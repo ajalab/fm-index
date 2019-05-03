@@ -1,0 +1,10 @@
+[package]
+name = "fm-index"
+version = "0.1.0"
+authors = ["Koki Kato <koki.kato1994@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+fid = "0.1.3"
+wavelet-tree = { path = "../wavelet-tree" }
+num-traits = "0.2"
