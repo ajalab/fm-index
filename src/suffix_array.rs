@@ -2,7 +2,7 @@ use crate::util;
 use std::fmt;
 
 pub trait SuffixArray {
-    fn build(&mut self, sa: Vec<usize>);
+    fn build(&mut self, sa: Vec<u64>);
     fn get(&self, i: u64) -> Option<u64>;
 }
 
@@ -37,12 +37,14 @@ impl fmt::Debug for SOSamplingSuffixArray {
 }
 
 impl SuffixArray for SOSamplingSuffixArray {
-    fn build(&mut self, sa: Vec<usize>) {
+    fn build(&mut self, sa: Vec<u64>) {
         let n = sa.len();
         let word_size = (util::log2(n as u64) + 1) as usize;
         debug_assert!(
             n > (1 << self.level),
-            "sampling level L must satisfy 2^L < text_len"
+            "sampling level L must satisfy 2^L < text_len (L = {}, text_len = {})",
+            self.level,
+            n,
         );
         let sa_samples_len = n >> self.level;
         let mut sa_samples = fid::BitArray::with_word_size(word_size, sa_samples_len);
