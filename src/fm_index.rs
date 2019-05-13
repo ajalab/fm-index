@@ -1,11 +1,9 @@
+use crate::character::Character;
 use crate::converter::Converter;
 use crate::sais;
 use crate::suffix_array::SuffixArray;
 use crate::util;
-
-use num_traits::Num;
-use std::fmt::Debug;
-use wavelet_tree::WaveletMatrix;
+use crate::wavelet_matrix::WaveletMatrix;
 
 pub struct FMIndex<T, C, S>
 where
@@ -22,7 +20,7 @@ where
 // TODO: Refactor types (Converter converts T -> u64)
 impl<T, C, S> FMIndex<T, C, S>
 where
-    T: Into<u64> + Copy + Clone + Ord + Num + Debug,
+    T: Character,
     C: Converter<T>,
     S: SuffixArray,
 {
@@ -94,7 +92,7 @@ where
         }
     }
 
-    fn search<K>(&self, pattern: K) -> (u64, u64)
+    pub fn search<'a, K>(&'a self, pattern: K) -> Search<'a, T, C, S>
     where
         K: AsRef<[T]>,
     {
@@ -105,27 +103,86 @@ where
             s = self.lf_map(c, s);
             e = self.lf_map(c, e);
         }
-        (s, e)
+        Search::new(self, s, e, pattern.as_ref().to_vec())
+    }
+}
+
+pub struct Search<'a, T, C, S>
+where
+    C: Converter<T>,
+    S: SuffixArray,
+{
+    fm_index: &'a FMIndex<T, C, S>,
+    s: u64,
+    e: u64,
+    pattern: Vec<T>,
+}
+
+impl<'a, T, C, S> Search<'a, T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+    S: SuffixArray,
+{
+    fn new(fm_index: &'a FMIndex<T, C, S>, s: u64, e: u64, pattern: Vec<T>) -> Self {
+        Search {
+            fm_index: fm_index,
+            s: s,
+            e: e,
+            pattern: pattern,
+        }
     }
 
-    pub fn count<K>(&self, pattern: K) -> u64
-    where
-        K: AsRef<[T]>,
-    {
-        let (s, e) = self.search(pattern);
-        e - s
+    pub fn count(&self) -> u64 {
+        self.e - self.s + 1
     }
 
-    pub fn locate<K>(&self, pattern: K) -> Vec<u64>
-    where
-        K: AsRef<[T]>,
-    {
-        let (s, e) = self.search(pattern);
-        let mut results: Vec<u64> = Vec::with_capacity((e - s + 1) as usize);
-        for k in s..e {
-            results.push(self.get_sa(k));
+    pub fn locate(&self) -> Vec<u64> {
+        let mut results: Vec<u64> = Vec::with_capacity((self.e - self.s + 1) as usize);
+        for k in self.s..self.e {
+            results.push(self.fm_index.get_sa(k));
         }
         results
+    }
+
+    pub fn display_prefix(&self, i: usize, l: usize) -> Vec<T> {
+        let mut result = Vec::with_capacity(l);
+        let mut i = self.s + i as u64;
+        debug_assert!(i < self.e);
+        for _ in 0..l {
+            let c: T = self.fm_index.bw.access(i);
+            if c.into() == 0 {
+                break;
+            }
+            result.push(self.fm_index.converter.convert_inv(c));
+            i = self.fm_index.lf_map(c.into(), i);
+        }
+        result.reverse();
+        result
+    }
+
+    pub fn display_postfix(&self, i: usize, r: usize) -> Vec<T> {
+        let mut result = Vec::with_capacity(r);
+        let mut i = self.s + i as u64;
+        debug_assert!(i < self.e);
+        for _ in 0..r {
+            let c = self.fm_index.get_f_char(i);
+            if c == 0 {
+                break;
+            }
+            i = self.fm_index.inverse_lf_map(c, i);
+            result.push(self.fm_index.converter.convert_inv(Character::from_u64(c)));
+            print!("inverse_lf_map({:?}, {}) = ", c, i);
+            println!("{}", i);
+        }
+        result
+    }
+
+    pub fn display(&self, i: usize, l: usize, r: usize) -> Vec<T> {
+        let mut prefix = self.display_prefix(i, l);
+        let mut postfix = self.display_postfix(i, r);
+        prefix.append(&mut postfix);
+        return prefix;
     }
 }
 
@@ -158,8 +215,9 @@ mod tests {
         );
 
         for (pattern, positions) in ans {
-            assert_eq!(fm_index.count(pattern), positions.len() as u64);
-            let mut res = fm_index.locate(pattern);
+            let search = fm_index.search(pattern);
+            assert_eq!(search.count(), positions.len() as u64);
+            let mut res = search.locate();
             res.sort();
             assert_eq!(res, positions);
         }
@@ -184,8 +242,9 @@ mod tests {
 
         for (pattern, positions) in ans {
             let pattern: Vec<u32> = pattern.chars().map(|c| c as u32).collect();
-            assert_eq!(fm_index.count(&pattern), positions.len() as u64);
-            let mut res = fm_index.locate(pattern);
+            let search = fm_index.search(pattern);
+            assert_eq!(search.count(), positions.len() as u64);
+            let mut res = search.locate();
             res.sort();
             assert_eq!(res, positions);
         }
@@ -210,45 +269,28 @@ mod tests {
     #[test]
     fn test_inverse_lf_map() {
         let text = "mississippi\0".to_string().into_bytes();
-        let n = text.len();
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b'a', b'z'),
             SOSamplingSuffixArray::new(2),
         );
-        let mut i = 0;
-        let mut c = fm_index.get_f_char(i);
-        for _ in 0..5 {
-            println!(
-                "char: {} ({})",
-                fm_index.converter.convert_inv(c as u8) as char,
-                c
-            );
-            let j = fm_index.inverse_lf_map(c, i);
-            c = fm_index.bw.access(i);
-            i = j;
-            println!("i = {}, c = {}", i, c);
+        let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
+        for (i, expected) in cases.into_iter().enumerate() {
+            let c = fm_index.get_f_char(i as u64);
+            let actual = fm_index.inverse_lf_map(c, i as u64);
+            assert_eq!(actual, expected);
         }
-        println!("");
     }
 
     #[test]
-    fn test_extract() {
+    fn test_display() {
         let text = "mississippi\0".to_string().into_bytes();
-        let n = text.len();
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b'a', b'z'),
             SOSamplingSuffixArray::new(2),
         );
-        /*
-        let i = 3;
-        let i = fm_index.get_sa(i);
-        let i = fm_index.lf_map(i);
-        println!(
-            "c = {}",
-            fm_index.converter.convert_inv(fm_index.bw.access(i)) as char
-        );
-        */
+        let search = fm_index.search("ssi");
+        println!("c = {:?}", String::from_utf8(search.display(0, 3, 4)));
     }
 }

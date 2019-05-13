@@ -6,7 +6,6 @@ edition = "2018"
 
 [dependencies]
 fid = "0.1.3"
-wavelet-tree = { path = "../wavelet-tree" }
 num-traits = "0.2"
 
 [dev-dependencies]

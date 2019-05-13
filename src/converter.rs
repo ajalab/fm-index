@@ -1,4 +1,4 @@
-use num_traits::{self, Num};
+use crate::character::Character;
 
 pub trait Converter<T> {
     fn convert(&self, c: T) -> T;
@@ -19,7 +19,7 @@ impl<T> RangeConverter<T> {
 
 impl<T> Converter<T> for RangeConverter<T>
 where
-    T: Copy + Clone + Into<u64> + Num,
+    T: Character,
 {
     fn convert(&self, c: T) -> T {
         if c == T::zero() {
