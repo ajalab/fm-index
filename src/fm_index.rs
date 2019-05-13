@@ -134,7 +134,7 @@ where
     }
 
     pub fn count(&self) -> u64 {
-        self.e - self.s + 1
+        self.e - self.s
     }
 
     pub fn locate(&self) -> Vec<u64> {
