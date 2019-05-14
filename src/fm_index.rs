@@ -161,10 +161,14 @@ where
         result
     }
 
-    pub fn display_postfix(&self, i: usize, r: usize) -> Vec<T> {
+    pub fn display_postfix(&self, i: usize, n: usize, r: usize) -> Vec<T> {
         let mut result = Vec::with_capacity(r);
         let mut i = self.s + i as u64;
         debug_assert!(i < self.e);
+        for _ in 0..n {
+            let c = self.fm_index.get_f_char(i);
+            i = self.fm_index.inverse_lf_map(c, i);
+        }
         for _ in 0..r {
             let c = self.fm_index.get_f_char(i);
             if c == 0 {
@@ -172,17 +176,18 @@ where
             }
             i = self.fm_index.inverse_lf_map(c, i);
             result.push(self.fm_index.converter.convert_inv(Character::from_u64(c)));
-            print!("inverse_lf_map({:?}, {}) = ", c, i);
-            println!("{}", i);
         }
         result
     }
 
     pub fn display(&self, i: usize, l: usize, r: usize) -> Vec<T> {
+        let mut result = Vec::with_capacity(l + self.pattern.len() + r);
         let mut prefix = self.display_prefix(i, l);
-        let mut postfix = self.display_postfix(i, r);
-        prefix.append(&mut postfix);
-        return prefix;
+        let mut postfix = self.display_postfix(i, self.pattern.len(), r);
+        result.append(&mut prefix);
+        result.extend(&self.pattern);
+        result.append(&mut postfix);
+        result
     }
 }
 
@@ -202,7 +207,6 @@ mod tests {
             ("i", vec![1, 4, 7, 10]),
             ("iss", vec![1, 4]),
             ("ss", vec![2, 5]),
-            ("ss", vec![2, 5]),
             ("p", vec![8, 9]),
             ("ppi", vec![8]),
             ("z", vec![]),
@@ -216,7 +220,17 @@ mod tests {
 
         for (pattern, positions) in ans {
             let search = fm_index.search(pattern);
-            assert_eq!(search.count(), positions.len() as u64);
+            let expected = positions.len() as u64;
+            let actual = search.count();
+            assert_eq!(
+                expected,
+                actual,
+                "pattern \"{}\" must occur {} times, but {}: {:?}",
+                pattern,
+                expected,
+                actual,
+                search.locate()
+            );
             let mut res = search.locate();
             res.sort();
             assert_eq!(res, positions);
@@ -291,6 +305,7 @@ mod tests {
             SOSamplingSuffixArray::new(2),
         );
         let search = fm_index.search("ssi");
-        println!("c = {:?}", String::from_utf8(search.display(0, 3, 4)));
+        assert_eq!(search.display(0, 2, 2), "sissipp".to_owned().as_bytes());
+        assert_eq!(search.display(1, 2, 2), "mississ".to_owned().as_bytes());
     }
 }
