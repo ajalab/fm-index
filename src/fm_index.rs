@@ -238,6 +238,22 @@ mod tests {
     }
 
     #[test]
+    fn test_small_contain_null() {
+        let text = "miss\0issippi\0".to_string().into_bytes();
+        let fm_index = FMIndex::new(
+            text,
+            RangeConverter::new(b'a', b'z'),
+            SOSamplingSuffixArray::new(2),
+        );
+        assert_eq!(fm_index.search("m").count(), 1);
+        assert_eq!(fm_index.search("ssi").count(), 1);
+        assert_eq!(fm_index.search("iss").count(), 2);
+        assert_eq!(fm_index.search("p").count(), 2);
+        assert_eq!(fm_index.search("\0").count(), 2);
+        assert_eq!(fm_index.search("\0i").count(), 1);
+    }
+
+    #[test]
     fn test_utf8() {
         let text = "みんなみんなきれいだな\0"
             .chars()
