@@ -53,6 +53,9 @@ where
     }
 
     fn get_f_char(&self, i: u64) -> u64 {
+        // binary search to find c s.t. occs[c] <= i < occs[c+1]
+        // <=> c is the greatest index s.t. occs[i] <= i
+        // invariant: c exists in [s, e)
         let mut s = 0;
         let mut e = self.occs.len();
         while e - s > 1 {
@@ -72,9 +75,6 @@ where
     }
 
     fn inverse_lf_map(&self, c: u64, i: u64) -> u64 {
-        // binary search to find c s.t. occs[c] <= i < occs[c+1]
-        // <=> c is the greatest index s.t. occs[i] <= i
-        // invariant: c exists in [s, e)
         let occ = self.occs[c as usize];
         self.bw.select(c, i - occ)
     }
@@ -95,18 +95,31 @@ where
         }
     }
 
+    fn len(&self) -> u64 {
+        return self.bw.len();
+    }
+
     pub fn search<'a, K>(&'a self, pattern: K) -> Search<'a, T, C, S>
     where
         K: AsRef<[T]>,
     {
-        let mut s = 0;
-        let mut e = self.bw.len();
-        for &c in pattern.as_ref().iter().rev() {
-            let c = self.converter.convert(c).into();
-            s = self.lf_map(c, s);
-            e = self.lf_map(c, e);
+        Search::new(self, 0, self.bw.len(), vec![]).search_backward(pattern)
+    }
+
+    pub fn iter_backward<'a>(&'a self, i: u64) -> impl Iterator<Item = T> + 'a {
+        debug_assert!(i < self.len());
+        PrefixIterator {
+            fm_index: self,
+            i: i,
         }
-        Search::new(self, s, e, pattern.as_ref().to_vec())
+    }
+
+    pub fn iter_forward<'a>(&'a self, i: u64) -> impl Iterator<Item = T> + 'a {
+        debug_assert!(i < self.len());
+        PostfixIterator {
+            fm_index: self,
+            i: i,
+        }
     }
 }
 
@@ -133,6 +146,49 @@ where
             s: s,
             e: e,
             pattern: pattern,
+        }
+    }
+
+    pub fn get_range(&self) -> (u64, u64) {
+        (self.s, self.e)
+    }
+
+    pub fn search_backward<K: AsRef<[T]>>(&self, pattern: K) -> Self {
+        let mut s = self.s;
+        let mut e = self.e;
+        let mut pattern = pattern.as_ref().to_owned();
+        for &c in pattern.iter().rev() {
+            let c = self.fm_index.converter.convert(c).into();
+            s = self.fm_index.lf_map(c, s);
+            e = self.fm_index.lf_map(c, e);
+        }
+        pattern.extend_from_slice(&self.pattern);
+
+        Search {
+            fm_index: self.fm_index,
+            s: s,
+            e: e,
+            pattern: pattern,
+        }
+    }
+
+    pub fn search_forward<K: AsRef<[T]>>(&self, pattern: K) -> Self {
+        let mut s = self.s;
+        let mut e = self.e;
+        let pattern = pattern.as_ref();
+        for &c in pattern.iter() {
+            let c = self.fm_index.converter.convert(c).into();
+            s = self.fm_index.inverse_lf_map(c, s);
+            e = self.fm_index.inverse_lf_map(c, e);
+        }
+        let mut new_pattern = self.pattern.clone();
+        new_pattern.extend_from_slice(pattern);
+
+        Search {
+            fm_index: self.fm_index,
+            s: s,
+            e: e,
+            pattern: new_pattern,
         }
     }
 
@@ -164,11 +220,33 @@ where
         result
     }
 
-    pub fn display_postfix(&self, i: usize, n: usize, r: usize) -> Vec<T> {
+    pub fn iter_prefix(&'a self, i: usize) -> impl Iterator<Item = T> + 'a {
+        let i = self.s + i as u64;
+        debug_assert!(i < self.e);
+        PrefixIterator {
+            fm_index: self.fm_index,
+            i: i,
+        }
+    }
+
+    pub fn iter_postfix(&'a self, i: usize) -> impl Iterator<Item = T> + 'a {
+        let mut i = self.s + i as u64;
+        debug_assert!(i < self.e);
+        for _ in 0..self.pattern.len() {
+            let c = self.fm_index.get_f_char(i);
+            i = self.fm_index.inverse_lf_map(c, i);
+        }
+        PostfixIterator {
+            fm_index: self.fm_index,
+            i: i,
+        }
+    }
+
+    pub fn display_postfix(&self, i: usize, r: usize) -> Vec<T> {
         let mut result = Vec::with_capacity(r);
         let mut i = self.s + i as u64;
         debug_assert!(i < self.e);
-        for _ in 0..n {
+        for _ in 0..self.pattern.len() {
             let c = self.fm_index.get_f_char(i);
             i = self.fm_index.inverse_lf_map(c, i);
         }
@@ -186,11 +264,59 @@ where
     pub fn display(&self, i: usize, l: usize, r: usize) -> Vec<T> {
         let mut result = Vec::with_capacity(l + self.pattern.len() + r);
         let mut prefix = self.display_prefix(i, l);
-        let mut postfix = self.display_postfix(i, self.pattern.len(), r);
+        let mut postfix = self.display_postfix(i, r);
         result.append(&mut prefix);
         result.extend(&self.pattern);
         result.append(&mut postfix);
         result
+    }
+}
+
+pub struct PrefixIterator<'a, T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+    S: SuffixArray,
+{
+    fm_index: &'a FMIndex<T, C, S>,
+    i: u64,
+}
+
+impl<'a, T, C, S> Iterator for PrefixIterator<'a, T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+    S: SuffixArray,
+{
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        let c: T = self.fm_index.bw.access(self.i);
+        self.i = self.fm_index.lf_map(c.into(), self.i);
+        Some(self.fm_index.converter.convert_inv(c))
+    }
+}
+
+pub struct PostfixIterator<'a, T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+    S: SuffixArray,
+{
+    fm_index: &'a FMIndex<T, C, S>,
+    i: u64,
+}
+
+impl<'a, T, C, S> Iterator for PostfixIterator<'a, T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+    S: SuffixArray,
+{
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        let c = self.fm_index.get_f_char(self.i);
+        self.i = self.fm_index.inverse_lf_map(c, self.i);
+        Some(self.fm_index.converter.convert_inv(Character::from_u64(c)))
     }
 }
 
@@ -326,5 +452,79 @@ mod tests {
         let search = fm_index.search("ssi");
         assert_eq!(search.display(0, 2, 2), "sissipp".to_owned().as_bytes());
         assert_eq!(search.display(1, 2, 2), "mississ".to_owned().as_bytes());
+    }
+
+    #[test]
+    fn test_search_forward() {
+        // todo
+    }
+
+    #[test]
+    fn test_search_backword() {
+        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\0".to_string().into_bytes();
+        let word_pairs = vec![("ipsum", " dolor"), ("sit", " amet"), ("sed", " do")];
+        let fm_index = FMIndex::new(
+            text,
+            RangeConverter::new(b' ', b'~'),
+            SOSamplingSuffixArray::new(2),
+        );
+        for (fst, snd) in word_pairs {
+            let search1 = fm_index.search(snd).search_backward(fst);
+            let concat = fst.to_owned() + snd;
+            let search2 = fm_index.search(&concat);
+            assert_eq!(search1.pattern, search2.pattern);
+            assert!(search1.count() > 0);
+            assert_eq!(search1.count(), search2.count());
+            assert_eq!(search1.locate(), search2.locate());
+        }
+    }
+
+    #[test]
+    fn test_iter_prefix() {
+        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\0".to_string().into_bytes();
+        let fm_index = FMIndex::new(
+            text,
+            RangeConverter::new(b' ', b'~'),
+            SOSamplingSuffixArray::new(2),
+        );
+        let search = fm_index.search("amet");
+        let mut p = search.iter_prefix(0);
+        if let Some(c) = p.next() {
+            let mut result = vec![c];
+            for c in p.take_while(|&c| c != b' ') {
+                result.push(c);
+            }
+            result.reverse();
+            assert_eq!(
+                b"sit ".to_vec(),
+                result.to_owned(),
+                "expected \"sit\", actual \"{:?}\"",
+                String::from_utf8(result)
+            );
+        }
+    }
+
+    #[test]
+    fn test_iter_postfix() {
+        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\0".to_string().into_bytes();
+        let fm_index = FMIndex::new(
+            text,
+            RangeConverter::new(b' ', b'~'),
+            SOSamplingSuffixArray::new(2),
+        );
+        let search = fm_index.search("ipsum");
+        let mut p = search.iter_postfix(0);
+        if let Some(c) = p.next() {
+            let mut result = vec![c];
+            for c in p.take_while(|&c| c != b' ') {
+                result.push(c);
+            }
+            assert_eq!(
+                b" dolor".to_vec(),
+                result.to_owned(),
+                "expected \" dolor\", actual \"{:?}\"",
+                String::from_utf8(result)
+            );
+        }
     }
 }
