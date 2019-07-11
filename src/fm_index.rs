@@ -5,6 +5,9 @@ use crate::suffix_array::SuffixArray;
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
 
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
 pub struct FMIndex<T, C, S>
 where
     C: Converter<T>,
