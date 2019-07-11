@@ -52,13 +52,6 @@ impl WaveletMatrix {
         }
     }
 
-    pub fn new<T>(text: Vec<T>) -> Self
-    where
-        T: Character,
-    {
-        Self::new_with_size(text, std::mem::size_of::<T>() as u64 * 8)
-    }
-
     pub fn access<T>(&self, k: u64) -> T
     where
         T: Character,
@@ -209,7 +202,7 @@ mod tests {
     #[test]
     fn empty() {
         let empty_vec: Vec<u8> = vec![];
-        let wm = WaveletMatrix::new(empty_vec);
+        let wm = WaveletMatrix::new_with_size(empty_vec, 8);
         assert_eq!(wm.len, 0);
         assert_eq!(wm.rank(0u8, 0), 0);
         assert_eq!(wm.rank(0u8, 10), 0);
