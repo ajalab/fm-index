@@ -3,6 +3,9 @@ use crate::character::Character;
 use fid::{BitVector, FID};
 use std::fmt;
 
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
 pub struct WaveletMatrix {
     rows: Vec<BitVector>,
     size: u64,

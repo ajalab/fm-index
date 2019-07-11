@@ -1,11 +1,14 @@
 use crate::character::Character;
 
+use serde::{Deserialize, Serialize};
+
 pub trait Converter<T> {
     fn convert(&self, c: T) -> T;
     fn convert_inv(&self, c: T) -> T;
     fn len(&self) -> u64;
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct RangeConverter<T> {
     min: T,
     max: T,

@@ -1,11 +1,14 @@
 use crate::util;
 use std::fmt;
 
+use serde::{Serialize, Deserialize};
+
 pub trait SuffixArray {
     fn build(&mut self, sa: Vec<u64>);
     fn get(&self, i: u64) -> Option<u64>;
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct SOSamplingSuffixArray {
     level: usize,
     word_size: usize,
