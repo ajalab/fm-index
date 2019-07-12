@@ -204,6 +204,7 @@ where
         results
     }
 
+    #[deprecated]
     pub fn display_prefix(&self, i: usize, l: usize) -> Vec<T> {
         let mut result = Vec::with_capacity(l);
         let mut i = self.s + i as u64;
@@ -220,6 +221,7 @@ where
         result
     }
 
+    #[deprecated]
     pub fn display_postfix(&self, i: usize, r: usize) -> Vec<T> {
         let mut result = Vec::with_capacity(r);
         let mut i = self.s + i as u64;
@@ -239,6 +241,7 @@ where
         result
     }
 
+    #[deprecated]
     pub fn display(&self, i: usize, l: usize, r: usize) -> Vec<T> {
         let mut result = Vec::with_capacity(l + self.pattern.len() + r);
         let mut prefix = self.display_prefix(i, l);
