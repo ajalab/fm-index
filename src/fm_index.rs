@@ -106,17 +106,17 @@ where
         Search::new(self, 0, self.bw.len(), vec![]).search_backward(pattern)
     }
 
-    pub fn iter_backward<'a>(&'a self, i: u64) -> impl Iterator<Item = T> + 'a {
+    pub fn iter_forward<'a>(&'a self, i: u64) -> impl Iterator<Item = T> + 'a {
         debug_assert!(i < self.len());
-        PrefixIterator {
+        ForwardIterator {
             fm_index: self,
             i: i,
         }
     }
 
-    pub fn iter_forward<'a>(&'a self, i: u64) -> impl Iterator<Item = T> + 'a {
+    pub fn iter_backward<'a>(&'a self, i: u64) -> impl Iterator<Item = T> + 'a {
         debug_assert!(i < self.len());
-        PostfixIterator {
+        BackwardIterator {
             fm_index: self,
             i: i,
         }
@@ -223,7 +223,7 @@ where
     pub fn iter_prefix(&'a self, i: usize) -> impl Iterator<Item = T> + 'a {
         let i = self.s + i as u64;
         debug_assert!(i < self.e);
-        PrefixIterator {
+        BackwardIterator {
             fm_index: self.fm_index,
             i: i,
         }
@@ -236,7 +236,7 @@ where
             let c = self.fm_index.get_f_char(i);
             i = self.fm_index.inverse_lf_map(c, i);
         }
-        PostfixIterator {
+        ForwardIterator {
             fm_index: self.fm_index,
             i: i,
         }
@@ -272,7 +272,7 @@ where
     }
 }
 
-pub struct PrefixIterator<'a, T, C, S>
+pub struct BackwardIterator<'a, T, C, S>
 where
     T: Character,
     C: Converter<T>,
@@ -282,7 +282,7 @@ where
     i: u64,
 }
 
-impl<'a, T, C, S> Iterator for PrefixIterator<'a, T, C, S>
+impl<'a, T, C, S> Iterator for BackwardIterator<'a, T, C, S>
 where
     T: Character,
     C: Converter<T>,
@@ -296,7 +296,7 @@ where
     }
 }
 
-pub struct PostfixIterator<'a, T, C, S>
+struct ForwardIterator<'a, T, C, S>
 where
     T: Character,
     C: Converter<T>,
@@ -306,7 +306,7 @@ where
     i: u64,
 }
 
-impl<'a, T, C, S> Iterator for PostfixIterator<'a, T, C, S>
+impl<'a, T, C, S> Iterator for ForwardIterator<'a, T, C, S>
 where
     T: Character,
     C: Converter<T>,
@@ -480,51 +480,35 @@ mod tests {
     }
 
     #[test]
-    fn test_iter_prefix() {
+    fn test_iter_forward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\0".to_string().into_bytes();
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b' ', b'~'),
             SOSamplingSuffixArray::new(2),
         );
-        let search = fm_index.search("amet");
-        let mut p = search.iter_prefix(0);
-        if let Some(c) = p.next() {
-            let mut result = vec![c];
-            for c in p.take_while(|&c| c != b' ') {
-                result.push(c);
-            }
-            result.reverse();
-            assert_eq!(
-                b"sit ".to_vec(),
-                result.to_owned(),
-                "expected \"sit\", actual \"{:?}\"",
-                String::from_utf8(result)
-            );
-        }
+        let search = fm_index.search("sit ");
+        let next_seq = fm_index
+            .iter_forward(search.get_range().0)
+            .take(8)
+            .collect::<Vec<_>>();
+        assert_eq!(next_seq, b"sit amet".to_owned());
     }
 
     #[test]
-    fn test_iter_postfix() {
+    fn test_iter_backward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\0".to_string().into_bytes();
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b' ', b'~'),
             SOSamplingSuffixArray::new(2),
         );
-        let search = fm_index.search("ipsum");
-        let mut p = search.iter_postfix(0);
-        if let Some(c) = p.next() {
-            let mut result = vec![c];
-            for c in p.take_while(|&c| c != b' ') {
-                result.push(c);
-            }
-            assert_eq!(
-                b" dolor".to_vec(),
-                result.to_owned(),
-                "expected \" dolor\", actual \"{:?}\"",
-                String::from_utf8(result)
-            );
-        }
+        let search = fm_index.search("sit ");
+        let mut prev_seq = fm_index
+            .iter_backward(search.get_range().0)
+            .take(6)
+            .collect::<Vec<_>>();
+        prev_seq.reverse();
+        assert_eq!(prev_seq, b"dolor ".to_owned());
     }
 }
