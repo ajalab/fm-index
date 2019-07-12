@@ -220,28 +220,6 @@ where
         result
     }
 
-    pub fn iter_prefix(&'a self, i: usize) -> impl Iterator<Item = T> + 'a {
-        let i = self.s + i as u64;
-        debug_assert!(i < self.e);
-        BackwardIterator {
-            fm_index: self.fm_index,
-            i: i,
-        }
-    }
-
-    pub fn iter_postfix(&'a self, i: usize) -> impl Iterator<Item = T> + 'a {
-        let mut i = self.s + i as u64;
-        debug_assert!(i < self.e);
-        for _ in 0..self.pattern.len() {
-            let c = self.fm_index.get_f_char(i);
-            i = self.fm_index.inverse_lf_map(c, i);
-        }
-        ForwardIterator {
-            fm_index: self.fm_index,
-            i: i,
-        }
-    }
-
     pub fn display_postfix(&self, i: usize, r: usize) -> Vec<T> {
         let mut result = Vec::with_capacity(r);
         let mut i = self.s + i as u64;
