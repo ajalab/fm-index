@@ -123,6 +123,7 @@ where
     }
 }
 
+#[derive(Clone)]
 pub struct Search<'a, T, C, S>
 where
     C: Converter<T>,
