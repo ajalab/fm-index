@@ -162,6 +162,9 @@ where
             let c = self.fm_index.converter.convert(c).into();
             s = self.fm_index.lf_map(c, s);
             e = self.fm_index.lf_map(c, e);
+            if s == e {
+                break;
+            }
         }
         pattern.extend_from_slice(&self.pattern);
 
@@ -321,6 +324,7 @@ mod tests {
             ("p", vec![8, 9]),
             ("ppi", vec![8]),
             ("z", vec![]),
+            ("pps", vec![]),
         ];
 
         let fm_index = FMIndex::new(
