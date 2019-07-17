@@ -99,7 +99,7 @@ where
         return self.bw.len();
     }
 
-    pub fn search<'a, K>(&'a self, pattern: K) -> Search<'a, T, C, S>
+    pub fn search_backward<'a, K>(&'a self, pattern: K) -> Search<'a, T, C, S>
     where
         K: AsRef<[T]>,
     {
@@ -334,7 +334,7 @@ mod tests {
         );
 
         for (pattern, positions) in ans {
-            let search = fm_index.search(pattern);
+            let search = fm_index.search_backward(pattern);
             let expected = positions.len() as u64;
             let actual = search.count();
             assert_eq!(
@@ -360,12 +360,12 @@ mod tests {
             RangeConverter::new(b'a', b'z'),
             SOSamplingSuffixArray::new(2),
         );
-        assert_eq!(fm_index.search("m").count(), 1);
-        assert_eq!(fm_index.search("ssi").count(), 1);
-        assert_eq!(fm_index.search("iss").count(), 2);
-        assert_eq!(fm_index.search("p").count(), 2);
-        assert_eq!(fm_index.search("\0").count(), 2);
-        assert_eq!(fm_index.search("\0i").count(), 1);
+        assert_eq!(fm_index.search_backward("m").count(), 1);
+        assert_eq!(fm_index.search_backward("ssi").count(), 1);
+        assert_eq!(fm_index.search_backward("iss").count(), 2);
+        assert_eq!(fm_index.search_backward("p").count(), 2);
+        assert_eq!(fm_index.search_backward("\0").count(), 2);
+        assert_eq!(fm_index.search_backward("\0i").count(), 1);
     }
 
     #[test]
@@ -387,7 +387,7 @@ mod tests {
 
         for (pattern, positions) in ans {
             let pattern: Vec<u32> = pattern.chars().map(|c| c as u32).collect();
-            let search = fm_index.search(pattern);
+            let search = fm_index.search_backward(pattern);
             assert_eq!(search.count(), positions.len() as u64);
             let mut res = search.locate();
             res.sort();
@@ -435,7 +435,7 @@ mod tests {
             RangeConverter::new(b'a', b'z'),
             SOSamplingSuffixArray::new(2),
         );
-        let search = fm_index.search("ssi");
+        let search = fm_index.search_backward("ssi");
         assert_eq!(search.display(0, 2, 2), "sissipp".to_owned().as_bytes());
         assert_eq!(search.display(1, 2, 2), "mississ".to_owned().as_bytes());
     }
@@ -455,9 +455,9 @@ mod tests {
             SOSamplingSuffixArray::new(2),
         );
         for (fst, snd) in word_pairs {
-            let search1 = fm_index.search(snd).search_backward(fst);
+            let search1 = fm_index.search_backward(snd).search_backward(fst);
             let concat = fst.to_owned() + snd;
-            let search2 = fm_index.search(&concat);
+            let search2 = fm_index.search_backward(&concat);
             assert_eq!(search1.pattern, search2.pattern);
             assert!(search1.count() > 0);
             assert_eq!(search1.count(), search2.count());
@@ -473,7 +473,7 @@ mod tests {
             RangeConverter::new(b' ', b'~'),
             SOSamplingSuffixArray::new(2),
         );
-        let search = fm_index.search("sit ");
+        let search = fm_index.search_backward("sit ");
         let next_seq = fm_index
             .iter_forward(search.get_range().0)
             .take(8)
@@ -489,7 +489,7 @@ mod tests {
             RangeConverter::new(b' ', b'~'),
             SOSamplingSuffixArray::new(2),
         );
-        let search = fm_index.search("sit ");
+        let search = fm_index.search_backward("sit ");
         let mut prev_seq = fm_index
             .iter_backward(search.get_range().0)
             .take(6)
