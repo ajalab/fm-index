@@ -176,26 +176,6 @@ where
         }
     }
 
-    pub fn search_forward<K: AsRef<[T]>>(&self, pattern: K) -> Self {
-        let mut s = self.s;
-        let mut e = self.e;
-        let pattern = pattern.as_ref();
-        for &c in pattern.iter() {
-            let c = self.fm_index.converter.convert(c).into();
-            s = self.fm_index.inverse_lf_map(c, s);
-            e = self.fm_index.inverse_lf_map(c, e);
-        }
-        let mut new_pattern = self.pattern.clone();
-        new_pattern.extend_from_slice(pattern);
-
-        Search {
-            fm_index: self.fm_index,
-            s: s,
-            e: e,
-            pattern: new_pattern,
-        }
-    }
-
     pub fn count(&self) -> u64 {
         self.e - self.s
     }
@@ -438,11 +418,6 @@ mod tests {
         let search = fm_index.search_backward("ssi");
         assert_eq!(search.display(0, 2, 2), "sissipp".to_owned().as_bytes());
         assert_eq!(search.display(1, 2, 2), "mississ".to_owned().as_bytes());
-    }
-
-    #[test]
-    fn test_search_forward() {
-        // todo
     }
 
     #[test]
