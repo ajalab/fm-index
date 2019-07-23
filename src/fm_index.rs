@@ -187,54 +187,6 @@ where
         }
         results
     }
-
-    #[deprecated]
-    pub fn display_prefix(&self, i: usize, l: usize) -> Vec<T> {
-        let mut result = Vec::with_capacity(l);
-        let mut i = self.s + i as u64;
-        debug_assert!(i < self.e);
-        for _ in 0..l {
-            let c: T = self.fm_index.bw.access(i);
-            if c.into() == 0 {
-                break;
-            }
-            result.push(self.fm_index.converter.convert_inv(c));
-            i = self.fm_index.lf_map(c.into(), i);
-        }
-        result.reverse();
-        result
-    }
-
-    #[deprecated]
-    pub fn display_postfix(&self, i: usize, r: usize) -> Vec<T> {
-        let mut result = Vec::with_capacity(r);
-        let mut i = self.s + i as u64;
-        debug_assert!(i < self.e);
-        for _ in 0..self.pattern.len() {
-            let c = self.fm_index.get_f_char(i);
-            i = self.fm_index.inverse_lf_map(c, i);
-        }
-        for _ in 0..r {
-            let c = self.fm_index.get_f_char(i);
-            if c == 0 {
-                break;
-            }
-            i = self.fm_index.inverse_lf_map(c, i);
-            result.push(self.fm_index.converter.convert_inv(Character::from_u64(c)));
-        }
-        result
-    }
-
-    #[deprecated]
-    pub fn display(&self, i: usize, l: usize, r: usize) -> Vec<T> {
-        let mut result = Vec::with_capacity(l + self.pattern.len() + r);
-        let mut prefix = self.display_prefix(i, l);
-        let mut postfix = self.display_postfix(i, r);
-        result.append(&mut prefix);
-        result.extend(&self.pattern);
-        result.append(&mut postfix);
-        result
-    }
 }
 
 pub struct BackwardIterator<'a, T, C, S>
@@ -405,19 +357,6 @@ mod tests {
             let actual = fm_index.inverse_lf_map(c, i as u64);
             assert_eq!(actual, expected);
         }
-    }
-
-    #[test]
-    fn test_display() {
-        let text = "mississippi\0".to_string().into_bytes();
-        let fm_index = FMIndex::new(
-            text,
-            RangeConverter::new(b'a', b'z'),
-            SOSamplingSuffixArray::new(2),
-        );
-        let search = fm_index.search_backward("ssi");
-        assert_eq!(search.display(0, 2, 2), "sissipp".to_owned().as_bytes());
-        assert_eq!(search.display(1, 2, 2), "mississ".to_owned().as_bytes());
     }
 
     #[test]
