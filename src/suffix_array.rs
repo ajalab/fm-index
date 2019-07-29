@@ -1,33 +1,31 @@
 use crate::util;
 use std::fmt;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub trait SuffixArray {
-    fn build(&mut self, sa: Vec<u64>);
     fn get(&self, i: u64) -> Option<u64>;
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct SOSamplingSuffixArray {
+pub struct SOSampledSuffixArray {
     level: usize,
     word_size: usize,
     sa: fid::BitArray,
     len: usize,
 }
 
-impl SOSamplingSuffixArray {
-    pub fn new(level: usize) -> Self {
-        SOSamplingSuffixArray {
-            level: level,
-            word_size: 0,
-            sa: fid::BitArray::new(0),
-            len: 0,
+impl SuffixArray for SOSampledSuffixArray {
+    fn get(&self, i: u64) -> Option<u64> {
+        if i & ((1 << self.level) - 1) == 0 {
+            Some(self.sa.get_word(i as usize >> self.level, self.word_size))
+        } else {
+            None
         }
     }
 }
 
-impl fmt::Debug for SOSamplingSuffixArray {
+impl fmt::Debug for SOSampledSuffixArray {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for i in 0..self.len {
             match self.get(i as u64) {
@@ -39,8 +37,27 @@ impl fmt::Debug for SOSamplingSuffixArray {
     }
 }
 
-impl SuffixArray for SOSamplingSuffixArray {
-    fn build(&mut self, sa: Vec<u64>) {
+pub trait SuffixArraySampler<S: SuffixArray> {
+    fn sample(&self, sa: Vec<u64>) -> S;
+}
+
+pub struct SuffixArraySOSampler {
+    level: usize,
+}
+
+impl SuffixArraySOSampler {
+    pub fn new() -> Self {
+        SuffixArraySOSampler { level: 0 }
+    }
+
+    pub fn level(mut self, level: usize) -> Self {
+        self.level = level;
+        self
+    }
+}
+
+impl SuffixArraySampler<SOSampledSuffixArray> for SuffixArraySOSampler {
+    fn sample(&self, sa: Vec<u64>) -> SOSampledSuffixArray {
         let n = sa.len();
         let word_size = (util::log2(n as u64) + 1) as usize;
         debug_assert!(
@@ -54,16 +71,11 @@ impl SuffixArray for SOSamplingSuffixArray {
         for i in 0..sa_samples_len {
             sa_samples.set_word(i, word_size, sa[i << self.level] as u64);
         }
-        self.word_size = word_size;
-        self.sa = sa_samples;
-        self.len = sa.len();
-    }
-
-    fn get(&self, i: u64) -> Option<u64> {
-        if i & ((1 << self.level) - 1) == 0 {
-            Some(self.sa.get_word(i as usize >> self.level, self.word_size))
-        } else {
-            None
+        SOSampledSuffixArray {
+            level: self.level,
+            word_size: word_size,
+            sa: sa_samples,
+            len: sa.len(),
         }
     }
 }

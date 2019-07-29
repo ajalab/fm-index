@@ -1,7 +1,7 @@
 use crate::character::Character;
 use crate::converter::Converter;
 use crate::sais;
-use crate::suffix_array::SuffixArray;
+use crate::suffix_array::{SuffixArray, SuffixArraySampler};
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
 
@@ -27,7 +27,7 @@ where
     C: Converter<T>,
     S: SuffixArray,
 {
-    pub fn new(text: Vec<T>, converter: C, mut suffix_array: S) -> Self {
+    pub fn new<B: SuffixArraySampler<S>>(text: Vec<T>, converter: C, sampler: B) -> Self {
         let n = text.len();
 
         let occs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
@@ -41,13 +41,12 @@ where
             }
         }
         let bw = WaveletMatrix::new_with_size(bw, util::log2(converter.len() - 1) + 1);
-        suffix_array.build(sa);
 
         FMIndex {
             occs: occs,
             bw: bw,
             converter: converter,
-            suffix_array: suffix_array,
+            suffix_array: sampler.sample(sa),
             _t: std::marker::PhantomData::<T>,
         }
     }
@@ -241,7 +240,7 @@ where
 mod tests {
     use super::*;
     use crate::converter::RangeConverter;
-    use crate::suffix_array::SOSamplingSuffixArray;
+    use crate::suffix_array::SuffixArraySOSampler;
 
     #[test]
     fn test_small() {
@@ -262,7 +261,7 @@ mod tests {
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b'a', b'z'),
-            SOSamplingSuffixArray::new(2),
+            SuffixArraySOSampler::new().level(2),
         );
 
         for (pattern, positions) in ans {
@@ -290,7 +289,7 @@ mod tests {
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b'a', b'z'),
-            SOSamplingSuffixArray::new(2),
+            SuffixArraySOSampler::new().level(2),
         );
         assert_eq!(fm_index.search_backward("m").count(), 1);
         assert_eq!(fm_index.search_backward("ssi").count(), 1);
@@ -314,7 +313,7 @@ mod tests {
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new('あ' as u32, 'ん' as u32),
-            SOSamplingSuffixArray::new(2),
+            SuffixArraySOSampler::new().level(2),
         );
 
         for (pattern, positions) in ans {
@@ -334,7 +333,7 @@ mod tests {
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b'a', b'z'),
-            SOSamplingSuffixArray::new(2),
+            SuffixArraySOSampler::new().level(2),
         );
         let mut i = 0;
         for _ in 0..n {
@@ -349,7 +348,7 @@ mod tests {
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b'a', b'z'),
-            SOSamplingSuffixArray::new(2),
+            SuffixArraySOSampler::new().level(2),
         );
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
@@ -366,7 +365,7 @@ mod tests {
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b' ', b'~'),
-            SOSamplingSuffixArray::new(2),
+            SuffixArraySOSampler::new().level(2),
         );
         for (fst, snd) in word_pairs {
             let search1 = fm_index.search_backward(snd).search_backward(fst);
@@ -385,7 +384,7 @@ mod tests {
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b' ', b'~'),
-            SOSamplingSuffixArray::new(2),
+            SuffixArraySOSampler::new().level(2),
         );
         let search = fm_index.search_backward("sit ");
         let next_seq = fm_index
@@ -401,7 +400,7 @@ mod tests {
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b' ', b'~'),
-            SOSamplingSuffixArray::new(2),
+            SuffixArraySOSampler::new().level(2),
         );
         let search = fm_index.search_backward("sit ");
         let mut prev_seq = fm_index
