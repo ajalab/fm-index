@@ -11,7 +11,6 @@ use serde::{Deserialize, Serialize};
 pub struct FMIndex<T, C, S>
 where
     C: Converter<T>,
-    S: SuffixArray,
 {
     bw: WaveletMatrix,
     occs: Vec<u64>,
@@ -25,7 +24,6 @@ impl<T, C, S> FMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,
-    S: SuffixArray,
 {
     pub fn new<B: SuffixArraySampler<S>>(text: Vec<T>, converter: C, sampler: B) -> Self {
         let n = text.len();
@@ -78,22 +76,6 @@ where
         self.bw.select(c, i - occ)
     }
 
-    fn get_sa(&self, mut i: u64) -> u64 {
-        let mut steps = 0;
-        loop {
-            match self.suffix_array.get(i) {
-                Some(sa) => {
-                    return (sa + steps) % self.bw.len();
-                }
-                None => {
-                    let c = self.bw.access(i);
-                    i = self.lf_map(c, i);
-                    steps += 1;
-                }
-            }
-        }
-    }
-
     fn len(&self) -> u64 {
         return self.bw.len();
     }
@@ -122,11 +104,33 @@ where
     }
 }
 
+impl<T, C, S> FMIndex<T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+    S: SuffixArray,
+{
+    fn get_sa(&self, mut i: u64) -> u64 {
+        let mut steps = 0;
+        loop {
+            match self.suffix_array.get(i) {
+                Some(sa) => {
+                    return (sa + steps) % self.bw.len();
+                }
+                None => {
+                    let c = self.bw.access(i);
+                    i = self.lf_map(c, i);
+                    steps += 1;
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Search<'a, T, C, S>
 where
     C: Converter<T>,
-    S: SuffixArray,
 {
     fm_index: &'a FMIndex<T, C, S>,
     s: u64,
@@ -138,7 +142,6 @@ impl<'a, T, C, S> Search<'a, T, C, S>
 where
     T: Character,
     C: Converter<T>,
-    S: SuffixArray,
 {
     fn new(fm_index: &'a FMIndex<T, C, S>, s: u64, e: u64, pattern: Vec<T>) -> Self {
         Search {
@@ -178,7 +181,15 @@ where
     pub fn count(&self) -> u64 {
         self.e - self.s
     }
+}
 
+
+impl<'a, T, C, S> Search<'a, T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+    S: SuffixArray,
+{
     pub fn locate(&self) -> Vec<u64> {
         let mut results: Vec<u64> = Vec::with_capacity((self.e - self.s + 1) as usize);
         for k in self.s..self.e {
@@ -192,7 +203,6 @@ pub struct BackwardIterator<'a, T, C, S>
 where
     T: Character,
     C: Converter<T>,
-    S: SuffixArray,
 {
     fm_index: &'a FMIndex<T, C, S>,
     i: u64,
@@ -202,7 +212,6 @@ impl<'a, T, C, S> Iterator for BackwardIterator<'a, T, C, S>
 where
     T: Character,
     C: Converter<T>,
-    S: SuffixArray,
 {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
@@ -216,7 +225,6 @@ struct ForwardIterator<'a, T, C, S>
 where
     T: Character,
     C: Converter<T>,
-    S: SuffixArray,
 {
     fm_index: &'a FMIndex<T, C, S>,
     i: u64,
@@ -226,7 +234,6 @@ impl<'a, T, C, S> Iterator for ForwardIterator<'a, T, C, S>
 where
     T: Character,
     C: Converter<T>,
-    S: SuffixArray,
 {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {

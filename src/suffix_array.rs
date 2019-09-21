@@ -37,8 +37,22 @@ impl fmt::Debug for SOSampledSuffixArray {
     }
 }
 
-pub trait SuffixArraySampler<S: SuffixArray> {
+pub trait SuffixArraySampler<S> {
     fn sample(&self, sa: Vec<u64>) -> S;
+}
+
+pub struct NullSampler {}
+
+impl NullSampler {
+    pub fn new() -> Self {
+        NullSampler {}
+    }
+}
+
+impl SuffixArraySampler<()> for NullSampler {
+    fn sample(&self, _sa: Vec<u64>) -> () {
+        ()
+    }
 }
 
 pub struct SuffixArraySOSampler {
