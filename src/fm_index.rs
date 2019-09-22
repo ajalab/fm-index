@@ -183,7 +183,6 @@ where
     }
 }
 
-
 impl<'a, T, C, S> Search<'a, T, C, S>
 where
     T: Character,
@@ -255,7 +254,6 @@ mod tests {
         let ans = vec![
             ("m", vec![0]),
             ("mi", vec![0]),
-            ("m", vec![0]),
             ("i", vec![1, 4, 7, 10]),
             ("iss", vec![1, 4]),
             ("ss", vec![2, 5]),
@@ -336,6 +334,7 @@ mod tests {
     #[test]
     fn test_lf_map() {
         let text = "mississippi\0".to_string().into_bytes();
+        let ans = [1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
         let n = text.len();
         let fm_index = FMIndex::new(
             text,
@@ -343,9 +342,10 @@ mod tests {
             SuffixArraySOSampler::new().level(2),
         );
         let mut i = 0;
-        for _ in 0..n {
+        for k in 0..n {
             let c = fm_index.bw.access(i);
             i = fm_index.lf_map(c, i);
+            assert_eq!(i, ans[k]);
         }
     }
 
