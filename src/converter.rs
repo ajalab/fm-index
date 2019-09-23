@@ -67,3 +67,9 @@ impl<T> Converter<T> for IdConverter {
         self.size
     }
 }
+
+pub trait IndexWithConverter<T>
+{
+    type C: Converter<T>;
+    fn get_converter(&self) -> &Self::C;
+}

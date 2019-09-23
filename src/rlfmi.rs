@@ -1,6 +1,7 @@
 use crate::character::Character;
-use crate::converter::Converter;
+use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
+use crate::search::BackwardIterableIndex;
 use crate::suffix_array::SuffixArraySampler;
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
@@ -80,35 +81,55 @@ where
         }
     }
 
-    fn get_l(&self, i: u64) -> u64 {
-        // note: b[0] is always 1
-        self.s.access::<u64>(self.b.rank1(i + 1) - 1)
-    }
-
-    fn lf_map(&self, i: u64) -> u64 {
-        let c = self.get_l(i);
-        let nr = self.s.rank(c, self.b.rank1(i));
-        self.bp.select1(self.cs[c as usize] + nr) + i - self.b.select1(self.b.rank1(i))
-    }
-
-    fn lf_map2(&self, c: u64, i: u64) -> u64 {
-        let nr = self.s.rank(c, self.b.rank1(i));
-        if self.get_l(i) != c {
-            self.bp.select1(self.cs[c as usize] + nr)
-        } else {
-            self.bp.select1(self.cs[c as usize] + nr) + i - self.b.select1(self.b.rank1(i))
-        }
-    }
-
-    fn len(&self) -> u64 {
-        self.len
-    }
-
     pub fn search_backward<'a, K>(&'a self, pattern: K) -> Search<'a, T, C, S>
     where
         K: AsRef<[T]>,
     {
         Search::new(self, 0, self.len, vec![]).search_backward(pattern)
+    }
+}
+
+impl<T, C, S> BackwardIterableIndex for RLFMIndex<T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    type T = T;
+
+    fn len(&self) -> u64 {
+        self.len
+    }
+
+    fn get_l(&self, i: u64) -> T {
+        // note: b[0] is always 1
+        self.s.access(self.b.rank1(i + 1) - 1)
+    }
+
+    fn lf_map(&self, i: u64) -> u64 {
+        let c = self.get_l(i);
+        let nr = self.s.rank(c, self.b.rank1(i));
+        self.bp.select1(self.cs[c.into() as usize] + nr) + i - self.b.select1(self.b.rank1(i))
+    }
+
+    fn lf_map2(&self, c: T, i: u64) -> u64 {
+        let c = self.converter.convert(c);
+        let nr = self.s.rank(c, self.b.rank1(i));
+        if self.get_l(i) != c {
+            self.bp.select1(self.cs[c.into() as usize] + nr)
+        } else {
+            self.bp.select1(self.cs[c.into() as usize] + nr) + i - self.b.select1(self.b.rank1(i))
+        }
+    }
+}
+
+impl<T, C, S> IndexWithConverter<T> for RLFMIndex<T, C, S>
+where
+    C: Converter<T>,
+{
+    type C = C;
+
+    fn get_converter(&self) -> &Self::C {
+        return &self.converter;
     }
 }
 
@@ -145,7 +166,6 @@ where
         let mut e = self.e;
         let mut pattern = pattern.as_ref().to_owned();
         for &c in pattern.iter().rev() {
-            let c = self.fm_index.converter.convert(c).into();
             s = self.fm_index.lf_map2(c, s);
             e = self.fm_index.lf_map2(c, e);
             if s == e {
@@ -294,9 +314,8 @@ mod tests {
         let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
 
         for (c, r) in ans {
-            let cc = rlfmi.converter.convert(c).into();
-            let s = rlfmi.lf_map2(cc, 0);
-            let e = rlfmi.lf_map2(cc, n);
+            let s = rlfmi.lf_map2(c, 0);
+            let e = rlfmi.lf_map2(c, n);
             assert_eq!(
                 (s, e),
                 r,
