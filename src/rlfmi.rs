@@ -80,13 +80,6 @@ where
             _t: std::marker::PhantomData::<T>,
         }
     }
-
-    pub fn search_backward<'a, K>(&'a self, pattern: K) -> Search<'a, T, C, S>
-    where
-        K: AsRef<[T]>,
-    {
-        Search::new(self, 0, self.len, vec![]).search_backward(pattern)
-    }
 }
 
 impl<T, C, S> BackwardIterableIndex for RLFMIndex<T, C, S>
@@ -130,60 +123,6 @@ where
 
     fn get_converter(&self) -> &Self::C {
         return &self.converter;
-    }
-}
-
-pub struct Search<'a, T, C, S>
-where
-    C: Converter<T>,
-{
-    fm_index: &'a RLFMIndex<T, C, S>,
-    s: u64,
-    e: u64,
-    pattern: Vec<T>,
-}
-
-impl<'a, T, C, S> Search<'a, T, C, S>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    fn new(fm_index: &'a RLFMIndex<T, C, S>, s: u64, e: u64, pattern: Vec<T>) -> Self {
-        Search {
-            fm_index: fm_index,
-            s: s,
-            e: e,
-            pattern: pattern,
-        }
-    }
-
-    pub fn get_range(&self) -> (u64, u64) {
-        (self.s, self.e)
-    }
-
-    pub fn search_backward<K: AsRef<[T]>>(&self, pattern: K) -> Self {
-        let mut s = self.s;
-        let mut e = self.e;
-        let mut pattern = pattern.as_ref().to_owned();
-        for &c in pattern.iter().rev() {
-            s = self.fm_index.lf_map2(c, s);
-            e = self.fm_index.lf_map2(c, e);
-            if s == e {
-                break;
-            }
-        }
-        pattern.extend_from_slice(&self.pattern);
-
-        Search {
-            fm_index: self.fm_index,
-            s: s,
-            e: e,
-            pattern: pattern,
-        }
-    }
-
-    pub fn count(&self) -> u64 {
-        self.e - self.s
     }
 }
 
