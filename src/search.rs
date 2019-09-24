@@ -1,5 +1,5 @@
-use crate::suffix_array::IndexWithSA;
 use crate::converter::{Converter, IndexWithConverter};
+use crate::suffix_array::IndexWithSA;
 
 pub trait BackwardIterableIndex: Sized {
     type T: Copy + Clone;
@@ -16,6 +16,11 @@ pub trait BackwardIterableIndex: Sized {
     {
         Search::new(self).search_backward(pattern)
     }
+
+    fn iter_backward<'a>(&'a self, i: u64) -> BackwardIterator<'a, Self> {
+        debug_assert!(i < self.len());
+        BackwardIterator { index: self, i }
+}
 }
 
 pub struct BackwardIterator<'a, I>
@@ -29,7 +34,7 @@ where
 impl<'a, T, I> Iterator for BackwardIterator<'a, I>
 where
     T: Copy + Clone,
-    I: BackwardIterableIndex<T=T> + IndexWithConverter<T>,
+    I: BackwardIterableIndex<T = T> + IndexWithConverter<T>,
 {
     type Item = <I as BackwardIterableIndex>::T;
     fn next(&mut self) -> Option<Self::Item> {
@@ -38,7 +43,6 @@ where
         Some(self.index.get_converter().convert_inv(c))
     }
 }
-
 
 pub struct Search<'a, I>
 where
