@@ -88,6 +88,10 @@ where
         }
     }
 
+    pub fn get_range(&self) -> (u64, u64) {
+        (self.s, self.e)
+    }
+
     pub fn count(&self) -> u64 {
         self.e - self.s
     }
