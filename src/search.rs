@@ -20,7 +20,7 @@ pub trait BackwardIterableIndex: Sized {
     fn iter_backward<'a>(&'a self, i: u64) -> BackwardIterator<'a, Self> {
         debug_assert!(i < self.len());
         BackwardIterator { index: self, i }
-}
+    }
 }
 
 pub struct BackwardIterator<'a, I>
@@ -108,17 +108,36 @@ where
 
 pub trait ForwardIterableIndex: Sized {
     type T: Copy + Clone;
-    fn get_f(&self, i: u64) -> u64;
-    fn inverse_lf_map(&self, i: u64) -> u64;
+    fn get_f(&self, i: u64) -> Self::T;
+    fn inverse_lf_map(&self, i: u64) -> u64 {
+        self.inverse_lf_map2(self.get_f(i), i)
+    }
     fn inverse_lf_map2(&self, c: Self::T, i: u64) -> u64;
     fn len(&self) -> u64;
 
-    /*
-    fn search_forward<'a, K>(&'a self, pattern: K) -> ForwardSearch<'a, Self>
-    where
-        K: AsRef<[Self::T]>,
-    {
-        BackwardSearch::new(self).search_backward(pattern)
+    fn iter_forward<'a>(&'a self, i: u64) -> ForwardIterator<'a, Self> {
+        debug_assert!(i < self.len());
+        ForwardIterator { index: self, i }
     }
-    */
+}
+
+pub struct ForwardIterator<'a, I>
+where
+    I: ForwardIterableIndex,
+{
+    index: &'a I,
+    i: u64,
+}
+
+impl<'a, T, I> Iterator for ForwardIterator<'a, I>
+where
+    T: Copy + Clone,
+    I: ForwardIterableIndex<T = T> + IndexWithConverter<T>,
+{
+    type Item = <I as ForwardIterableIndex>::T;
+    fn next(&mut self) -> Option<Self::Item> {
+        let c = self.index.get_f(self.i);
+        self.i = self.index.inverse_lf_map2(c, self.i);
+        Some(self.index.get_converter().convert_inv(c))
+    }
 }
