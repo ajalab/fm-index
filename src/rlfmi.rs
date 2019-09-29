@@ -7,7 +7,9 @@ use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
 
 use fid::FID;
+use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize)]
 pub struct RLFMIndex<T, C, S> {
     converter: C,
     suffix_array: S,
