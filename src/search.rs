@@ -139,7 +139,7 @@ where
     type Item = <I as ForwardIterableIndex>::T;
     fn next(&mut self) -> Option<Self::Item> {
         let c = self.index.get_f(self.i);
-        self.i = self.index.inverse_lf_map2(c, self.i);
+        self.i = self.index.inverse_lf_map(self.i);
         Some(self.index.get_converter().convert_inv(c))
     }
 }

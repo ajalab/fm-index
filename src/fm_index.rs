@@ -1,7 +1,8 @@
 use crate::character::Character;
-use crate::converter::Converter;
+use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::suffix_array::{SuffixArray, SuffixArraySampler};
+use crate::search::{BackwardIterableIndex, ForwardIterableIndex};
+use crate::suffix_array::{IndexWithSA, SuffixArray, SuffixArraySampler};
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
 
@@ -49,7 +50,46 @@ where
         }
     }
 
-    fn get_f_char(&self, i: u64) -> u64 {
+    fn len(&self) -> u64 {
+        return self.bw.len();
+    }
+}
+
+impl<T, C, S> BackwardIterableIndex for FMIndex<T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    type T = T;
+
+    fn get_l(&self, i: u64) -> Self::T {
+        self.bw.access(i)
+    }
+
+    fn lf_map(&self, i: u64) -> u64 {
+        let c = self.get_l(i);
+        let occ = self.occs[c.into() as usize];
+        occ + self.bw.rank(c, i)
+    }
+
+    fn lf_map2(&self, c: T, i: u64) -> u64 {
+        let c = self.converter.convert(c);
+        let occ = self.occs[c.into() as usize];
+        occ + self.bw.rank(c, i)
+    }
+
+    fn len(&self) -> u64 {
+        self.bw.len()
+    }
+}
+
+impl<T, C, S> ForwardIterableIndex for FMIndex<T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    type T = T;
+    fn get_f(&self, i: u64) -> Self::T {
         // binary search to find c s.t. occs[c] <= i < occs[c+1]
         // <=> c is the greatest index s.t. occs[i] <= i
         // invariant: c exists in [s, e)
@@ -63,48 +103,27 @@ where
                 e = m;
             }
         }
-        s as u64
+        T::from_u64(s as u64)
     }
 
-    fn lf_map(&self, c: u64, i: u64) -> u64 {
-        let occ = self.occs[c as usize];
-        occ + self.bw.rank(c, i)
+    fn inverse_lf_map(&self, i: u64) -> u64 {
+        let c = self.get_f(i);
+        let occ = self.occs[c.into() as usize];
+        self.bw.select(c, i - occ)
     }
 
-    fn inverse_lf_map(&self, c: u64, i: u64) -> u64 {
-        let occ = self.occs[c as usize];
+    fn inverse_lf_map2(&self, c: Self::T, i: u64) -> u64 {
+        let c = self.converter.convert(c);
+        let occ = self.occs[c.into() as usize];
         self.bw.select(c, i - occ)
     }
 
     fn len(&self) -> u64 {
-        return self.bw.len();
-    }
-
-    pub fn search_backward<'a, K>(&'a self, pattern: K) -> Search<'a, T, C, S>
-    where
-        K: AsRef<[T]>,
-    {
-        Search::new(self, 0, self.bw.len(), vec![]).search_backward(pattern)
-    }
-
-    pub fn iter_forward<'a>(&'a self, i: u64) -> impl Iterator<Item = T> + 'a {
-        debug_assert!(i < self.len());
-        ForwardIterator {
-            fm_index: self,
-            i: i,
-        }
-    }
-
-    pub fn iter_backward<'a>(&'a self, i: u64) -> impl Iterator<Item = T> + 'a {
-        debug_assert!(i < self.len());
-        BackwardIterator {
-            fm_index: self,
-            i: i,
-        }
+        self.bw.len()
     }
 }
 
-impl<T, C, S> FMIndex<T, C, S>
+impl<T, C, S> IndexWithSA for FMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,
@@ -118,8 +137,7 @@ where
                     return (sa + steps) % self.bw.len();
                 }
                 None => {
-                    let c = self.bw.access(i);
-                    i = self.lf_map(c, i);
+                    i = self.lf_map(i);
                     steps += 1;
                 }
             }
@@ -127,118 +145,14 @@ where
     }
 }
 
-#[derive(Clone)]
-pub struct Search<'a, T, C, S>
+impl<T, C, S> IndexWithConverter<T> for FMIndex<T, C, S>
 where
     C: Converter<T>,
 {
-    fm_index: &'a FMIndex<T, C, S>,
-    s: u64,
-    e: u64,
-    pattern: Vec<T>,
-}
+    type C = C;
 
-impl<'a, T, C, S> Search<'a, T, C, S>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    fn new(fm_index: &'a FMIndex<T, C, S>, s: u64, e: u64, pattern: Vec<T>) -> Self {
-        Search {
-            fm_index: fm_index,
-            s: s,
-            e: e,
-            pattern: pattern,
-        }
-    }
-
-    pub fn get_range(&self) -> (u64, u64) {
-        (self.s, self.e)
-    }
-
-    pub fn search_backward<K: AsRef<[T]>>(&self, pattern: K) -> Self {
-        let mut s = self.s;
-        let mut e = self.e;
-        let mut pattern = pattern.as_ref().to_owned();
-        for &c in pattern.iter().rev() {
-            let c = self.fm_index.converter.convert(c).into();
-            s = self.fm_index.lf_map(c, s);
-            e = self.fm_index.lf_map(c, e);
-            if s == e {
-                break;
-            }
-        }
-        pattern.extend_from_slice(&self.pattern);
-
-        Search {
-            fm_index: self.fm_index,
-            s: s,
-            e: e,
-            pattern: pattern,
-        }
-    }
-
-    pub fn count(&self) -> u64 {
-        self.e - self.s
-    }
-}
-
-impl<'a, T, C, S> Search<'a, T, C, S>
-where
-    T: Character,
-    C: Converter<T>,
-    S: SuffixArray,
-{
-    pub fn locate(&self) -> Vec<u64> {
-        let mut results: Vec<u64> = Vec::with_capacity((self.e - self.s + 1) as usize);
-        for k in self.s..self.e {
-            results.push(self.fm_index.get_sa(k));
-        }
-        results
-    }
-}
-
-pub struct BackwardIterator<'a, T, C, S>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    fm_index: &'a FMIndex<T, C, S>,
-    i: u64,
-}
-
-impl<'a, T, C, S> Iterator for BackwardIterator<'a, T, C, S>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    type Item = T;
-    fn next(&mut self) -> Option<Self::Item> {
-        let c: T = self.fm_index.bw.access(self.i);
-        self.i = self.fm_index.lf_map(c.into(), self.i);
-        Some(self.fm_index.converter.convert_inv(c))
-    }
-}
-
-struct ForwardIterator<'a, T, C, S>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    fm_index: &'a FMIndex<T, C, S>,
-    i: u64,
-}
-
-impl<'a, T, C, S> Iterator for ForwardIterator<'a, T, C, S>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    type Item = T;
-    fn next(&mut self) -> Option<Self::Item> {
-        let c = self.fm_index.get_f_char(self.i);
-        self.i = self.fm_index.inverse_lf_map(c, self.i);
-        Some(self.fm_index.converter.convert_inv(Character::from_u64(c)))
+    fn get_converter(&self) -> &Self::C {
+        return &self.converter;
     }
 }
 
@@ -343,8 +257,7 @@ mod tests {
         );
         let mut i = 0;
         for k in 0..n {
-            let c = fm_index.bw.access(i);
-            i = fm_index.lf_map(c, i);
+            i = fm_index.lf_map(i);
             assert_eq!(i, ans[k]);
         }
     }
@@ -359,8 +272,7 @@ mod tests {
         );
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
-            let c = fm_index.get_f_char(i as u64);
-            let actual = fm_index.inverse_lf_map(c, i as u64);
+            let actual = fm_index.inverse_lf_map(i as u64);
             assert_eq!(actual, expected);
         }
     }
@@ -378,7 +290,6 @@ mod tests {
             let search1 = fm_index.search_backward(snd).search_backward(fst);
             let concat = fst.to_owned() + snd;
             let search2 = fm_index.search_backward(&concat);
-            assert_eq!(search1.pattern, search2.pattern);
             assert!(search1.count() > 0);
             assert_eq!(search1.count(), search2.count());
             assert_eq!(search1.locate(), search2.locate());
