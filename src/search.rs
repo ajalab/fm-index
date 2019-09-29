@@ -4,9 +4,7 @@ use crate::suffix_array::IndexWithSA;
 pub trait BackwardIterableIndex: Sized {
     type T: Copy + Clone;
     fn get_l(&self, i: u64) -> Self::T;
-    fn lf_map(&self, i: u64) -> u64 {
-        self.lf_map2(self.get_l(i), i)
-    }
+    fn lf_map(&self, i: u64) -> u64;
     fn lf_map2(&self, c: Self::T, i: u64) -> u64;
     fn len(&self) -> u64;
 
@@ -39,7 +37,7 @@ where
     type Item = <I as BackwardIterableIndex>::T;
     fn next(&mut self) -> Option<Self::Item> {
         let c = self.index.get_l(self.i);
-        self.i = self.index.lf_map2(c, self.i);
+        self.i = self.index.lf_map(self.i);
         Some(self.index.get_converter().convert_inv(c))
     }
 }

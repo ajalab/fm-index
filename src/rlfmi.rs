@@ -265,4 +265,35 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn test_search_backward() {
+        let text = "mississippi\0".to_string().into_bytes();
+        let ans = vec![
+            ("iss", (3, 5)),
+            ("ppi", (7, 8)),
+            ("si", (8, 10)),
+            ("ssi", (10, 12)),
+        ];
+        let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
+
+        for (s, r) in ans {
+            let search = rlfmi.search_backward(s);
+            assert_eq!(search.get_range(), r);
+        }
+    }
+
+    #[test]
+    fn test_iter_backward() {
+        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\0".to_string().into_bytes();
+        let rlfmi = RLFMIndex::new(text, RangeConverter::new(b' ', b'~'), NullSampler::new());
+        let search = rlfmi.search_backward("sit ");
+        println!("{:?}", search.get_range());
+        let mut prev_seq = rlfmi
+            .iter_backward(search.get_range().0)
+            .take(6)
+            .collect::<Vec<_>>();
+        prev_seq.reverse();
+        assert_eq!(prev_seq, b"dolor ".to_owned());
+    }
 }
