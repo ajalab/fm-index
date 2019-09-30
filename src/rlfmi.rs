@@ -2,7 +2,7 @@ use crate::character::Character;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
 use crate::search::BackwardIterableIndex;
-use crate::suffix_array::SuffixArraySampler;
+use crate::suffix_array::{IndexWithSA, SuffixArray, SuffixArraySampler};
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
 
@@ -117,6 +117,28 @@ where
     }
 }
 
+impl<T, C, S> IndexWithSA for RLFMIndex<T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+    S: SuffixArray,
+{
+    fn get_sa(&self, mut i: u64) -> u64 {
+        let mut steps = 0;
+        loop {
+            match self.suffix_array.get(i) {
+                Some(sa) => {
+                    return (sa + steps) % self.len();
+                }
+                None => {
+                    i = self.lf_map(i);
+                    steps += 1;
+                }
+            }
+        }
+    }
+}
+
 impl<T, C, S> IndexWithConverter<T> for RLFMIndex<T, C, S>
 where
     C: Converter<T>,
@@ -132,7 +154,7 @@ where
 mod tests {
     use super::*;
     use crate::converter::RangeConverter;
-    use crate::suffix_array::NullSampler;
+    use crate::suffix_array::{NullSampler, SuffixArraySOSampler};
 
     use fid::FID;
 
@@ -159,6 +181,46 @@ mod tests {
                 "pattern \"{}\" must occur {} times, but {}",
                 pattern, expected, actual,
             );
+        }
+    }
+
+    #[test]
+    fn test_locate() {
+        let text = "mississippi\0".to_string().into_bytes();
+        let ans = vec![
+            ("m", vec![0]),
+            ("mi", vec![0]),
+            ("i", vec![1, 4, 7, 10]),
+            ("iss", vec![1, 4]),
+            ("ss", vec![2, 5]),
+            ("p", vec![8, 9]),
+            ("ppi", vec![8]),
+            ("z", vec![]),
+            ("pps", vec![]),
+        ];
+
+        let fm_index = RLFMIndex::new(
+            text,
+            RangeConverter::new(b'a', b'z'),
+            SuffixArraySOSampler::new().level(2),
+        );
+
+        for (pattern, positions) in ans {
+            let search = fm_index.search_backward(pattern);
+            let expected = positions.len() as u64;
+            let actual = search.count();
+            assert_eq!(
+                expected,
+                actual,
+                "pattern \"{}\" must occur {} times, but {}: {:?}",
+                pattern,
+                expected,
+                actual,
+                search.locate()
+            );
+            let mut res = search.locate();
+            res.sort();
+            assert_eq!(res, positions);
         }
     }
 
