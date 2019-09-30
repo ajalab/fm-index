@@ -91,7 +91,7 @@ where
     type T = T;
     fn get_f(&self, i: u64) -> Self::T {
         // binary search to find c s.t. occs[c] <= i < occs[c+1]
-        // <=> c is the greatest index s.t. occs[i] <= i
+        // <=> c is the greatest index s.t. occs[c] <= i
         // invariant: c exists in [s, e)
         let mut s = 0;
         let mut e = self.occs.len();
