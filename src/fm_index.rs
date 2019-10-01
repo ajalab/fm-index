@@ -1,7 +1,7 @@
+use crate::{BackwardIterableIndex, ForwardIterableIndex};
 use crate::character::Character;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::search::{BackwardIterableIndex, ForwardIterableIndex};
 use crate::suffix_array::{IndexWithSA, SuffixArray, SuffixArraySampler};
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
