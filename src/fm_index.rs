@@ -1,10 +1,10 @@
-use crate::{BackwardIterableIndex, ForwardIterableIndex};
 use crate::character::Character;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
 use crate::suffix_array::{IndexWithSA, SuffixArray, SuffixArraySampler};
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
+use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
 use serde::{Deserialize, Serialize};
 
@@ -48,10 +48,6 @@ where
             suffix_array: sampler.sample(sa),
             _t: std::marker::PhantomData::<T>,
         }
-    }
-
-    fn len(&self) -> u64 {
-        return self.bw.len();
     }
 }
 
