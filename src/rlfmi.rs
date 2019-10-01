@@ -1,10 +1,10 @@
-use crate::BackwardIterableIndex;
 use crate::character::Character;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
 use crate::suffix_array::{IndexWithSA, SuffixArray, SuffixArraySampler};
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
+use crate::BackwardIterableIndex;
 
 use fid::FID;
 use serde::{Deserialize, Serialize};
@@ -81,6 +81,10 @@ where
             len: n as u64,
             _t: std::marker::PhantomData::<T>,
         }
+    }
+
+    pub fn runs(&self) -> u64 {
+        self.s.len()
     }
 }
 
