@@ -86,6 +86,21 @@ where
     pub fn runs(&self) -> u64 {
         self.s.len()
     }
+
+    fn get_f(&self, i: u64) -> u64 {
+        let mut s = 0;
+        let mut e = self.cs.len();
+        let r = self.bp.rank1(i + 1) - 1;
+        while e - s > 1 {
+            let m = s + (e - s) / 2;
+            if self.cs[m] <= r {
+                s = m;
+            } else {
+                e = m;
+            }
+        }
+        s as u64
+    }
 }
 
 impl<T, C, S> BackwardIterableIndex for RLFMIndex<T, C, S>
@@ -363,5 +378,18 @@ mod tests {
             .collect::<Vec<_>>();
         prev_seq.reverse();
         assert_eq!(prev_seq, b"dolor ".to_owned());
+    }
+
+    #[test]
+    fn test_get_f() {
+        let text = "mississippi\0".to_string().into_bytes();
+        let mut ans = text.clone();
+        let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
+        ans.sort();
+
+        for (i, a) in ans.into_iter().enumerate() {
+            let f = rlfmi.get_f(i as u64);
+            assert_eq!(rlfmi.converter.convert_inv(f as u8), a);
+        }
     }
 }
