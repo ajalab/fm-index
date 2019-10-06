@@ -102,13 +102,13 @@ where
         T::from_u64(s as u64)
     }
 
-    fn inverse_lf_map(&self, i: u64) -> u64 {
+    fn fl_map(&self, i: u64) -> u64 {
         let c = self.get_f(i);
         let occ = self.occs[c.into() as usize];
         self.bw.select(c, i - occ)
     }
 
-    fn inverse_lf_map2(&self, c: Self::T, i: u64) -> u64 {
+    fn fl_map2(&self, c: Self::T, i: u64) -> u64 {
         let c = self.converter.convert(c);
         let occ = self.occs[c.into() as usize];
         self.bw.select(c, i - occ)
@@ -259,7 +259,7 @@ mod tests {
     }
 
     #[test]
-    fn test_inverse_lf_map() {
+    fn test_fl_map() {
         let text = "mississippi\0".to_string().into_bytes();
         let fm_index = FMIndex::new(
             text,
@@ -268,7 +268,7 @@ mod tests {
         );
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
-            let actual = fm_index.inverse_lf_map(i as u64);
+            let actual = fm_index.fl_map(i as u64);
             assert_eq!(actual, expected);
         }
     }

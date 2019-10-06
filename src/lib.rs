@@ -123,10 +123,10 @@ where
 pub trait ForwardIterableIndex: Sized {
     type T: Copy + Clone;
     fn get_f(&self, i: u64) -> Self::T;
-    fn inverse_lf_map(&self, i: u64) -> u64 {
-        self.inverse_lf_map2(self.get_f(i), i)
+    fn fl_map(&self, i: u64) -> u64 {
+        self.fl_map2(self.get_f(i), i)
     }
-    fn inverse_lf_map2(&self, c: Self::T, i: u64) -> u64;
+    fn fl_map2(&self, c: Self::T, i: u64) -> u64;
     fn len(&self) -> u64;
 
     fn iter_forward<'a>(&'a self, i: u64) -> ForwardIterator<'a, Self> {
@@ -151,7 +151,7 @@ where
     type Item = <I as ForwardIterableIndex>::T;
     fn next(&mut self) -> Option<Self::Item> {
         let c = self.index.get_f(self.i);
-        self.i = self.index.inverse_lf_map(self.i);
+        self.i = self.index.fl_map(self.i);
         Some(self.index.get_converter().convert_inv(c))
     }
 }
