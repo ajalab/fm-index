@@ -4,7 +4,7 @@ use crate::sais;
 use crate::suffix_array::{IndexWithSA, SuffixArray, SuffixArraySampler};
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
-use crate::BackwardIterableIndex;
+use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
 use fid::FID;
 use serde::{Deserialize, Serialize};
@@ -87,19 +87,8 @@ where
         self.s.len()
     }
 
-    fn get_f(&self, i: u64) -> u64 {
-        let mut s = 0;
-        let mut e = self.cs.len();
-        let r = self.bp.rank1(i + 1) - 1;
-        while e - s > 1 {
-            let m = s + (e - s) / 2;
-            if self.cs[m] <= r {
-                s = m;
-            } else {
-                e = m;
-            }
-        }
-        s as u64
+    pub fn len(&self) -> u64 {
+        self.len
     }
 }
 
@@ -133,6 +122,51 @@ where
         } else {
             self.bp.select1(self.cs[c.into() as usize] + nr) + i - self.b.select1(self.b.rank1(i))
         }
+    }
+}
+
+impl<T, C, S> ForwardIterableIndex for RLFMIndex<T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    type T = T;
+
+    fn get_f(&self, i: u64) -> Self::T {
+        let mut s = 0;
+        let mut e = self.cs.len() as usize;
+        let r = self.bp.rank1(i + 1) - 1;
+        while e - s > 1 {
+            let m = s + (e - s) / 2;
+            if self.cs[m] <= r {
+                s = m;
+            } else {
+                e = m;
+            }
+        }
+        T::from_u64(s as u64)
+    }
+
+    fn fl_map(&self, i: u64) -> u64 {
+        let c = self.get_f(i);
+        let j = self.bp.rank1(i + 1) - 1;
+        let p = self.bp.select1(j);
+        let m = self.s.select(c, j - self.cs[c.into() as usize]);
+        let n = self.b.select1(m);
+        n + i - p
+    }
+
+    fn fl_map2(&self, c: Self::T, i: u64) -> u64 {
+        let c = self.converter.convert(c);
+        let j = self.bp.rank1(i + 1) - 1;
+        let p = self.bp.select1(j);
+        let m = self.s.select(c, j - self.cs[c.into() as usize]);
+        let n = self.b.select1(m);
+        n + i - p
+    }
+
+    fn len(&self) -> u64 {
+        self.len
     }
 }
 
@@ -390,6 +424,17 @@ mod tests {
         for (i, a) in ans.into_iter().enumerate() {
             let f = rlfmi.get_f(i as u64);
             assert_eq!(rlfmi.converter.convert_inv(f as u8), a);
+        }
+    }
+
+    #[test]
+    fn test_fl_map() {
+        let text = "mississippi\0".to_string().into_bytes();
+        let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
+        let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
+        for (i, expected) in cases.into_iter().enumerate() {
+            let actual = rlfmi.fl_map(i as u64);
+            assert_eq!(actual, expected);
         }
     }
 }

@@ -123,9 +123,7 @@ where
 pub trait ForwardIterableIndex: Sized {
     type T: Copy + Clone;
     fn get_f(&self, i: u64) -> Self::T;
-    fn fl_map(&self, i: u64) -> u64 {
-        self.fl_map2(self.get_f(i), i)
-    }
+    fn fl_map(&self, i: u64) -> u64;
     fn fl_map2(&self, c: Self::T, i: u64) -> u64;
     fn len(&self) -> u64;
 
