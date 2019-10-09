@@ -3,23 +3,19 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-pub trait IndexWithSA {
-    fn get_sa(&self, i: u64) -> u64;
-}
-
-pub trait SuffixArray {
+pub trait PartialArray {
     fn get(&self, i: u64) -> Option<u64>;
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct SOSampledSuffixArray {
+pub struct RegularSampledArray {
     level: usize,
     word_size: usize,
     sa: fid::BitArray,
     len: usize,
 }
 
-impl SuffixArray for SOSampledSuffixArray {
+impl PartialArray for RegularSampledArray {
     fn get(&self, i: u64) -> Option<u64> {
         if i & ((1 << self.level) - 1) == 0 {
             Some(self.sa.get_word(i as usize >> self.level, self.word_size))
@@ -29,7 +25,7 @@ impl SuffixArray for SOSampledSuffixArray {
     }
 }
 
-impl fmt::Debug for SOSampledSuffixArray {
+impl fmt::Debug for RegularSampledArray {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for i in 0..self.len {
             match self.get(i as u64) {
@@ -41,7 +37,7 @@ impl fmt::Debug for SOSampledSuffixArray {
     }
 }
 
-pub trait SuffixArraySampler<S> {
+pub trait ArraySampler<S> {
     fn sample(&self, sa: Vec<u64>) -> S;
 }
 
@@ -54,18 +50,18 @@ impl NullSampler {
     }
 }
 
-impl SuffixArraySampler<()> for NullSampler {
+impl ArraySampler<()> for NullSampler {
     fn sample(&self, _sa: Vec<u64>) {}
 }
 
 #[derive(Default)]
-pub struct SuffixArraySOSampler {
+pub struct RegularSampler {
     level: usize,
 }
 
-impl SuffixArraySOSampler {
+impl RegularSampler {
     pub fn new() -> Self {
-        SuffixArraySOSampler { level: 0 }
+        RegularSampler { level: 0 }
     }
 
     pub fn level(mut self, level: usize) -> Self {
@@ -74,8 +70,8 @@ impl SuffixArraySOSampler {
     }
 }
 
-impl SuffixArraySampler<SOSampledSuffixArray> for SuffixArraySOSampler {
-    fn sample(&self, sa: Vec<u64>) -> SOSampledSuffixArray {
+impl ArraySampler<RegularSampledArray> for RegularSampler {
+    fn sample(&self, sa: Vec<u64>) -> RegularSampledArray {
         let n = sa.len();
         let word_size = (util::log2(n as u64) + 1) as usize;
         debug_assert!(
@@ -89,7 +85,7 @@ impl SuffixArraySampler<SOSampledSuffixArray> for SuffixArraySOSampler {
         for i in 0..sa_samples_len {
             sa_samples.set_word(i, word_size, sa[i << self.level] as u64);
         }
-        SOSampledSuffixArray {
+        RegularSampledArray {
             level: self.level,
             word_size,
             sa: sa_samples,

@@ -1,10 +1,10 @@
 use crate::character::Character;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::suffix_array::{IndexWithSA, SuffixArray, SuffixArraySampler};
+use crate::suffix_array::{PartialArray, ArraySampler};
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
-use crate::{BackwardIterableIndex, ForwardIterableIndex};
+use crate::{BackwardIterableIndex, ForwardIterableIndex, IndexWithSA};
 
 use fid::FID;
 use serde::{Deserialize, Serialize};
@@ -26,7 +26,7 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub fn new<B: SuffixArraySampler<S>>(text: Vec<T>, converter: C, sampler: B) -> Self {
+    pub fn new<B: ArraySampler<S>>(text: Vec<T>, converter: C, sampler: B) -> Self {
         let n = text.len();
         let m = converter.len();
         let sa = sais::sais(&text, &converter);
@@ -178,7 +178,7 @@ impl<T, C, S> IndexWithSA for RLFMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,
-    S: SuffixArray,
+    S: PartialArray,
 {
     fn get_sa(&self, mut i: u64) -> u64 {
         let mut steps = 0;
@@ -211,7 +211,7 @@ where
 mod tests {
     use super::*;
     use crate::converter::RangeConverter;
-    use crate::suffix_array::{NullSampler, SuffixArraySOSampler};
+    use crate::suffix_array::{NullSampler, RegularSampler};
 
     use fid::FID;
 
@@ -259,7 +259,7 @@ mod tests {
         let fm_index = RLFMIndex::new(
             text,
             RangeConverter::new(b'a', b'z'),
-            SuffixArraySOSampler::new().level(2),
+            RegularSampler::new().level(2),
         );
 
         for (pattern, positions) in ans {

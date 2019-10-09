@@ -1,5 +1,5 @@
 use fm_index::converter::RangeConverter;
-use fm_index::suffix_array::SuffixArraySOSampler;
+use fm_index::suffix_array::RegularSampler;
 use fm_index::FMIndex;
 
 use criterion::BatchSize;
@@ -25,7 +25,7 @@ fn construct_fm_index(text: Vec<u8>) {
     FMIndex::new(
         text,
         RangeConverter::new(b'a', b'b'),
-        SuffixArraySOSampler::new().level(2),
+        RegularSampler::new().level(2),
     );
 }
 

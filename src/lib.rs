@@ -13,7 +13,10 @@ pub use crate::fm_index::FMIndex;
 pub use crate::rlfmi::RLFMIndex;
 
 use converter::{Converter, IndexWithConverter};
-use suffix_array::IndexWithSA;
+
+pub trait IndexWithSA {
+    fn get_sa(&self, i: u64) -> u64;
+}
 
 pub trait BackwardIterableIndex: Sized {
     type T: Copy + Clone;
