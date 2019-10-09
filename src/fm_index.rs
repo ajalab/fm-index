@@ -1,7 +1,7 @@
 use crate::character::Character;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::suffix_array::{PartialArray, ArraySampler};
+use crate::suffix_array::{ArraySampler, PartialArray};
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
 use crate::{BackwardIterableIndex, ForwardIterableIndex, IndexWithSA};
@@ -14,7 +14,7 @@ where
     C: Converter<T>,
 {
     bw: WaveletMatrix,
-    occs: Vec<u64>,
+    cs: Vec<u64>,
     converter: C,
     suffix_array: S,
     _t: std::marker::PhantomData<T>,
@@ -29,7 +29,7 @@ where
     pub fn new<B: ArraySampler<S>>(text: Vec<T>, converter: C, sampler: B) -> Self {
         let n = text.len();
 
-        let occs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
+        let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
         let sa = sais::sais(&text, &converter);
 
         let mut bw = vec![T::zero(); n];
@@ -42,7 +42,7 @@ where
         let bw = WaveletMatrix::new_with_size(bw, util::log2(converter.len() - 1) + 1);
 
         FMIndex {
-            occs,
+            cs,
             bw,
             converter,
             suffix_array: sampler.sample(sa),
@@ -64,14 +64,12 @@ where
 
     fn lf_map(&self, i: u64) -> u64 {
         let c = self.get_l(i);
-        let occ = self.occs[c.into() as usize];
-        occ + self.bw.rank(c, i)
+        self.cs[c.into() as usize] + self.bw.rank(c, i)
     }
 
     fn lf_map2(&self, c: T, i: u64) -> u64 {
         let c = self.converter.convert(c);
-        let occ = self.occs[c.into() as usize];
-        occ + self.bw.rank(c, i)
+        self.cs[c.into() as usize] + self.bw.rank(c, i)
     }
 
     fn len(&self) -> u64 {
@@ -86,14 +84,14 @@ where
 {
     type T = T;
     fn get_f(&self, i: u64) -> Self::T {
-        // binary search to find c s.t. occs[c] <= i < occs[c+1]
-        // <=> c is the greatest index s.t. occs[c] <= i
+        // binary search to find c s.t. cs[c] <= i < cs[c+1]
+        // <=> c is the greatest index s.t. cs[c] <= i
         // invariant: c exists in [s, e)
         let mut s = 0;
-        let mut e = self.occs.len();
+        let mut e = self.cs.len();
         while e - s > 1 {
             let m = s + (e - s) / 2;
-            if self.occs[m] <= i {
+            if self.cs[m] <= i {
                 s = m;
             } else {
                 e = m;
@@ -104,14 +102,12 @@ where
 
     fn fl_map(&self, i: u64) -> u64 {
         let c = self.get_f(i);
-        let occ = self.occs[c.into() as usize];
-        self.bw.select(c, i - occ)
+        self.bw.select(c, i - self.cs[c.into() as usize])
     }
 
     fn fl_map2(&self, c: Self::T, i: u64) -> u64 {
         let c = self.converter.convert(c);
-        let occ = self.occs[c.into() as usize];
-        self.bw.select(c, i - occ)
+        self.bw.select(c, i - self.cs[c.into() as usize])
     }
 
     fn len(&self) -> u64 {
