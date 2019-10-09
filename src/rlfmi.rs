@@ -38,8 +38,8 @@ where
         // run length `l` is encoded as 10^{l-1}
         let mut b = fid::BitVector::new();
         let mut runs_by_char: Vec<Vec<usize>> = vec![vec![]; m as usize];
-        for i in 0..n {
-            let k = sa[i] as usize;
+        for &k in &sa {
+            let k = k as usize;
             let c = converter.convert(if k > 0 { text[k - 1] } else { text[n - 1] });
             // We do not allow consecutive occurrences of zeroes,
             // so text[sa[0] - 1] = text[n - 2] is not zero.
@@ -62,7 +62,7 @@ where
         let mut c = 0;
         for (rs, ci) in runs_by_char.into_iter().zip(&mut cs) {
             *ci = c;
-            c = c + rs.len() as u64;
+            c += rs.len() as u64;
             for r in rs {
                 bp.push(true);
                 for _ in 0..(r - 1) {
@@ -72,12 +72,12 @@ where
         }
 
         RLFMIndex {
-            converter: converter,
+            converter,
             suffix_array: sampler.sample(sa),
-            s: s,
-            b: b,
-            bp: bp,
-            cs: cs,
+            s,
+            b,
+            bp,
+            cs,
             len: n as u64,
             _t: std::marker::PhantomData::<T>,
         }
@@ -89,6 +89,10 @@ where
 
     pub fn len(&self) -> u64 {
         self.len
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
     }
 }
 
@@ -199,7 +203,7 @@ where
     type C = C;
 
     fn get_converter(&self) -> &Self::C {
-        return &self.converter;
+        &self.converter
     }
 }
 
@@ -344,14 +348,13 @@ mod tests {
     #[test]
     fn test_lf_map() {
         let text = "mississippi\0".to_string().into_bytes();
-        let n = text.len();
-        let ans = [1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
+        let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
         let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
 
         let mut i = 0;
-        for k in 0..n {
+        for a in ans {
             let next_i = rlfmi.lf_map(i);
-            assert_eq!(next_i, ans[k], "should be lf_map({}) == {}", i, ans[k]);
+            assert_eq!(next_i, a, "should be lf_map({}) == {}", i, a);
             i = next_i;
         }
     }

@@ -45,10 +45,10 @@ impl WaveletMatrix {
             partitions.push(zeros.len() as u64);
         }
         WaveletMatrix {
-            rows: rows,
-            size: size,
-            len: len,
-            partitions: partitions,
+            rows,
+            size,
+            len,
+            partitions,
         }
     }
 
@@ -62,7 +62,7 @@ impl WaveletMatrix {
             let b = bv.get(i);
             if b {
                 i = self.partitions[r] + bv.rank1(i);
-                n = n | (1 << (self.size - (r as u64) - 1));
+                n |= 1 << (self.size - (r as u64) - 1);
             } else {
                 i = bv.rank0(i);
             }
@@ -83,8 +83,8 @@ impl WaveletMatrix {
             e = bv.rank(b, e);
             if b {
                 let z = self.partitions[r];
-                s = s + z;
-                e = e + z;
+                s += z;
+                e += z;
             }
         }
         e - s
@@ -101,7 +101,7 @@ impl WaveletMatrix {
             s = bv.rank(b, s);
             if b {
                 let z = self.partitions[r];
-                s = s + z;
+                s += z;
             }
         }
         let mut e = s + k;
@@ -131,7 +131,7 @@ impl fmt::Debug for WaveletMatrix {
             for i in 0..len {
                 write!(f, "{}", if bv.get(i) { "1" } else { "0" })?;
             }
-            writeln!(f, "")?;
+            writeln!(f)?;
         }
         write!(f, "}}")
     }
@@ -157,7 +157,7 @@ mod tests {
                     r
                 );
                 if n == i {
-                    r = r + 1;
+                    r += 1;
                 }
             }
         }

@@ -42,9 +42,9 @@ where
         let bw = WaveletMatrix::new_with_size(bw, util::log2(converter.len() - 1) + 1);
 
         FMIndex {
-            occs: occs,
-            bw: bw,
-            converter: converter,
+            occs,
+            bw,
+            converter,
             suffix_array: sampler.sample(sa),
             _t: std::marker::PhantomData::<T>,
         }
@@ -148,7 +148,7 @@ where
     type C = C;
 
     fn get_converter(&self) -> &Self::C {
-        return &self.converter;
+        &self.converter
     }
 }
 
@@ -244,17 +244,16 @@ mod tests {
     #[test]
     fn test_lf_map() {
         let text = "mississippi\0".to_string().into_bytes();
-        let ans = [1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
-        let n = text.len();
+        let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b'a', b'z'),
             SuffixArraySOSampler::new().level(2),
         );
         let mut i = 0;
-        for k in 0..n {
+        for a in ans {
             i = fm_index.lf_map(i);
-            assert_eq!(i, ans[k]);
+            assert_eq!(i, a);
         }
     }
 

@@ -16,7 +16,7 @@ where
         occs[c as usize] += 1;
     }
 
-    return occs;
+    occs
 }
 
 pub fn get_bucket_start_pos(occs: &[u64]) -> Vec<u64> {
@@ -57,10 +57,8 @@ where
         let ty = text[i] < text[i + 1] || (text[i] == text[i + 1] && prev_type);
         if ty {
             types.set_bit(i, true);
-        } else {
-            if prev_type {
-                lms.push(i + 1);
-            }
+        } else if prev_type {
+            lms.push(i + 1);
         }
         prev_type = ty;
     }
@@ -82,26 +80,22 @@ where
     let mut bucket_start_pos = get_bucket_start_pos(occs);
     for i in 0..n {
         let j = sa[i];
-        if 0 < j && j < u64::max_value() {
-            if !types.get_bit(j as usize - 1) {
-                let c = converter.convert(text[j as usize - 1]).into() as usize;
-                let p = bucket_start_pos[c] as usize;
-                sa[p] = j - 1;
-                bucket_start_pos[c] += 1;
-            }
+        if 0 < j && j < u64::max_value() && !types.get_bit(j as usize - 1) {
+            let c = converter.convert(text[j as usize - 1]).into() as usize;
+            let p = bucket_start_pos[c] as usize;
+            sa[p] = j - 1;
+            bucket_start_pos[c] += 1;
         }
     }
 
     let mut bucket_end_pos = get_bucket_end_pos(&occs);
     for i in (0..n).rev() {
         let j = sa[i];
-        if j != 0 && j != u64::max_value() {
-            if types.get_bit(j as usize - 1) {
-                let c = converter.convert(text[j as usize - 1]).into() as usize;
-                let p = bucket_end_pos[c] as usize - 1;
-                sa[p] = j - 1;
-                bucket_end_pos[c] -= 1;
-            }
+        if j != 0 && j != u64::max_value() && types.get_bit(j as usize - 1) {
+            let c = converter.convert(text[j as usize - 1]).into() as usize;
+            let p = bucket_end_pos[c] as usize - 1;
+            sa[p] = j - 1;
+            bucket_end_pos[c] -= 1;
         }
     }
 }
@@ -153,7 +147,7 @@ where
         let p = sa[i];
         if is_lms(&types, p) {
             sa[k] = p;
-            k = k + 1;
+            k += 1;
             if k == lms_len {
                 break;
             }
@@ -331,7 +325,7 @@ mod tests {
 
     #[test]
     fn test_sais_rand() {
-        let len = 100000;
+        let len = 100_000;
         let prob = 1.0 / 4.0;
         let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
         let mut text = (0..len)

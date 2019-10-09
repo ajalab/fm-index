@@ -1,3 +1,5 @@
+#![allow(clippy::len_without_is_empty)]
+
 mod character;
 pub mod converter;
 mod fm_index;
@@ -20,14 +22,14 @@ pub trait BackwardIterableIndex: Sized {
     fn lf_map2(&self, c: Self::T, i: u64) -> u64;
     fn len(&self) -> u64;
 
-    fn search_backward<'a, K>(&'a self, pattern: K) -> Search<'a, Self>
+    fn search_backward<K>(&self, pattern: K) -> Search<Self>
     where
         K: AsRef<[Self::T]>,
     {
         Search::new(self).search_backward(pattern)
     }
 
-    fn iter_backward<'a>(&'a self, i: u64) -> BackwardIterator<'a, Self> {
+    fn iter_backward(&self, i: u64) -> BackwardIterator<Self> {
         debug_assert!(i < self.len());
         BackwardIterator { index: self, i }
     }
@@ -70,7 +72,7 @@ where
 {
     fn new(index: &'a I) -> Search<I> {
         Search {
-            index: index,
+            index,
             s: 0,
             e: index.len(),
             pattern: vec![],
@@ -127,7 +129,7 @@ pub trait ForwardIterableIndex: Sized {
     fn fl_map2(&self, c: Self::T, i: u64) -> u64;
     fn len(&self) -> u64;
 
-    fn iter_forward<'a>(&'a self, i: u64) -> ForwardIterator<'a, Self> {
+    fn iter_forward(&self, i: u64) -> ForwardIterator<Self> {
         debug_assert!(i < self.len());
         ForwardIterator { index: self, i }
     }

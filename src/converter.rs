@@ -16,7 +16,7 @@ pub struct RangeConverter<T> {
 
 impl<T> RangeConverter<T> {
     pub fn new(min: T, max: T) -> Self {
-        return RangeConverter { min: min, max: max };
+        RangeConverter { min, max }
     }
 }
 
@@ -52,7 +52,7 @@ pub struct IdConverter {
 
 impl IdConverter {
     pub fn new(size: u64) -> Self {
-        IdConverter { size: size }
+        IdConverter { size }
     }
 }
 
@@ -68,8 +68,7 @@ impl<T> Converter<T> for IdConverter {
     }
 }
 
-pub trait IndexWithConverter<T>
-{
+pub trait IndexWithConverter<T> {
     type C: Converter<T>;
     fn get_converter(&self) -> &Self::C;
 }

@@ -45,6 +45,7 @@ pub trait SuffixArraySampler<S> {
     fn sample(&self, sa: Vec<u64>) -> S;
 }
 
+#[derive(Default)]
 pub struct NullSampler {}
 
 impl NullSampler {
@@ -54,11 +55,10 @@ impl NullSampler {
 }
 
 impl SuffixArraySampler<()> for NullSampler {
-    fn sample(&self, _sa: Vec<u64>) -> () {
-        ()
-    }
+    fn sample(&self, _sa: Vec<u64>) {}
 }
 
+#[derive(Default)]
 pub struct SuffixArraySOSampler {
     level: usize,
 }
@@ -91,7 +91,7 @@ impl SuffixArraySampler<SOSampledSuffixArray> for SuffixArraySOSampler {
         }
         SOSampledSuffixArray {
             level: self.level,
-            word_size: word_size,
+            word_size,
             sa: sa_samples,
             len: sa.len(),
         }

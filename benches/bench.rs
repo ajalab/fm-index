@@ -22,7 +22,7 @@ fn prepare(len: usize) -> Vec<u8> {
 }
 
 fn construct_fm_index(text: Vec<u8>) {
-    let fm_index = FMIndex::new(
+    FMIndex::new(
         text,
         RangeConverter::new(b'a', b'b'),
         SuffixArraySOSampler::new().level(2),
@@ -35,14 +35,8 @@ fn criterion_benchmark(c: &mut Criterion) {
         "fm_index",
         ParameterizedBenchmark::new(
             "change_text_size",
-            |b, i| {
-                b.iter_batched(
-                    || prepare(*i),
-                    |text| construct_fm_index(text),
-                    BatchSize::SmallInput,
-                )
-            },
-            vec![10000usize, 1000000usize, 100000000usize],
+            |b, i| b.iter_batched(|| prepare(*i), construct_fm_index, BatchSize::SmallInput),
+            vec![10_000usize, 1_000_000usize, 100_000_000usize],
         )
         .plot_config(plot_config),
     );
