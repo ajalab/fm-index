@@ -117,7 +117,7 @@ where
     sa
 }
 
-pub fn sais_sub<T, C, K>(text: K, sa: &mut [u64], converter: &C)
+fn sais_sub<T, C, K>(text: K, sa: &mut [u64], converter: &C)
 where
     T: Into<u64> + Copy + Clone + Ord + Debug,
     K: AsRef<[T]>,
