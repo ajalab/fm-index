@@ -1,7 +1,7 @@
 use crate::character::Character;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::suffix_array::{PartialArray, ArraySampler};
+use crate::suffix_array::{ArraySampler, PartialArray};
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
 use crate::{BackwardIterableIndex, ForwardIterableIndex, IndexWithSA};
@@ -114,17 +114,19 @@ where
 
     fn lf_map(&self, i: u64) -> u64 {
         let c = self.get_l(i);
-        let nr = self.s.rank(c, self.b.rank1(i));
-        self.bp.select1(self.cs[c.into() as usize] + nr) + i - self.b.select1(self.b.rank1(i))
+        let j = self.b.rank1(i);
+        let nr = self.s.rank(c, j);
+        self.bp.select1(self.cs[c.into() as usize] + nr) + i - self.b.select1(j)
     }
 
     fn lf_map2(&self, c: T, i: u64) -> u64 {
         let c = self.converter.convert(c);
-        let nr = self.s.rank(c, self.b.rank1(i));
+        let j = self.b.rank1(i);
+        let nr = self.s.rank(c, j);
         if self.get_l(i) != c {
             self.bp.select1(self.cs[c.into() as usize] + nr)
         } else {
-            self.bp.select1(self.cs[c.into() as usize] + nr) + i - self.b.select1(self.b.rank1(i))
+            self.bp.select1(self.cs[c.into() as usize] + nr) + i - self.b.select1(j)
         }
     }
 }
