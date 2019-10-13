@@ -3,6 +3,10 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
+pub trait IndexWithSA {
+    fn get_sa(&self, i: u64) -> u64;
+}
+
 pub trait PartialArray {
     fn get(&self, i: u64) -> Option<u64>;
 }

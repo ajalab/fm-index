@@ -152,6 +152,7 @@ where
 mod tests {
     use super::*;
     use crate::converter::RangeConverter;
+    use crate::search::BackwardSearchIndex;
     use crate::suffix_array::RegularSampler;
 
     #[test]
