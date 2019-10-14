@@ -49,6 +49,10 @@ where
             _t: std::marker::PhantomData::<T>,
         }
     }
+
+    pub fn len(&self) -> u64 {
+        self.bw.len()
+    }
 }
 
 impl<T, C, S> BackwardIterableIndex for FMIndex<T, C, S>

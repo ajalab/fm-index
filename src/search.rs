@@ -1,4 +1,3 @@
-
 use crate::iter::BackwardIterableIndex;
 use crate::IndexWithSA;
 
