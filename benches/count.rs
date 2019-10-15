@@ -2,8 +2,9 @@ use fm_index::suffix_array::NullSampler;
 use fm_index::{BackwardSearchIndex, FMIndex, RLFMIndex};
 
 use criterion::{AxisScale, BatchSize, BenchmarkId, Criterion, PlotConfiguration, Throughput};
+use criterion::{criterion_group, criterion_main};
 
-use crate::common;
+mod common;
 
 fn prepare_fmindex(
     len: usize,
@@ -61,3 +62,6 @@ pub fn bench(c: &mut Criterion) {
         });
     }
 }
+
+criterion_group!(benches, bench);
+criterion_main!(benches);

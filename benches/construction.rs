@@ -1,18 +1,19 @@
 use fm_index::suffix_array::NullSampler;
 use fm_index::{FMIndex, RLFMIndex};
 
+use criterion::{criterion_group, criterion_main};
 use criterion::{AxisScale, BatchSize, BenchmarkId, Criterion, PlotConfiguration};
 
-use crate::common::binary_text_set;
+mod common;
 
 pub fn bench(c: &mut Criterion) {
     let plot_config = PlotConfiguration::default().summary_scale(AxisScale::Logarithmic);
     let mut group = c.benchmark_group("construction");
     group.plot_config(plot_config);
-    for n in [1000usize, 10_000usize, 100_000usize].iter() {
+    for n in [1000usize, 10_000usize, 100_000usize, 1_000_000].iter() {
         group.bench_with_input(BenchmarkId::new("FMIndex", n), n, |b, &n| {
             b.iter_batched(
-                || binary_text_set(n, 0.5),
+                || common::binary_text_set(n, 0.5),
                 |(text, converter)| {
                     FMIndex::new(text, converter, NullSampler::new());
                 },
@@ -22,7 +23,7 @@ pub fn bench(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("RLFMIndex", n), n, |b, &n| {
             b.iter_batched(
-                || binary_text_set(n, 0.5),
+                || common::binary_text_set(n, 0.5),
                 |(text, converter)| {
                     RLFMIndex::new(text, converter, NullSampler::new());
                 },
@@ -31,3 +32,6 @@ pub fn bench(c: &mut Criterion) {
         });
     }
 }
+
+criterion_group!(benches, bench);
+criterion_main!(benches);

@@ -14,5 +14,16 @@ rand = "0.6.5"
 criterion = "0.3"
 
 [[bench]]
-name = "bench"
+name = "construction"
+path = "benches/construction.rs"
+harness = false
+
+[[bench]]
+name = "locate"
+path = "benches/locate.rs"
+harness = false
+
+[[bench]]
+name = "count"
+path = "benches/count.rs"
 harness = false

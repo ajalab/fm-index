@@ -1,9 +1,10 @@
 use fm_index::suffix_array::RegularSampler;
 use fm_index::{BackwardSearchIndex, FMIndex, IndexWithSA, RLFMIndex};
 
+use criterion::{criterion_group, criterion_main};
 use criterion::{BatchSize, BenchmarkId, Criterion, Throughput};
 
-use crate::common;
+mod common;
 
 fn prepare_fmindex(
     len: usize,
@@ -57,7 +58,7 @@ pub fn bench(c: &mut Criterion) {
                 || prepare_rlfmindex(n, prob, m, l),
                 |(index, patterns)| {
                     for pattern in patterns {
-                        index.search_backward(pattern).count();
+                        index.search_backward(pattern).locate();
                     }
                 },
                 BatchSize::SmallInput,
@@ -65,3 +66,6 @@ pub fn bench(c: &mut Criterion) {
         });
     }
 }
+
+criterion_group!(benches, bench);
+criterion_main!(benches);
