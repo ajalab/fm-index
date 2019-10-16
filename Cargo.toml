@@ -3,6 +3,14 @@ name = "fm-index"
 version = "0.1.0"
 authors = ["Koki Kato <koki.kato1994@gmail.com>"]
 edition = "2018"
+description = "FM index and its variant implementations for Rust"
+repository = "https://github.com/ajalab/fm-index"
+readme = "README.md"
+homepage = "https://github.com/ajalab/fm-index"
+documentation = "https://docs.rs/fm-index"
+license = "MIT"
+keywords = ["fm-index", "self-index", "succinct"]
+categories = ["data-structures"]
 
 [dependencies]
 fid = "0.1.4"
