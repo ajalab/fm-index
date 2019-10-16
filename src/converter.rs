@@ -14,8 +14,12 @@ pub struct RangeConverter<T> {
     max: T,
 }
 
-impl<T> RangeConverter<T> {
+impl<T> RangeConverter<T>
+where
+    T: Character,
+{
     pub fn new(min: T, max: T) -> Self {
+        debug_assert!(!T::is_zero(&min), "min should not be zero");
         RangeConverter { min, max }
     }
 }
