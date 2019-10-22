@@ -1,5 +1,5 @@
-use fm_index::suffix_array::RegularSampler;
-use fm_index::{BackwardSearchIndex, FMIndex, IndexWithSA, RLFMIndex};
+use fm_index::suffix_array::{RegularSampler, IndexWithSA};
+use fm_index::{BackwardSearchIndex, FMIndex, RLFMIndex};
 
 use criterion::{criterion_group, criterion_main};
 use criterion::{BatchSize, BenchmarkId, Criterion, Throughput};

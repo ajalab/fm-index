@@ -1,5 +1,5 @@
 use crate::iter::{BackwardIterableIndex, BackwardIterator, ForwardIterableIndex, ForwardIterator};
-use crate::IndexWithSA;
+use crate::suffix_array::IndexWithSA;
 
 pub trait BackwardSearchIndex: BackwardIterableIndex {
     fn search_backward<K>(&self, pattern: K) -> Search<Self>

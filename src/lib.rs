@@ -47,4 +47,3 @@ pub use crate::rlfmi::RLFMIndex;
 
 pub use iter::{BackwardIterableIndex, ForwardIterableIndex};
 pub use search::BackwardSearchIndex;
-pub use suffix_array::IndexWithSA;

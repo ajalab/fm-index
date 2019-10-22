@@ -1,10 +1,10 @@
 use crate::character::Character;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::suffix_array::{ArraySampler, PartialArray};
+use crate::suffix_array::{ArraySampler, PartialArray, IndexWithSA};
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
-use crate::{BackwardIterableIndex, ForwardIterableIndex, IndexWithSA};
+use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
 use serde::{Deserialize, Serialize};
 
