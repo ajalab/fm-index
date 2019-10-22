@@ -1,4 +1,4 @@
-use crate::iter::BackwardIterableIndex;
+use crate::iter::{BackwardIterableIndex, BackwardIterator, ForwardIterableIndex, ForwardIterator};
 use crate::IndexWithSA;
 
 pub trait BackwardSearchIndex: BackwardIterableIndex {
@@ -14,7 +14,7 @@ impl<I: BackwardIterableIndex> BackwardSearchIndex for I {}
 
 pub struct Search<'a, I>
 where
-    I: BackwardIterableIndex,
+    I: BackwardSearchIndex,
 {
     index: &'a I,
     s: u64,
@@ -24,7 +24,7 @@ where
 
 impl<'a, I> Search<'a, I>
 where
-    I: BackwardIterableIndex,
+    I: BackwardSearchIndex,
 {
     fn new(index: &'a I) -> Search<I> {
         Search {
@@ -67,7 +67,35 @@ where
 
 impl<'a, I> Search<'a, I>
 where
-    I: BackwardIterableIndex + IndexWithSA,
+    I: BackwardIterableIndex,
+{
+    pub fn iter_backward(&self, i: u64) -> BackwardIterator<I> {
+        let m = self.count();
+
+        debug_assert!(m > 0, "cannot iterate from empty search result");
+        debug_assert!(i < m, "{} is out of range", i);
+
+        self.index.iter_backward(self.s + i)
+    }
+}
+
+impl<'a, I> Search<'a, I>
+where
+    I: BackwardSearchIndex + ForwardIterableIndex,
+{
+    pub fn iter_forward(&self, i: u64) -> ForwardIterator<I> {
+        let m = self.count();
+
+        debug_assert!(m > 0, "cannot iterate from empty search result");
+        debug_assert!(i < m, "{} is out of range", i);
+
+        self.index.iter_forward(self.s + i)
+    }
+}
+
+impl<'a, I> Search<'a, I>
+where
+    I: BackwardSearchIndex + IndexWithSA,
 {
     pub fn locate(&self) -> Vec<u64> {
         let mut results: Vec<u64> = Vec::with_capacity((self.e - self.s) as usize);

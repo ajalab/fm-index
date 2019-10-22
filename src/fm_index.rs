@@ -157,7 +157,7 @@ mod tests {
     use super::*;
     use crate::converter::RangeConverter;
     use crate::search::BackwardSearchIndex;
-    use crate::suffix_array::RegularSampler;
+    use crate::suffix_array::{NullSampler, RegularSampler};
 
     #[test]
     fn test_small() {
@@ -293,35 +293,21 @@ mod tests {
     }
 
     #[test]
-    fn test_iter_forward() {
+    fn test_iter_backward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\0".to_string().into_bytes();
-        let fm_index = FMIndex::new(
-            text,
-            RangeConverter::new(b' ', b'~'),
-            RegularSampler::new().level(2),
-        );
-        let search = fm_index.search_backward("sit ");
-        let next_seq = fm_index
-            .iter_forward(search.get_range().0)
-            .take(8)
-            .collect::<Vec<_>>();
-        assert_eq!(next_seq, b"sit amet".to_owned());
+        let index = FMIndex::new(text, RangeConverter::new(b' ', b'~'), NullSampler::new());
+        let search = index.search_backward("sit ");
+        let mut prev_seq = search.iter_backward(0).take(6).collect::<Vec<_>>();
+        prev_seq.reverse();
+        assert_eq!(prev_seq, b"dolor ".to_owned());
     }
 
     #[test]
-    fn test_iter_backward() {
+    fn test_iter_forward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\0".to_string().into_bytes();
-        let fm_index = FMIndex::new(
-            text,
-            RangeConverter::new(b' ', b'~'),
-            RegularSampler::new().level(2),
-        );
-        let search = fm_index.search_backward("sit ");
-        let mut prev_seq = fm_index
-            .iter_backward(search.get_range().0)
-            .take(6)
-            .collect::<Vec<_>>();
-        prev_seq.reverse();
-        assert_eq!(prev_seq, b"dolor ".to_owned());
+        let index = FMIndex::new(text, RangeConverter::new(b' ', b'~'), NullSampler::new());
+        let search = index.search_backward("sit ");
+        let next_seq = search.iter_forward(0).take(10).collect::<Vec<_>>();
+        assert_eq!(next_seq, b"sit amet, ".to_owned());
     }
 }
