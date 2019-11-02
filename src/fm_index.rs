@@ -1,7 +1,7 @@
 use crate::character::Character;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::suffix_array::{ArraySampler, PartialArray, IndexWithSA};
+use crate::suffix_array::{ArraySampler, IndexWithSA, PartialArray};
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
 use crate::{BackwardIterableIndex, ForwardIterableIndex};
@@ -26,7 +26,10 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub fn new<B: ArraySampler<S>>(text: Vec<T>, converter: C, sampler: B) -> Self {
+    pub fn new<B: ArraySampler<S>>(mut text: Vec<T>, converter: C, sampler: B) -> Self {
+        if !text[text.len() - 1].is_zero() {
+            text.push(T::zero());
+        }
         let n = text.len();
 
         let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
