@@ -118,6 +118,9 @@ where
     C: Converter<T>,
 {
     let text = text.as_ref();
+
+    debug_assert!(text.last().map(|&c| c.into()) == Some(0u64));
+
     let n = text.len();
     let (types, lms) = get_types(text);
     let lms_len = lms.len();

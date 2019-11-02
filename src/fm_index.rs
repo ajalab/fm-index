@@ -1,7 +1,7 @@
 use crate::character::Character;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::suffix_array::{ArraySampler, PartialArray, IndexWithSA};
+use crate::suffix_array::{ArraySampler, IndexWithSA, PartialArray};
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
 use crate::{BackwardIterableIndex, ForwardIterableIndex};
@@ -26,7 +26,10 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub fn new<B: ArraySampler<S>>(text: Vec<T>, converter: C, sampler: B) -> Self {
+    pub fn new<B: ArraySampler<S>>(mut text: Vec<T>, converter: C, sampler: B) -> Self {
+        if !text[text.len() - 1].is_zero() {
+            text.push(T::zero());
+        }
         let n = text.len();
 
         let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
@@ -161,7 +164,7 @@ mod tests {
 
     #[test]
     fn test_small() {
-        let text = "mississippi\0".to_string().into_bytes();
+        let text = "mississippi".to_string().into_bytes();
         let ans = vec![
             ("m", vec![0]),
             ("mi", vec![0]),
@@ -217,7 +220,7 @@ mod tests {
 
     #[test]
     fn test_utf8() {
-        let text = "みんなみんなきれいだな\0"
+        let text = "みんなみんなきれいだな"
             .chars()
             .map(|c| c as u32)
             .collect::<Vec<u32>>();
@@ -244,7 +247,7 @@ mod tests {
 
     #[test]
     fn test_lf_map() {
-        let text = "mississippi\0".to_string().into_bytes();
+        let text = "mississippi".to_string().into_bytes();
         let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
         let fm_index = FMIndex::new(
             text,
@@ -260,7 +263,7 @@ mod tests {
 
     #[test]
     fn test_fl_map() {
-        let text = "mississippi\0".to_string().into_bytes();
+        let text = "mississippi".to_string().into_bytes();
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b'a', b'z'),
@@ -275,7 +278,7 @@ mod tests {
 
     #[test]
     fn test_search_backword() {
-        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\0".to_string().into_bytes();
+        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
         let word_pairs = vec![("ipsum", " dolor"), ("sit", " amet"), ("sed", " do")];
         let fm_index = FMIndex::new(
             text,
@@ -294,7 +297,7 @@ mod tests {
 
     #[test]
     fn test_iter_backward() {
-        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\0".to_string().into_bytes();
+        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
         let index = FMIndex::new(text, RangeConverter::new(b' ', b'~'), NullSampler::new());
         let search = index.search_backward("sit ");
         let mut prev_seq = search.iter_backward(0).take(6).collect::<Vec<_>>();
@@ -304,7 +307,7 @@ mod tests {
 
     #[test]
     fn test_iter_forward() {
-        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\0".to_string().into_bytes();
+        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
         let index = FMIndex::new(text, RangeConverter::new(b' ', b'~'), NullSampler::new());
         let search = index.search_backward("sit ");
         let next_seq = search.iter_forward(0).take(10).collect::<Vec<_>>();

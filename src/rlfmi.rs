@@ -1,7 +1,7 @@
 use crate::character::Character;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::suffix_array::{ArraySampler, PartialArray, IndexWithSA};
+use crate::suffix_array::{ArraySampler, IndexWithSA, PartialArray};
 use crate::util;
 use crate::wavelet_matrix::WaveletMatrix;
 use crate::{BackwardIterableIndex, ForwardIterableIndex};
@@ -26,7 +26,10 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub fn new<B: ArraySampler<S>>(text: Vec<T>, converter: C, sampler: B) -> Self {
+    pub fn new<B: ArraySampler<S>>(mut text: Vec<T>, converter: C, sampler: B) -> Self {
+        if !text[text.len() - 1].is_zero() {
+            text.push(T::zero());
+        }
         let n = text.len();
         let m = converter.len();
         let sa = sais::sais(&text, &converter);
@@ -220,7 +223,7 @@ mod tests {
 
     #[test]
     fn test_count() {
-        let text = "mississippi\0".to_string().into_bytes();
+        let text = "mississippi".to_string().into_bytes();
         let ans = vec![
             ("m", 1),
             ("mi", 1),
@@ -246,7 +249,7 @@ mod tests {
 
     #[test]
     fn test_locate() {
-        let text = "mississippi\0".to_string().into_bytes();
+        let text = "mississippi".to_string().into_bytes();
         let ans = vec![
             ("m", vec![0]),
             ("mi", vec![0]),
@@ -286,7 +289,7 @@ mod tests {
 
     #[test]
     fn test_s() {
-        let text = "mississippi\0".to_string().into_bytes();
+        let text = "mississippi".to_string().into_bytes();
         let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
         let ans = "ipsm\0pisi".to_string().into_bytes();
         for (i, a) in ans.into_iter().enumerate() {
@@ -297,7 +300,7 @@ mod tests {
 
     #[test]
     fn test_b() {
-        let text = "mississippi\0".to_string().into_bytes();
+        let text = "mississippi".to_string().into_bytes();
         let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0];
@@ -315,7 +318,7 @@ mod tests {
 
     #[test]
     fn test_bp() {
-        let text = "mississippi\0".to_string().into_bytes();
+        let text = "mississippi".to_string().into_bytes();
         let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0];
@@ -327,7 +330,7 @@ mod tests {
 
     #[test]
     fn test_cs() {
-        let text = "mississippi\0".to_string().into_bytes();
+        let text = "mississippi".to_string().into_bytes();
         let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
         let ans = vec![(b'\0', 0), (b'i', 1), (b'm', 4), (b'p', 5), (b's', 7)];
         for (c, a) in ans {
@@ -338,7 +341,7 @@ mod tests {
 
     #[test]
     fn test_get_l() {
-        let text = "mississippi\0".to_string().into_bytes();
+        let text = "mississippi".to_string().into_bytes();
         let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
         let ans = "ipssm\0pissii".to_string().into_bytes();
 
@@ -350,7 +353,7 @@ mod tests {
 
     #[test]
     fn test_lf_map() {
-        let text = "mississippi\0".to_string().into_bytes();
+        let text = "mississippi".to_string().into_bytes();
         let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
         let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
 
@@ -364,8 +367,7 @@ mod tests {
 
     #[test]
     fn test_lf_map2() {
-        let text = "mississippi\0".to_string().into_bytes();
-        let n = text.len() as u64;
+        let text = "mississippi".to_string().into_bytes();
         let ans = vec![
             (b'\0', (0, 1)),
             (b'i', (1, 5)),
@@ -374,6 +376,7 @@ mod tests {
             (b's', (8, 12)),
         ];
         let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
+        let n = rlfmi.len();
 
         for (c, r) in ans {
             let s = rlfmi.lf_map2(c, 0);
@@ -391,7 +394,7 @@ mod tests {
 
     #[test]
     fn test_search_backward() {
-        let text = "mississippi\0".to_string().into_bytes();
+        let text = "mississippi".to_string().into_bytes();
         let ans = vec![
             ("iss", (3, 5)),
             ("ppi", (7, 8)),
@@ -408,7 +411,7 @@ mod tests {
 
     #[test]
     fn test_iter_backward() {
-        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\0".to_string().into_bytes();
+        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
         let index = RLFMIndex::new(text, RangeConverter::new(b' ', b'~'), NullSampler::new());
         let search = index.search_backward("sit ");
         let mut prev_seq = search.iter_backward(0).take(6).collect::<Vec<_>>();
@@ -418,7 +421,7 @@ mod tests {
 
     #[test]
     fn test_iter_forward() {
-        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\0".to_string().into_bytes();
+        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
         let index = RLFMIndex::new(text, RangeConverter::new(b' ', b'~'), NullSampler::new());
         let search = index.search_backward("sit ");
         let next_seq = search.iter_forward(0).take(10).collect::<Vec<_>>();
@@ -427,10 +430,11 @@ mod tests {
 
     #[test]
     fn test_get_f() {
-        let text = "mississippi\0".to_string().into_bytes();
+        let text = "mississippi".to_string().into_bytes();
         let mut ans = text.clone();
-        let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
+        ans.push(0);
         ans.sort();
+        let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
 
         for (i, a) in ans.into_iter().enumerate() {
             let f = rlfmi.get_f(i as u64);
@@ -440,7 +444,7 @@ mod tests {
 
     #[test]
     fn test_fl_map() {
-        let text = "mississippi\0".to_string().into_bytes();
+        let text = "mississippi".to_string().into_bytes();
         let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
