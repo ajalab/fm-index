@@ -244,16 +244,44 @@ mod tests {
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
 
+    fn marks_to_lms(s: &str) -> Vec<usize> {
+        s.as_bytes()
+            .iter()
+            .enumerate()
+            .filter(|(_, &c)| c == b'*')
+            .map(|(i, _)| i)
+            .rev()
+            .collect::<Vec<_>>()
+    }
+
     #[test]
     fn test_get_types() {
         let text = "mmiissiissiippii\0";
-        let type_ans = "LLSSLLSSLLSSLLLLS";
-        let _lms_ans = "  *   *   *     *";
-        let (types, _lms) = get_types(text);
-        for (i, &a) in type_ans.as_bytes().iter().enumerate() {
-            assert_eq!(types.get_bit(i), a == b'S');
+        let n = text.len();
+        let types_expected = "LLSSLLSSLLSSLLLLS";
+        let lms_expected = marks_to_lms("  *   *   *     *");
+        let (types, lms) = get_types(text);
+        let types_actual = (0..n)
+            .map(|i| if types.get_bit(i) { 'S' } else { 'L' })
+            .collect::<String>();
+
+        assert_eq!(types_expected, types_actual);
+        assert_eq!(lms_expected, lms);
         }
-        // TODO: write a test for lms
+
+    #[test]
+    fn test_get_types_zeros() {
+        let text = "m\0\0a\0";
+        let n = text.len();
+        let types_expected = "LSSLS".to_string();
+        let lms_expected = marks_to_lms(" *  *");
+        let (types, lms) = get_types(text);
+        let types_actual = (0..n)
+            .map(|i| if types.get_bit(i) { 'S' } else { 'L' })
+            .collect::<String>();
+
+        assert_eq!(types_expected, types_actual);
+        assert_eq!(lms_expected, lms);
     }
 
     #[test]
