@@ -1,5 +1,9 @@
 # fm-index
 
+[![Build Status](https://travis-ci.com/ajalab/fm-index.svg?branch=master)](https://travis-ci.org/ajalab/fm-index)
+[![Crate](https://img.shields.io/crates/v/fm-index.svg)](https://crates.io/crates/fm-index)
+[![Doc](https://docs.rs/fm-index/badge.svg)](https://docs.rs/fm-index)
+
 This crate provides implementations of *FM-Index* and its variants.
 
 FM-Index, originally proposed by Paolo Ferragina and Giovanni Manzini [1],
