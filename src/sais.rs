@@ -292,27 +292,59 @@ mod tests {
     }
 
     #[test]
-    fn test_sais1() {
-        let mut text = "mmiissiissiippii".to_string().into_bytes();
-        text.push(0);
+    #[should_panic(expected = "expected:")]
+    fn test_sais_no_trailing_zero() {
+        let text = "nozero".to_string().into_bytes();
         let converter = RangeConverter::new(b'a', b'z');
-        let sa = sais(&text, &converter);
-        let ans = get_suffix_array(text);
-
-        assert_eq!(sa.len(), ans.len());
-        for (i, (actual, expected)) in sa.into_iter().zip(ans.into_iter()).enumerate() {
-            assert_eq!(
-                actual, expected,
-                "wrong at {}-th pos: expected {}, but actual {}",
-                i, expected, actual
-            );
-        }
+        sais(&text, &converter);
     }
 
     #[test]
-    fn test_sais2() {
-        let text = &[2u64, 2, 1, 0];
-        let converter = IdConverter::new(3);
+    fn test_sais_1() {
+        let text = &[0u8];
+        let sa = sais(&text, &IdConverter::new(4));
+        let expected = get_suffix_array(text);
+        assert_eq!(sa, expected);
+    }
+
+    #[test]
+    fn test_sais_2() {
+        let text = &[3u8, 0];
+        let sa = sais(&text, &IdConverter::new(4));
+        let expected = get_suffix_array(text);
+        assert_eq!(sa, expected);
+    }
+
+    #[test]
+    fn test_sais_4() {
+        let text = &[3u8, 2, 1, 0];
+        let sa = sais(&text, &IdConverter::new(4));
+        let expected = get_suffix_array(text);
+        assert_eq!(sa, expected);
+    }
+
+    #[test]
+    fn test_sais_with_nulls() {
+        let text = b"mm\0ii\0s\0sii\0ssii\0ppii\0".to_vec();
+        let sa = sais(&text, &RangeConverter::new(b'a', b'z'));
+        let expected = get_suffix_array(text);
+        assert_eq!(sa, expected);
+        }
+
+    #[test]
+    #[ignore]
+    fn test_sais_with_consecutive_nulls() {
+        let text = b"mm\0\0ii\0s\0\0\0sii\0ssii\0ppii\0".to_vec();
+        let sa = sais(&text, &RangeConverter::new(b'a', b'z'));
+        let expected = get_suffix_array(text);
+        assert_eq!(sa, expected);
+    }
+
+    #[test]
+    fn test_small() {
+        let mut text = "mmiissiissiippii".to_string().into_bytes();
+        text.push(0);
+        let converter = RangeConverter::new(b'a', b'z');
         let sa = sais(&text, &converter);
         let ans = get_suffix_array(text);
 
