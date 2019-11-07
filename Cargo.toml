@@ -12,6 +12,9 @@ license = "MIT"
 keywords = ["fm-index", "self-index", "succinct"]
 categories = ["data-structures"]
 
+[badges]
+travis-ci = { repository = "ajalab/fm-index" }
+
 [dependencies]
 fid = "0.1.4"
 num-traits = "0.2"
