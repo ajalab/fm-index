@@ -12,14 +12,14 @@ pub trait PartialArray {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct RegularSampledArray {
+pub struct SuffixOrderSampledArray {
     level: usize,
     word_size: usize,
     sa: fid::BitArray,
     len: usize,
 }
 
-impl PartialArray for RegularSampledArray {
+impl PartialArray for SuffixOrderSampledArray {
     fn get(&self, i: u64) -> Option<u64> {
         debug_assert!(i < self.len as u64);
         if i & ((1 << self.level) - 1) == 0 {
@@ -30,7 +30,7 @@ impl PartialArray for RegularSampledArray {
     }
 }
 
-impl fmt::Debug for RegularSampledArray {
+impl fmt::Debug for SuffixOrderSampledArray {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for i in 0..self.len {
             match self.get(i as u64) {
@@ -60,13 +60,13 @@ impl ArraySampler<()> for NullSampler {
 }
 
 #[derive(Default)]
-pub struct RegularSampler {
+pub struct SuffixOrderSampler {
     level: usize,
 }
 
-impl RegularSampler {
+impl SuffixOrderSampler {
     pub fn new() -> Self {
-        RegularSampler { level: 0 }
+        SuffixOrderSampler { level: 0 }
     }
 
     pub fn level(mut self, level: usize) -> Self {
@@ -75,8 +75,8 @@ impl RegularSampler {
     }
 }
 
-impl ArraySampler<RegularSampledArray> for RegularSampler {
-    fn sample(&self, sa: Vec<u64>) -> RegularSampledArray {
+impl ArraySampler<SuffixOrderSampledArray> for SuffixOrderSampler {
+    fn sample(&self, sa: Vec<u64>) -> SuffixOrderSampledArray {
         let n = sa.len();
         let word_size = (util::log2(n as u64) + 1) as usize;
         debug_assert!(n > 0);
@@ -91,7 +91,7 @@ impl ArraySampler<RegularSampledArray> for RegularSampler {
         for i in 0..sa_samples_len {
             sa_samples.set_word(i, word_size, sa[i << self.level] as u64);
         }
-        RegularSampledArray {
+        SuffixOrderSampledArray {
             level: self.level,
             word_size,
             sa: sa_samples,
@@ -118,7 +118,7 @@ mod tests {
         ];
         for &(level, n) in cases.iter() {
             let sa = (0..n).collect::<Vec<u64>>();
-            let ssa = RegularSampler::new().level(level).sample(sa);
+            let ssa = SuffixOrderSampler::new().level(level).sample(sa);
             for i in 0..n {
                 let v = ssa.get(i);
                 if i & ((1 << level) - 1) == 0 {

@@ -217,7 +217,7 @@ mod tests {
     use super::*;
     use crate::converter::RangeConverter;
     use crate::search::BackwardSearchIndex;
-    use crate::suffix_array::{NullSampler, RegularSampler};
+    use crate::suffix_array::{NullSampler, SuffixOrderSampler};
 
     use fid::FID;
 
@@ -265,7 +265,7 @@ mod tests {
         let fm_index = RLFMIndex::new(
             text,
             RangeConverter::new(b'a', b'z'),
-            RegularSampler::new().level(2),
+            SuffixOrderSampler::new().level(2),
         );
 
         for (pattern, positions) in ans {

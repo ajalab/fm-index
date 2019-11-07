@@ -22,7 +22,7 @@
 //! # Example
 //! ```
 //! use fm_index::converter::RangeConverter;
-//! use fm_index::suffix_array::RegularSampler;
+//! use fm_index::suffix_array::SuffixOrderSampler;
 //! use fm_index::{BackwardSearchIndex, FMIndex};
 //!
 //! // Prepare a text string to search for patterns.
@@ -41,7 +41,7 @@
 //! // However, we don't need the whole array since we can interpolate missing elements in a suffix array from others.
 //! // A sampler will _sieve_ a suffix array for this purpose.
 //! // You can also use `NullSampler` if you don't perform location queries (disabled in type-level).
-//! let sampler = RegularSampler::new().level(2);
+//! let sampler = SuffixOrderSampler::new().level(2);
 //! let index = FMIndex::new(text, converter, sampler);
 //!
 //! // Search for a pattern string.
