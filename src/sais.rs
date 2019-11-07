@@ -197,7 +197,6 @@ where
     while j < lms_len {
         if sa[i] < u64::max_value() {
             sa[sa.len() - 1 - j] = sa[i];
-            sa[i] = u64::max_value();
             j += 1;
         }
         i -= 1;
