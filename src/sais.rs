@@ -1,3 +1,7 @@
+//! SA-IS implementation based on
+//!    Ge Nong, Sen Zhang, & Wai Hong Chan. (2010). Two Efficient Algorithms for Linear Time Suffix Array Construction.
+//!    IEEE Transactions on Computers, 60(10), 1471–1484. https://doi.org/10.1109/tc.2010.188
+
 use fid::BitArray;
 use std::fmt::Debug;
 
@@ -12,8 +16,8 @@ where
     let text = text.as_ref();
     let mut occs = vec![0; converter.len() as usize];
     for &c in text.iter() {
-        let c: u64 = converter.convert(c).into();
-        occs[c as usize] += 1;
+        let c = converter.convert(c).into() as usize;
+        occs[c] += 1;
     }
 
     occs
@@ -46,21 +50,26 @@ where
 {
     let text = text.as_ref();
     let n = text.len();
-    // true => type S, false => type L
+    // true => S-Type, false => L-Type
     let mut types = BitArray::new(n);
-    types.set_bit(n - 2, false);
     types.set_bit(n - 1, true);
 
+    if n == 1 {
+        return (types, vec![]);
+    }
+
+    types.set_bit(n - 2, false);
+
     let mut lms = vec![n - 1];
-    let mut prev_type = false;
+    let mut prev_is_s_type = false;
     for i in (0..(n - 1)).rev() {
-        let ty = text[i] < text[i + 1] || (text[i] == text[i + 1] && prev_type);
-        if ty {
+        let is_s_type = text[i] < text[i + 1] || (text[i] == text[i + 1] && prev_is_s_type);
+        if is_s_type {
             types.set_bit(i, true);
-        } else if prev_type {
+        } else if prev_is_s_type {
             lms.push(i + 1);
         }
-        prev_type = ty;
+        prev_is_s_type = is_s_type;
     }
     (types, lms)
 }
@@ -106,11 +115,23 @@ where
     K: AsRef<[T]>,
     C: Converter<T>,
 {
-    let mut sa = vec![u64::max_value(); text.as_ref().len()];
-    sais_sub(&text, &mut sa, converter);
-    sa
+    let n = text.as_ref().len();
+    match n {
+        0 => vec![],
+        1 => vec![0],
+        _ => {
+            debug_assert!(
+                text.as_ref().last().map(|&c| c.into()) == Some(0u64),
+                "expected: the last char in text should be zero"
+            );
+            let mut sa = vec![u64::max_value(); n];
+            sais_sub(&text, &mut sa, converter);
+            sa
+        }
+    }
 }
 
+#[allow(clippy::cognitive_complexity)]
 fn sais_sub<T, C, K>(text: K, sa: &mut [u64], converter: &C)
 where
     T: Into<u64> + Copy + Clone + Ord + Debug,
@@ -118,8 +139,6 @@ where
     C: Converter<T>,
 {
     let text = text.as_ref();
-
-    debug_assert!(text.last().map(|&c| c.into()) == Some(0u64));
 
     let n = text.len();
     let (types, lms) = get_types(text);
@@ -130,11 +149,7 @@ where
     // Step 1.
     for &i in lms.iter().rev() {
         // TODO: refactor
-        let c = if i == n {
-            0
-        } else {
-            converter.convert(text[i]).into()
-        };
+        let c = converter.convert(text[i]).into();
         let k = bucket_end_pos[c as usize] as usize - 1;
         sa[k] = i as u64;
         bucket_end_pos[c as usize] = k as u64;
@@ -159,24 +174,34 @@ where
 
     let mut name = 1;
     {
-        let (sa0, sa1) = sa.split_at_mut(lms_len);
-        for s in sa1.iter_mut() {
-            *s = u64::max_value();
-        }
+        // Put lexicographic names of LMS substrings into `names`
+        // in the order of SA.
+        //
+        //      sa_lms         names
+        //    +--------+--------------------+
+        // sa |        |**n0**n1************|
+        //    +--------+--------------------+
+        //    <--------><------------------->
+        //     lms_len      names.len >= sa.len / 2 (Lemma 4.10)
 
-        sa1[sa0[0] as usize / 2] = 0; // name of the sentinel
+        let (sa_lms, names) = sa.split_at_mut(lms_len);
+        for n in names.iter_mut() {
+            *n = u64::max_value();
+        }
+        names[sa_lms[0] as usize / 2] = 0; // name of the sentinel
         if lms_len <= 1 {
             debug_assert!(lms_len != 0);
         } else {
-            sa1[sa0[1] as usize / 2] = 1; // name of the second least LMS substring
+            names[sa_lms[1] as usize / 2] = 1; // name of the second least LMS substring
             for i in 2..lms_len {
-                let p = sa0[i - 1] as usize;
-                let q = sa0[i] as usize;
+                let p = sa_lms[i - 1] as usize;
+                let q = sa_lms[i] as usize;
                 let mut d = 1;
                 let mut same = text[p] == text[q] && types.get_bit(p) == types.get_bit(q);
                 while same {
                     if text[p + d] != text[q + d] || types.get_bit(p + d) != types.get_bit(q + d) {
                         same = false;
+                        break;
                     } else if is_lms(&types, (p + d) as u64) && is_lms(&types, (p + d) as u64) {
                         break;
                     }
@@ -185,10 +210,10 @@ where
                 if !same {
                     name += 1;
                 }
-                sa1[q / 2] = name;
+                names[q / 2] = name;
             }
         }
-        for s in sa0.iter_mut() {
+        for s in sa_lms.iter_mut() {
             *s = u64::max_value();
         }
     }
@@ -201,10 +226,11 @@ where
         }
         i -= 1;
     }
+
     {
         let (sa1, s1) = sa.split_at_mut(sa.len() - lms_len);
         if name < lms_len as u64 {
-            sais_sub(&s1[..s1.len()], sa1, &IdConverter::new(name + 1 as u64));
+            sais_sub(&s1, sa1, &IdConverter::new(name + 1 as u64));
         } else {
             for (i, &s) in s1.iter().enumerate() {
                 sa1[s as usize] = i as u64
@@ -217,6 +243,7 @@ where
             sa1[i] = s1[sa1[i] as usize];
         }
     }
+
     for i in &mut sa[lms_len..] {
         *i = u64::max_value();
     }
@@ -267,7 +294,7 @@ mod tests {
 
         assert_eq!(types_expected, types_actual);
         assert_eq!(lms_expected, lms);
-        }
+    }
 
     #[test]
     fn test_get_types_zeros() {
@@ -356,7 +383,7 @@ mod tests {
         let sa = sais(&text, &RangeConverter::new(b'a', b'z'));
         let expected = get_suffix_array(text);
         assert_eq!(sa, expected);
-        }
+    }
 
     #[test]
     #[ignore]
