@@ -160,7 +160,7 @@ mod tests {
     use super::*;
     use crate::converter::RangeConverter;
     use crate::search::BackwardSearchIndex;
-    use crate::suffix_array::{NullSampler, RegularSampler};
+    use crate::suffix_array::{NullSampler, SuffixOrderSampler};
 
     #[test]
     fn test_small() {
@@ -180,7 +180,7 @@ mod tests {
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b'a', b'z'),
-            RegularSampler::new().level(2),
+            SuffixOrderSampler::new().level(2),
         );
 
         for (pattern, positions) in ans {
@@ -208,7 +208,7 @@ mod tests {
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b'a', b'z'),
-            RegularSampler::new().level(2),
+            SuffixOrderSampler::new().level(2),
         );
         assert_eq!(fm_index.search_backward("m").count(), 1);
         assert_eq!(fm_index.search_backward("ssi").count(), 1);
@@ -232,7 +232,7 @@ mod tests {
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new('あ' as u32, 'ん' as u32),
-            RegularSampler::new().level(2),
+            SuffixOrderSampler::new().level(2),
         );
 
         for (pattern, positions) in ans {
@@ -252,7 +252,7 @@ mod tests {
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b'a', b'z'),
-            RegularSampler::new().level(2),
+            SuffixOrderSampler::new().level(2),
         );
         let mut i = 0;
         for a in ans {
@@ -267,7 +267,7 @@ mod tests {
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b'a', b'z'),
-            RegularSampler::new().level(2),
+            SuffixOrderSampler::new().level(2),
         );
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
@@ -283,7 +283,7 @@ mod tests {
         let fm_index = FMIndex::new(
             text,
             RangeConverter::new(b' ', b'~'),
-            RegularSampler::new().level(2),
+            SuffixOrderSampler::new().level(2),
         );
         for (fst, snd) in word_pairs {
             let search1 = fm_index.search_backward(snd).search_backward(fst);

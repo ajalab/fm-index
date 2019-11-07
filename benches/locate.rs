@@ -1,4 +1,4 @@
-use fm_index::suffix_array::{RegularSampler, IndexWithSA};
+use fm_index::suffix_array::{IndexWithSA, SuffixOrderSampler};
 use fm_index::{BackwardSearchIndex, FMIndex, RLFMIndex};
 
 use criterion::{criterion_group, criterion_main};
@@ -15,7 +15,7 @@ fn prepare_fmindex(
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
     (
-        FMIndex::new(text, converter, RegularSampler::new().level(l)),
+        FMIndex::new(text, converter, SuffixOrderSampler::new().level(l)),
         patterns,
     )
 }
@@ -29,7 +29,7 @@ fn prepare_rlfmindex(
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
     (
-        RLFMIndex::new(text, converter, RegularSampler::new().level(l)),
+        RLFMIndex::new(text, converter, SuffixOrderSampler::new().level(l)),
         patterns,
     )
 }
