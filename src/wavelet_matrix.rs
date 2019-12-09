@@ -120,6 +120,12 @@ impl WaveletMatrix {
     pub fn len(&self) -> u64 {
         self.len
     }
+
+    pub fn size(&self) -> usize {
+        std::mem::size_of::<Self>()
+            + self.rows.iter().fold(0, |sum, row| sum + row.size())
+            + self.partitions.len() * std::mem::size_of::<u64>()
+    }
 }
 
 impl fmt::Debug for WaveletMatrix {
