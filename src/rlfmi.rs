@@ -99,6 +99,30 @@ where
     }
 }
 
+impl<T, C> RLFMIndex<T, C, ()> {
+    fn size(&self) -> usize {
+        std::mem::size_of::<Self>()
+            + self.s.size()
+            + self.b.size()
+            + self.bp.size()
+            + self.cs.len() * std::mem::size_of::<Vec<u64>>()
+    }
+}
+
+impl<T, C, S> RLFMIndex<T, C, S>
+where
+    S: PartialArray,
+{
+    fn size(&self) -> usize {
+        std::mem::size_of::<Self>()
+            + self.s.size()
+            + self.b.size()
+            + self.bp.size()
+            + self.cs.len() * std::mem::size_of::<Vec<u64>>()
+            + self.suffix_array.size()
+    }
+}
+
 impl<T, C, S> BackwardIterableIndex for RLFMIndex<T, C, S>
 where
     T: Character,

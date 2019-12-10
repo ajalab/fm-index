@@ -9,6 +9,7 @@ pub trait IndexWithSA {
 
 pub trait PartialArray {
     fn get(&self, i: u64) -> Option<u64>;
+    fn size(&self) -> usize;
 }
 
 #[derive(Serialize, Deserialize)]
@@ -27,6 +28,10 @@ impl PartialArray for SuffixOrderSampledArray {
         } else {
             None
         }
+    }
+
+    fn size(&self) -> usize {
+        std::mem::size_of::<Self>() + self.sa.size()
     }
 }
 

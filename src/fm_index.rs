@@ -9,10 +9,7 @@ use crate::{BackwardIterableIndex, ForwardIterableIndex};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub struct FMIndex<T, C, S>
-where
-    C: Converter<T>,
-{
+pub struct FMIndex<T, C, S> {
     bw: WaveletMatrix,
     cs: Vec<u64>,
     converter: C,
@@ -55,6 +52,26 @@ where
 
     pub fn len(&self) -> u64 {
         self.bw.len()
+    }
+}
+
+impl<T, C> FMIndex<T, C, ()> {
+    fn size(&self) -> usize {
+        std::mem::size_of::<Self>()
+            + self.bw.size()
+            + self.cs.len() * std::mem::size_of::<Vec<u64>>()
+    }
+}
+
+impl<T, C, S> FMIndex<T, C, S>
+where
+    S: PartialArray,
+{
+    fn size(&self) -> usize {
+        std::mem::size_of::<Self>()
+            + self.bw.size()
+            + self.cs.len() * std::mem::size_of::<Vec<u64>>()
+            + self.suffix_array.size()
     }
 }
 
