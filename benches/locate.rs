@@ -36,7 +36,7 @@ fn prepare_rlfmindex(
 
 pub fn bench(c: &mut Criterion) {
     let mut group = c.benchmark_group("locate");
-    let n = 50000;
+    let n = 1_000_000;
     let m = 8;
     let prob = 0.5f64;
     group.throughput(Throughput::Elements(1 << m as u32));
