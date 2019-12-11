@@ -56,7 +56,7 @@ where
 }
 
 impl<T, C> FMIndex<T, C, ()> {
-    fn size(&self) -> usize {
+    pub fn size(&self) -> usize {
         std::mem::size_of::<Self>()
             + self.bw.size()
             + self.cs.len() * std::mem::size_of::<Vec<u64>>()
@@ -67,7 +67,7 @@ impl<T, C, S> FMIndex<T, C, S>
 where
     S: PartialArray,
 {
-    fn size(&self) -> usize {
+    pub fn size(&self) -> usize {
         std::mem::size_of::<Self>()
             + self.bw.size()
             + self.cs.len() * std::mem::size_of::<Vec<u64>>()
