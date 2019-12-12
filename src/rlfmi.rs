@@ -100,7 +100,7 @@ where
 }
 
 impl<T, C> RLFMIndex<T, C, ()> {
-    fn size(&self) -> usize {
+    pub fn size(&self) -> usize {
         std::mem::size_of::<Self>()
             + self.s.size()
             + self.b.size()
@@ -113,7 +113,7 @@ impl<T, C, S> RLFMIndex<T, C, S>
 where
     S: PartialArray,
 {
-    fn size(&self) -> usize {
+    pub fn size(&self) -> usize {
         std::mem::size_of::<Self>()
             + self.s.size()
             + self.b.size()
