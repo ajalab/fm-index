@@ -112,9 +112,3 @@ which stores the number of characters smaller than a given character in run head
 [3] Ge Nong, Sen Zhang, & Wai Hong Chan. (2010). Two Efficient Algorithms for Linear Time Suffix Array Construction. IEEE Transactions on Computers, 60(10), 1471–1484. https://doi.org/10.1109/tc.2010.188
 
 [4] Claude F., Navarro G. (2012). The Wavelet Matrix. In: Calderón-Benavides L., González-Caro C., Chávez E., Ziviani N. (eds) String Processing and Information Retrieval. SPIRE 2012. https://doi.org/10.1007/978-3-642-34109-0_18
-
-## License
-
-MIT
-
-License: MIT
