@@ -8,7 +8,7 @@ repository = "https://github.com/ajalab/fm-index"
 readme = "README.md"
 homepage = "https://github.com/ajalab/fm-index"
 documentation = "https://docs.rs/fm-index"
-license = "MIT"
+license = "MIT OR Apache-2.0"
 keywords = ["fm-index", "self-index", "succinct"]
 categories = ["data-structures"]
 
