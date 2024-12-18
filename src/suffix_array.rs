@@ -87,7 +87,7 @@ impl SuffixOrderSampler {
 impl ArraySampler<SuffixOrderSampledArray> for SuffixOrderSampler {
     fn sample(&self, sa: Vec<u64>) -> SuffixOrderSampledArray {
         let n = sa.len();
-        let word_size = (util::log2(n as u64) + 1) as usize;
+        let word_size = util::log2(n as u64) + 1;
         debug_assert!(n > 0);
         debug_assert!(
             n > (1 << self.level),

@@ -1,5 +1,5 @@
-pub fn log2(x: u64) -> u64 {
-    ((std::mem::size_of::<u64>() * 8) as u64) - u64::from(x.leading_zeros()) - 1
+pub fn log2(x: u64) -> usize {
+    (std::mem::size_of::<usize>() * 8) - x.leading_zeros() as usize - 1
 }
 
 #[cfg(test)]
