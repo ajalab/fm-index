@@ -118,7 +118,6 @@ mod rlfmi;
 mod sais;
 mod search;
 mod util;
-mod wavelet_matrix;
 
 pub use crate::fm_index::FMIndex;
 pub use crate::rlfmi::RLFMIndex;

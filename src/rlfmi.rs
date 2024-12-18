@@ -3,11 +3,10 @@ use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
 use crate::suffix_array::{ArraySampler, IndexWithSA, PartialArray};
 use crate::util;
-use crate::wavelet_matrix::WaveletMatrix;
 use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
 use serde::{Deserialize, Serialize};
-use vers_vecs::{BitVec, RsVec};
+use vers_vecs::{BitVec, RsVec, WaveletMatrix};
 
 #[derive(Serialize, Deserialize)]
 pub struct RLFMIndex<T, C, S> {
@@ -59,7 +58,8 @@ where
             }
             c0 = c;
         }
-        let s = WaveletMatrix::new_with_size(s, util::log2(m - 1) + 1);
+        let s: Vec<u64> = s.into_iter().map(|c| c.into()).collect();
+        let s = WaveletMatrix::from_slice(&s, (util::log2(m - 1) + 1) as u16);
         let mut bp = BitVec::new();
         let mut cs = vec![0u64; m as usize];
         let mut c = 0;
@@ -104,7 +104,7 @@ where
 impl<T, C> RLFMIndex<T, C, ()> {
     pub fn size(&self) -> usize {
         std::mem::size_of::<Self>()
-            + self.s.size()
+            + self.s.heap_size()
             + self.b.heap_size()
             + self.bp.heap_size()
             + self.cs.len() * std::mem::size_of::<Vec<u64>>()
@@ -117,7 +117,7 @@ where
 {
     pub fn size(&self) -> usize {
         std::mem::size_of::<Self>()
-            + self.s.size()
+            + self.s.heap_size()
             + self.b.heap_size()
             + self.bp.heap_size()
             + self.cs.len() * std::mem::size_of::<Vec<u64>>()
@@ -138,31 +138,26 @@ where
 
     fn get_l(&self, i: u64) -> T {
         // note: b[0] is always 1
-        self.s.access(self.b.rank1(i as usize + 1) as u64 - 1)
+        T::from_u64(self.s.get_u64_unchecked(self.b.rank1(i as usize + 1) - 1))
     }
 
     fn lf_map(&self, i: u64) -> u64 {
         let c = self.get_l(i);
-        let j = self.b.rank1(i as usize) as u64;
-        let nr = self.s.rank(c, j);
-        self.bp
-            .select1(self.cs[c.into() as usize] as usize + nr as usize) as u64
-            + i
-            - self.b.select1(j as usize) as u64
+        let j = self.b.rank1(i as usize);
+        let nr = self.s.rank_u64_unchecked(j, c.into());
+        self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64 + i
+            - self.b.select1(j) as u64
     }
 
     fn lf_map2(&self, c: T, i: u64) -> u64 {
         let c = self.converter.convert(c);
-        let j = self.b.rank1(i as usize) as u64;
-        let nr = self.s.rank(c, j);
+        let j = self.b.rank1(i as usize);
+        let nr = self.s.rank_u64_unchecked(j, c.into());
         if self.get_l(i) != c {
-            self.bp
-                .select1(self.cs[c.into() as usize] as usize + nr as usize) as u64
+            self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64
         } else {
-            self.bp
-                .select1(self.cs[c.into() as usize] as usize + nr as usize) as u64
-                + i
-                - self.b.select1(j as usize) as u64
+            self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64 + i
+                - self.b.select1(j) as u64
         }
     }
 }
@@ -193,8 +188,10 @@ where
         let c = self.get_f(i);
         let j = self.bp.rank1(i as usize + 1) - 1;
         let p = self.bp.select1(j) as u64;
-        let m = self.s.select(c, j as u64 - self.cs[c.into() as usize]);
-        let n = self.b.select1(m as usize) as u64;
+        let m = self
+            .s
+            .select_u64_unchecked(j - self.cs[c.into() as usize] as usize, c.into());
+        let n = self.b.select1(m) as u64;
         n + i - p
     }
 
@@ -202,8 +199,10 @@ where
         let c = self.converter.convert(c);
         let j = self.bp.rank1(i as usize + 1) - 1;
         let p = self.bp.select1(j) as u64;
-        let m = self.s.select(c, j as u64 - self.cs[c.into() as usize]);
-        let n = self.b.select1(m as usize) as u64;
+        let m = self
+            .s
+            .select_u64_unchecked(j - self.cs[c.into() as usize] as usize, c.into());
+        let n = self.b.select1(m) as u64;
         n + i - p
     }
 
@@ -324,7 +323,7 @@ mod tests {
         let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
         let ans = "ipsm\0pisi".to_string().into_bytes();
         for (i, a) in ans.into_iter().enumerate() {
-            let l: u8 = rlfmi.s.access(i as u64);
+            let l: u8 = rlfmi.s.get_u64_unchecked(i) as u8;
             assert_eq!(rlfmi.converter.convert_inv(l), a);
         }
     }
@@ -388,7 +387,7 @@ mod tests {
 
         for (i, a) in ans.into_iter().enumerate() {
             let l = rlfmi.get_l(i as u64);
-            assert_eq!(rlfmi.converter.convert_inv(l as u8), a);
+            assert_eq!(rlfmi.converter.convert_inv(l), a);
         }
     }
 
@@ -479,7 +478,7 @@ mod tests {
 
         for (i, a) in ans.into_iter().enumerate() {
             let f = rlfmi.get_f(i as u64);
-            assert_eq!(rlfmi.converter.convert_inv(f as u8), a);
+            assert_eq!(rlfmi.converter.convert_inv(f), a);
         }
     }
 
