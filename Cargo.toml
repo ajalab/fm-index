@@ -16,7 +16,7 @@ categories = ["data-structures"]
 travis-ci = { repository = "ajalab/fm-index" }
 
 [dependencies]
-fid = "0.1.4"
+vers-vecs = { version = "1.5.1", features = ["serde"] }
 num-traits = "0.2"
 serde = { version = "1.0", features = ["derive"] }
 

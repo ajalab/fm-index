@@ -1,13 +1,13 @@
 use crate::character::Character;
 
-use fid::{BitVector, FID};
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
+use vers_vecs::{BitVec, RsVec};
 
 #[derive(Serialize, Deserialize)]
 pub struct WaveletMatrix {
-    rows: Vec<BitVector>,
+    rows: Vec<RsVec>,
     size: u64,
     len: u64,
     partitions: Vec<u64>,
@@ -19,12 +19,12 @@ impl WaveletMatrix {
         T: Character,
     {
         let len = text.len() as u64;
-        let mut rows: Vec<BitVector> = vec![];
+        let mut rows: Vec<RsVec> = vec![];
         let mut zeros: Vec<T> = text;
         let mut ones: Vec<T> = Vec::new();
         let mut partitions: Vec<u64> = Vec::new();
         for r in 0..size {
-            let mut bv = BitVector::new();
+            let mut bv = BitVec::new();
             let mut new_zeros: Vec<T> = Vec::new();
             let mut new_ones: Vec<T> = Vec::new();
             for arr in &[zeros, ones] {
@@ -36,12 +36,12 @@ impl WaveletMatrix {
                     } else {
                         new_zeros.push(c);
                     }
-                    bv.push(bit);
+                    bv.append(bit);
                 }
             }
             zeros = new_zeros;
             ones = new_ones;
-            rows.push(bv);
+            rows.push(RsVec::from_bit_vec(bv));
             partitions.push(zeros.len() as u64);
         }
         WaveletMatrix {
@@ -59,12 +59,12 @@ impl WaveletMatrix {
         let mut i = k;
         let mut n = 0u64;
         for (r, bv) in self.rows.iter().enumerate() {
-            let b = bv.get(i);
+            let b = bv.get(i as usize).unwrap() == 1;
             if b {
-                i = self.partitions[r] + bv.rank1(i);
+                i = self.partitions[r] + bv.rank1(i as usize) as u64;
                 n |= 1 << (self.size - (r as u64) - 1);
             } else {
-                i = bv.rank0(i);
+                i = bv.rank0(i as usize) as u64;
             }
         }
         Character::from_u64(n)
@@ -79,8 +79,13 @@ impl WaveletMatrix {
         let mut e = if k < self.len { k } else { self.len };
         for (r, bv) in self.rows.iter().enumerate() {
             let b = (n >> (self.size - (r as u64) - 1)) & 1 > 0;
-            s = bv.rank(b, s);
-            e = bv.rank(b, e);
+            if b {
+                s = bv.rank1(s as usize) as u64;
+                e = bv.rank1(e as usize) as u64;
+            } else {
+                s = bv.rank0(s as usize) as u64;
+                e = bv.rank0(e as usize) as u64;
+            }
             if b {
                 let z = self.partitions[r];
                 s += z;
@@ -98,7 +103,11 @@ impl WaveletMatrix {
         let mut s = 0u64;
         for (r, bv) in self.rows.iter().enumerate() {
             let b = (n >> (self.size - (r as u64) - 1)) & 1 > 0;
-            s = bv.rank(b, s);
+            if b {
+                s = bv.rank1(s as usize) as u64;
+            } else {
+                s = bv.rank0(s as usize) as u64;
+            }
             if b {
                 let z = self.partitions[r];
                 s += z;
@@ -109,9 +118,9 @@ impl WaveletMatrix {
             let b = (n >> (self.size - (r as u64) - 1)) & 1 > 0;
             if b {
                 let z = self.partitions[r];
-                e = bv.select1(e - z);
+                e = bv.select1((e - z) as usize) as u64;
             } else {
-                e = bv.select0(e);
+                e = bv.select0(e as usize) as u64;
             }
         }
         e
@@ -123,7 +132,7 @@ impl WaveletMatrix {
 
     pub fn size(&self) -> usize {
         std::mem::size_of::<Self>()
-            + self.rows.iter().fold(0, |sum, row| sum + row.size())
+            + self.rows.iter().fold(0, |sum, row| sum + row.heap_size())
             + self.partitions.len() * std::mem::size_of::<u64>()
     }
 }
@@ -135,7 +144,7 @@ impl fmt::Debug for WaveletMatrix {
         for bv in &self.rows {
             write!(f, "  ")?;
             for i in 0..len {
-                write!(f, "{}", if bv.get(i) { "1" } else { "0" })?;
+                write!(f, "{}", if bv.get(i).unwrap() == 1 { "1" } else { "0" })?;
             }
             writeln!(f)?;
         }

@@ -2,8 +2,9 @@
 //!    Ge Nong, Sen Zhang, & Wai Hong Chan. (2010). Two Efficient Algorithms for Linear Time Suffix Array Construction.
 //!    IEEE Transactions on Computers, 60(10), 1471–1484. https://doi.org/10.1109/tc.2010.188
 
-use fid::BitArray;
 use std::fmt::Debug;
+
+use vers_vecs::BitVec;
 
 use crate::converter::{Converter, IdConverter};
 
@@ -43,7 +44,7 @@ pub fn get_bucket_end_pos(occs: &[u64]) -> Vec<u64> {
     buckets
 }
 
-fn get_types<T, K>(text: K) -> (BitArray, Vec<usize>)
+fn get_types<T, K>(text: K) -> (BitVec, Vec<usize>)
 where
     T: Copy + Clone + Ord,
     K: AsRef<[T]>,
@@ -51,21 +52,21 @@ where
     let text = text.as_ref();
     let n = text.len();
     // true => S-Type, false => L-Type
-    let mut types = BitArray::new(n);
-    types.set_bit(n - 1, true);
+    let mut types = BitVec::from_zeros(n);
+    types.set(n - 1, 1).unwrap();
 
     if n == 1 {
         return (types, vec![]);
     }
 
-    types.set_bit(n - 2, false);
+    types.set(n - 2, 0).unwrap();
 
     let mut lms = vec![n - 1];
     let mut prev_is_s_type = false;
     for i in (0..(n - 1)).rev() {
         let is_s_type = text[i] < text[i + 1] || (text[i] == text[i + 1] && prev_is_s_type);
         if is_s_type {
-            types.set_bit(i, true);
+            types.set(i, 1).unwrap();
         } else if prev_is_s_type {
             lms.push(i + 1);
         }
@@ -74,11 +75,14 @@ where
     (types, lms)
 }
 
-fn is_lms(types: &BitArray, i: u64) -> bool {
-    i > 0 && i < u64::MAX && types.get_bit(i as usize) && !types.get_bit(i as usize - 1)
+fn is_lms(types: &BitVec, i: u64) -> bool {
+    i > 0
+        && i < u64::MAX
+        && types.is_bit_set(i as usize).unwrap()
+        && !types.is_bit_set(i as usize - 1).unwrap()
 }
 
-fn induced_sort<T, K, C>(text: K, converter: &C, types: &BitArray, occs: &[u64], sa: &mut [u64])
+fn induced_sort<T, K, C>(text: K, converter: &C, types: &BitVec, occs: &[u64], sa: &mut [u64])
 where
     T: Into<u64> + Copy + Clone + Ord,
     K: AsRef<[T]>,
@@ -89,7 +93,7 @@ where
     let mut bucket_start_pos = get_bucket_start_pos(occs);
     for i in 0..n {
         let j = sa[i];
-        if 0 < j && j < u64::MAX && !types.get_bit(j as usize - 1) {
+        if 0 < j && j < u64::MAX && !types.is_bit_set(j as usize - 1).unwrap() {
             let c = converter.convert(text[j as usize - 1]).into() as usize;
             let p = bucket_start_pos[c] as usize;
             sa[p] = j - 1;
@@ -100,7 +104,7 @@ where
     let mut bucket_end_pos = get_bucket_end_pos(occs);
     for i in (0..n).rev() {
         let j = sa[i];
-        if j != 0 && j != u64::MAX && types.get_bit(j as usize - 1) {
+        if j != 0 && j != u64::MAX && types.is_bit_set(j as usize - 1).unwrap() {
             let c = converter.convert(text[j as usize - 1]).into() as usize;
             let p = bucket_end_pos[c] as usize - 1;
             sa[p] = j - 1;
@@ -197,9 +201,11 @@ where
                 let p = sa_lms[i - 1] as usize;
                 let q = sa_lms[i] as usize;
                 let mut d = 1;
-                let mut same = text[p] == text[q] && types.get_bit(p) == types.get_bit(q);
+                let mut same = text[p] == text[q] && types.is_bit_set(p) == types.is_bit_set(q);
                 while same {
-                    if text[p + d] != text[q + d] || types.get_bit(p + d) != types.get_bit(q + d) {
+                    if text[p + d] != text[q + d]
+                        || types.is_bit_set(p + d) != types.is_bit_set(q + d)
+                    {
                         same = false;
                         break;
                     } else if is_lms(&types, (p + d) as u64) && is_lms(&types, (p + d) as u64) {
@@ -289,7 +295,13 @@ mod tests {
         let lms_expected = marks_to_lms("  *   *   *     *");
         let (types, lms) = get_types(text);
         let types_actual = (0..n)
-            .map(|i| if types.get_bit(i) { 'S' } else { 'L' })
+            .map(|i| {
+                if types.is_bit_set(i).unwrap() {
+                    'S'
+                } else {
+                    'L'
+                }
+            })
             .collect::<String>();
 
         assert_eq!(types_expected, types_actual);
@@ -304,7 +316,13 @@ mod tests {
         let lms_expected = marks_to_lms(" *  *");
         let (types, lms) = get_types(text);
         let types_actual = (0..n)
-            .map(|i| if types.get_bit(i) { 'S' } else { 'L' })
+            .map(|i| {
+                if types.is_bit_set(i).unwrap() {
+                    'S'
+                } else {
+                    'L'
+                }
+            })
             .collect::<String>();
 
         assert_eq!(types_expected, types_actual);

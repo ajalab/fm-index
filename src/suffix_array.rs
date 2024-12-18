@@ -2,6 +2,7 @@ use crate::util;
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
+use vers_vecs::BitVec;
 
 pub trait IndexWithSA {
     fn get_sa(&self, i: u64) -> u64;
@@ -16,7 +17,7 @@ pub trait PartialArray {
 pub struct SuffixOrderSampledArray {
     level: usize,
     word_size: usize,
-    sa: fid::BitArray,
+    sa: BitVec,
     len: usize,
 }
 
@@ -24,14 +25,17 @@ impl PartialArray for SuffixOrderSampledArray {
     fn get(&self, i: u64) -> Option<u64> {
         debug_assert!(i < self.len as u64);
         if i & ((1 << self.level) - 1) == 0 {
-            Some(self.sa.get_word(i as usize >> self.level, self.word_size))
+            Some(
+                self.sa
+                    .get_bits_unchecked(i as usize >> self.level, self.word_size),
+            )
         } else {
             None
         }
     }
 
     fn size(&self) -> usize {
-        std::mem::size_of::<Self>() + self.sa.size()
+        std::mem::size_of::<Self>() + self.sa.heap_size()
     }
 }
 
@@ -92,9 +96,10 @@ impl ArraySampler<SuffixOrderSampledArray> for SuffixOrderSampler {
             n,
         );
         let sa_samples_len = ((n - 1) >> self.level) + 1;
-        let mut sa_samples = fid::BitArray::with_word_size(word_size, sa_samples_len);
+        let mut sa_samples = BitVec::with_capacity(sa_samples_len);
+        // fid::BitArray::with_word_size(word_size, sa_samples_len);
         for i in 0..sa_samples_len {
-            sa_samples.set_word(i, word_size, sa[i << self.level]);
+            sa_samples.append_bits(sa[i << self.level], word_size);
         }
         SuffixOrderSampledArray {
             level: self.level,
