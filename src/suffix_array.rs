@@ -26,8 +26,10 @@ impl PartialArray for SuffixOrderSampledArray {
         debug_assert!(i < self.len as u64);
         if i & ((1 << self.level) - 1) == 0 {
             Some(
-                self.sa
-                    .get_bits_unchecked(i as usize >> self.level, self.word_size),
+                self.sa.get_bits_unchecked(
+                    (i as usize >> self.level) * self.word_size,
+                    self.word_size,
+                ),
             )
         } else {
             None
