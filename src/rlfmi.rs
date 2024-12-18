@@ -167,7 +167,7 @@ where
 
     fn get_f(&self, i: u64) -> Self::T {
         let mut s = 0;
-        let mut e = self.cs.len() as usize;
+        let mut e = self.cs.len();
         let r = self.bp.rank1(i + 1) - 1;
         while e - s > 1 {
             let m = s + (e - s) / 2;

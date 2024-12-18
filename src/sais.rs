@@ -75,7 +75,7 @@ where
 }
 
 fn is_lms(types: &BitArray, i: u64) -> bool {
-    i > 0 && i < u64::max_value() && types.get_bit(i as usize) && !types.get_bit(i as usize - 1)
+    i > 0 && i < u64::MAX && types.get_bit(i as usize) && !types.get_bit(i as usize - 1)
 }
 
 fn induced_sort<T, K, C>(text: K, converter: &C, types: &BitArray, occs: &[u64], sa: &mut [u64])
@@ -89,7 +89,7 @@ where
     let mut bucket_start_pos = get_bucket_start_pos(occs);
     for i in 0..n {
         let j = sa[i];
-        if 0 < j && j < u64::max_value() && !types.get_bit(j as usize - 1) {
+        if 0 < j && j < u64::MAX && !types.get_bit(j as usize - 1) {
             let c = converter.convert(text[j as usize - 1]).into() as usize;
             let p = bucket_start_pos[c] as usize;
             sa[p] = j - 1;
@@ -97,10 +97,10 @@ where
         }
     }
 
-    let mut bucket_end_pos = get_bucket_end_pos(&occs);
+    let mut bucket_end_pos = get_bucket_end_pos(occs);
     for i in (0..n).rev() {
         let j = sa[i];
-        if j != 0 && j != u64::max_value() && types.get_bit(j as usize - 1) {
+        if j != 0 && j != u64::MAX && types.get_bit(j as usize - 1) {
             let c = converter.convert(text[j as usize - 1]).into() as usize;
             let p = bucket_end_pos[c] as usize - 1;
             sa[p] = j - 1;
@@ -124,7 +124,7 @@ where
                 text.as_ref().last().map(|&c| c.into()) == Some(0u64),
                 "expected: the last char in text should be zero"
             );
-            let mut sa = vec![u64::max_value(); n];
+            let mut sa = vec![u64::MAX; n];
             sais_sub(&text, &mut sa, converter);
             sa
         }
@@ -186,7 +186,7 @@ where
 
         let (sa_lms, names) = sa.split_at_mut(lms_len);
         for n in names.iter_mut() {
-            *n = u64::max_value();
+            *n = u64::MAX;
         }
         names[sa_lms[0] as usize / 2] = 0; // name of the sentinel
         if lms_len <= 1 {
@@ -214,13 +214,13 @@ where
             }
         }
         for s in sa_lms.iter_mut() {
-            *s = u64::max_value();
+            *s = u64::MAX;
         }
     }
     let mut i = sa.len() - 1;
     let mut j = 0;
     while j < lms_len {
-        if sa[i] < u64::max_value() {
+        if sa[i] < u64::MAX {
             sa[sa.len() - 1 - j] = sa[i];
             j += 1;
         }
@@ -230,7 +230,7 @@ where
     {
         let (sa1, s1) = sa.split_at_mut(sa.len() - lms_len);
         if name < lms_len as u64 {
-            sais_sub(&s1, sa1, &IdConverter::new(name + 1 as u64));
+            sais_sub(&s1, sa1, &IdConverter::new(name + 1));
         } else {
             for (i, &s) in s1.iter().enumerate() {
                 sa1[s as usize] = i as u64
@@ -245,13 +245,13 @@ where
     }
 
     for i in &mut sa[lms_len..] {
-        *i = u64::max_value();
+        *i = u64::MAX;
     }
 
     let mut bucket_end_pos = get_bucket_end_pos(&occs);
     for i in (0..lms_len).rev() {
         let j = sa[i] as usize;
-        sa[i] = u64::max_value();
+        sa[i] = u64::MAX;
         let c = if j == n {
             0
         } else {
@@ -356,7 +356,7 @@ mod tests {
     #[test]
     fn test_sais_1() {
         let text = &[0u8];
-        let sa = sais(&text, &IdConverter::new(4));
+        let sa = sais(text, &IdConverter::new(4));
         let expected = get_suffix_array(text);
         assert_eq!(sa, expected);
     }
@@ -364,7 +364,7 @@ mod tests {
     #[test]
     fn test_sais_2() {
         let text = &[3u8, 0];
-        let sa = sais(&text, &IdConverter::new(4));
+        let sa = sais(text, &IdConverter::new(4));
         let expected = get_suffix_array(text);
         assert_eq!(sa, expected);
     }
@@ -372,7 +372,7 @@ mod tests {
     #[test]
     fn test_sais_4() {
         let text = &[3u8, 2, 1, 0];
-        let sa = sais(&text, &IdConverter::new(4));
+        let sa = sais(text, &IdConverter::new(4));
         let expected = get_suffix_array(text);
         assert_eq!(sa, expected);
     }

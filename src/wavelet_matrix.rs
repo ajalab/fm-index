@@ -155,13 +155,7 @@ mod tests {
         for i in 0..(1 << size) {
             let mut r = 0;
             for (k, &n) in numbers.iter().enumerate() {
-                assert!(
-                    wm.rank(i as u8, k as u64) == r,
-                    "wm.rank({}, {}) == {}",
-                    i,
-                    k,
-                    r
-                );
+                assert!(wm.rank(i, k as u64) == r, "wm.rank({}, {}) == {}", i, k, r);
                 if n == i {
                     r += 1;
                 }

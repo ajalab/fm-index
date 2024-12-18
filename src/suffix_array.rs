@@ -94,7 +94,7 @@ impl ArraySampler<SuffixOrderSampledArray> for SuffixOrderSampler {
         let sa_samples_len = ((n - 1) >> self.level) + 1;
         let mut sa_samples = fid::BitArray::with_word_size(word_size, sa_samples_len);
         for i in 0..sa_samples_len {
-            sa_samples.set_word(i, word_size, sa[i << self.level] as u64);
+            sa_samples.set_word(i, word_size, sa[i << self.level]);
         }
         SuffixOrderSampledArray {
             level: self.level,
