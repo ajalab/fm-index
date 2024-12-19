@@ -10,7 +10,7 @@ homepage = "https://github.com/faassen/fm-index-vers"
 documentation = "https://docs.rs/fm-index-vers"
 license = "MIT OR Apache-2.0"
 keywords = ["fm-index", "self-index", "succinct", "search", "vers", "vers-vecs"]
-categories = ["data-structures"]
+categories = ["data-structures", "algorithms"]
 
 
 [dependencies]
