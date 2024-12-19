@@ -56,7 +56,7 @@ locate/RLFMIndex/2                1.00     24.9±0.12ms 10.0 KElem/sec      3.02
 locate/RLFMIndex/3                1.00     57.7±0.29ms  4.3 KElem/sec      3.25    187.8±2.91ms  1363 Elem/sec
 ```
 
-If compiled using `-C target-cpu=native` (so that Vers can make benefit of additional optimizations) it's faster yet:
+If compiled using `-C target-cpu=native` (so that Vers can make use of additional optimizations) it's faster yet:
 
 ```
 group                             vers port (native)                       original
@@ -89,14 +89,14 @@ Add this to your `Cargo.toml`.
 
 ```toml
 [dependencies]
-fm-index = "0.1"
+fm-index-vers = "0.1"
 ```
 
 ## Example
 ```rust
-use fm_index::converter::RangeConverter;
-use fm_index::suffix_array::SuffixOrderSampler;
-use fm_index::{BackwardSearchIndex, FMIndex};
+use fm_index_vers::converter::RangeConverter;
+use fm_index_vers::suffix_array::SuffixOrderSampler;
+use fm_index_vers::{BackwardSearchIndex, FMIndex};
 
 // Prepare a text string to search for patterns.
 let text = concat!(
