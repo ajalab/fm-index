@@ -9,7 +9,7 @@ readme = "README.md"
 homepage = "https://github.com/faassen/fm-index-vers"
 documentation = "https://docs.rs/fm-index-vers"
 license = "MIT OR Apache-2.0"
-keywords = ["fm-index", "self-index", "succinct", "search", "vers", "vers-vecs"]
+keywords = ["fm-index", "self-index", "succinct", "search", "vers"]
 categories = ["data-structures", "algorithms"]
 
 
