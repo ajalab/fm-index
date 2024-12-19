@@ -1,4 +1,4 @@
-use fm_index::converter::{Converter, RangeConverter};
+use fm_index_vers::converter::{Converter, RangeConverter};
 
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
