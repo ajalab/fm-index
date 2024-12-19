@@ -21,7 +21,7 @@ iterators that return the text characters starting from a search result.
 
 This is a port of the [original
 implementation](https://github.com/ajalab/fm-index) by [Koki
-Kato](https://github.com/ajalab) to the [Vers](https://github.com/Cydhra/vers)
+Kato](https://github.com/ajalab) to use [Vers](https://github.com/Cydhra/vers)
 for its underlying rank/select data structures. It also uses the Vers
 implementation of `WaveletMatrix` rather than the version custom built for
 `fm-index`.
