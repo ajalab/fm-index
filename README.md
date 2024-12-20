@@ -1,7 +1,8 @@
-# fm-index-vers
+# fm-index
 
-[![Crate](https://img.shields.io/crates/v/fm-index-vers.svg)](https://crates.io/crates/fm-index-vers)
-[![Doc](https://docs.rs/fm-index-vers/badge.svg)](https://docs.rs/fm-index-vers)
+[![Build Status](https://travis-ci.com/ajalab/fm-index.svg?branch=master)](https://travis-ci.org/ajalab/fm-index)
+[![Crate](https://img.shields.io/crates/v/fm-index.svg)](https://crates.io/crates/fm-index)
+[![Doc](https://docs.rs/fm-index-vers/badge.svg)](https://docs.rs/fm-index)
 
 This crate provides implementations of
 [FM-Index](https://en.wikipedia.org/wiki/FM-index) and its variants.
@@ -13,15 +14,9 @@ is a compressed full-text index which supports the following queries:
 - `locate`: Given a pattern string, lists the all positions of its occurrences.
 - `extract`: Given an integer, gets the character of the text at that position.
 
-The `fm-index-vers` crate does not support the third query (extracting a
+The `fm-index` crate does not support the third query (extracting a
 character from arbitrary position). Instead, it provides backward/forward
 iterators that return the text characters starting from a search result.
-
-Note that this is a port of the original
-[fm-index](https://github.com/ajalab/fm-index) crate to use
-[Vers](https://github.com/Cydhra/vers) for its underlying data structures.
-This results in a considerable performance boost; see the background section
-for more information.
 
 ## Usage
 
@@ -29,14 +24,14 @@ Add this to your `Cargo.toml`.
 
 ```toml
 [dependencies]
-fm-index-vers = "0.1"
+fm-index = "0.2"
 ```
 
 ## Example
 ```rust
-use fm_index_vers::converter::RangeConverter;
-use fm_index_vers::suffix_array::SuffixOrderSampler;
-use fm_index_vers::{BackwardSearchIndex, FMIndex};
+use fm_index::converter::RangeConverter;
+use fm_index::suffix_array::SuffixOrderSampler;
+use fm_index::{BackwardSearchIndex, FMIndex};
 
 // Prepare a text string to search for patterns.
 let text = concat!(

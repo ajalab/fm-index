@@ -1,17 +1,19 @@
 [package]
-name = "fm-index-vers"
-version = "0.1.2"
+name = "fm-index"
+version = "0.2.0"
 authors = ["Koki Kato <koki.kato1994@gmail.com>"]
 edition = "2021"
-description = "FM index and its variant implementations for Rust, backed by vers-vecs."
-repository = "https://github.com/faassen/fm-index-vers"
+description = "FM index and its variant implementations for Rust."
+repository = "https://github.com/ajalab/fm-index"
 readme = "README.md"
-homepage = "https://github.com/faassen/fm-index-vers"
-documentation = "https://docs.rs/fm-index-vers"
+homepage = "https://github.com/ajalab/fm-index"
+documentation = "https://docs.rs/fm-index"
 license = "MIT OR Apache-2.0"
 keywords = ["fm-index", "self-index", "succinct", "search", "vers"]
 categories = ["data-structures", "algorithms"]
 
+[badges]
+travis-ci = { repository = "ajalab/fm-index" }
 
 [dependencies]
 vers-vecs = { version = "1.5.1", features = ["serde"] }

@@ -21,9 +21,9 @@
 //!
 //! # Example
 //! ```
-//! use fm_index_vers::converter::RangeConverter;
-//! use fm_index_vers::suffix_array::SuffixOrderSampler;
-//! use fm_index_vers::{BackwardSearchIndex, FMIndex};
+//! use fm_index::converter::RangeConverter;
+//! use fm_index::suffix_array::SuffixOrderSampler;
+//! use fm_index::{BackwardSearchIndex, FMIndex};
 //!
 //! // Prepare a text string to search for patterns.
 //! let text = concat!(
