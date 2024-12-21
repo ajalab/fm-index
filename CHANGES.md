@@ -2,6 +2,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## 0.2.0 - 2024-12-21
+
 ### Features
 
 We have changed to use [Vers](https://github.com/Cydhra/vers) for its
