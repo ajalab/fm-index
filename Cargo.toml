@@ -2,27 +2,27 @@
 name = "fm-index"
 version = "0.1.2"
 authors = ["Koki Kato <koki.kato1994@gmail.com>"]
-edition = "2018"
-description = "FM index and its variant implementations for Rust"
+edition = "2021"
+description = "FM index and its variant implementations for Rust."
 repository = "https://github.com/ajalab/fm-index"
 readme = "README.md"
 homepage = "https://github.com/ajalab/fm-index"
 documentation = "https://docs.rs/fm-index"
 license = "MIT OR Apache-2.0"
-keywords = ["fm-index", "self-index", "succinct"]
-categories = ["data-structures"]
+keywords = ["fm-index", "self-index", "succinct", "search", "vers"]
+categories = ["data-structures", "algorithms"]
 
 [badges]
 travis-ci = { repository = "ajalab/fm-index" }
 
 [dependencies]
-fid = "0.1.4"
+vers-vecs = { version = "1.5.1", features = ["serde"] }
 num-traits = "0.2"
 serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
 rand = "0.6.5"
-criterion = "0.3"
+criterion = "0.5"
 
 [[bench]]
 name = "construction"

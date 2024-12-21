@@ -2,8 +2,9 @@
 //!    Ge Nong, Sen Zhang, & Wai Hong Chan. (2010). Two Efficient Algorithms for Linear Time Suffix Array Construction.
 //!    IEEE Transactions on Computers, 60(10), 1471–1484. https://doi.org/10.1109/tc.2010.188
 
-use fid::BitArray;
 use std::fmt::Debug;
+
+use vers_vecs::BitVec;
 
 use crate::converter::{Converter, IdConverter};
 
@@ -43,7 +44,7 @@ pub fn get_bucket_end_pos(occs: &[u64]) -> Vec<u64> {
     buckets
 }
 
-fn get_types<T, K>(text: K) -> (BitArray, Vec<usize>)
+fn get_types<T, K>(text: K) -> (BitVec, Vec<usize>)
 where
     T: Copy + Clone + Ord,
     K: AsRef<[T]>,
@@ -51,21 +52,21 @@ where
     let text = text.as_ref();
     let n = text.len();
     // true => S-Type, false => L-Type
-    let mut types = BitArray::new(n);
-    types.set_bit(n - 1, true);
+    let mut types = BitVec::from_zeros(n);
+    types.set(n - 1, 1).unwrap();
 
     if n == 1 {
         return (types, vec![]);
     }
 
-    types.set_bit(n - 2, false);
+    types.set(n - 2, 0).unwrap();
 
     let mut lms = vec![n - 1];
     let mut prev_is_s_type = false;
     for i in (0..(n - 1)).rev() {
         let is_s_type = text[i] < text[i + 1] || (text[i] == text[i + 1] && prev_is_s_type);
         if is_s_type {
-            types.set_bit(i, true);
+            types.set(i, 1).unwrap();
         } else if prev_is_s_type {
             lms.push(i + 1);
         }
@@ -74,11 +75,14 @@ where
     (types, lms)
 }
 
-fn is_lms(types: &BitArray, i: u64) -> bool {
-    i > 0 && i < u64::max_value() && types.get_bit(i as usize) && !types.get_bit(i as usize - 1)
+fn is_lms(types: &BitVec, i: u64) -> bool {
+    i > 0
+        && i < u64::MAX
+        && types.is_bit_set(i as usize).unwrap()
+        && !types.is_bit_set(i as usize - 1).unwrap()
 }
 
-fn induced_sort<T, K, C>(text: K, converter: &C, types: &BitArray, occs: &[u64], sa: &mut [u64])
+fn induced_sort<T, K, C>(text: K, converter: &C, types: &BitVec, occs: &[u64], sa: &mut [u64])
 where
     T: Into<u64> + Copy + Clone + Ord,
     K: AsRef<[T]>,
@@ -89,7 +93,7 @@ where
     let mut bucket_start_pos = get_bucket_start_pos(occs);
     for i in 0..n {
         let j = sa[i];
-        if 0 < j && j < u64::max_value() && !types.get_bit(j as usize - 1) {
+        if 0 < j && j < u64::MAX && !types.is_bit_set(j as usize - 1).unwrap() {
             let c = converter.convert(text[j as usize - 1]).into() as usize;
             let p = bucket_start_pos[c] as usize;
             sa[p] = j - 1;
@@ -97,10 +101,10 @@ where
         }
     }
 
-    let mut bucket_end_pos = get_bucket_end_pos(&occs);
+    let mut bucket_end_pos = get_bucket_end_pos(occs);
     for i in (0..n).rev() {
         let j = sa[i];
-        if j != 0 && j != u64::max_value() && types.get_bit(j as usize - 1) {
+        if j != 0 && j != u64::MAX && types.is_bit_set(j as usize - 1).unwrap() {
             let c = converter.convert(text[j as usize - 1]).into() as usize;
             let p = bucket_end_pos[c] as usize - 1;
             sa[p] = j - 1;
@@ -124,7 +128,7 @@ where
                 text.as_ref().last().map(|&c| c.into()) == Some(0u64),
                 "expected: the last char in text should be zero"
             );
-            let mut sa = vec![u64::max_value(); n];
+            let mut sa = vec![u64::MAX; n];
             sais_sub(&text, &mut sa, converter);
             sa
         }
@@ -186,7 +190,7 @@ where
 
         let (sa_lms, names) = sa.split_at_mut(lms_len);
         for n in names.iter_mut() {
-            *n = u64::max_value();
+            *n = u64::MAX;
         }
         names[sa_lms[0] as usize / 2] = 0; // name of the sentinel
         if lms_len <= 1 {
@@ -197,9 +201,11 @@ where
                 let p = sa_lms[i - 1] as usize;
                 let q = sa_lms[i] as usize;
                 let mut d = 1;
-                let mut same = text[p] == text[q] && types.get_bit(p) == types.get_bit(q);
+                let mut same = text[p] == text[q] && types.is_bit_set(p) == types.is_bit_set(q);
                 while same {
-                    if text[p + d] != text[q + d] || types.get_bit(p + d) != types.get_bit(q + d) {
+                    if text[p + d] != text[q + d]
+                        || types.is_bit_set(p + d) != types.is_bit_set(q + d)
+                    {
                         same = false;
                         break;
                     } else if is_lms(&types, (p + d) as u64) && is_lms(&types, (p + d) as u64) {
@@ -214,13 +220,13 @@ where
             }
         }
         for s in sa_lms.iter_mut() {
-            *s = u64::max_value();
+            *s = u64::MAX;
         }
     }
     let mut i = sa.len() - 1;
     let mut j = 0;
     while j < lms_len {
-        if sa[i] < u64::max_value() {
+        if sa[i] < u64::MAX {
             sa[sa.len() - 1 - j] = sa[i];
             j += 1;
         }
@@ -230,7 +236,7 @@ where
     {
         let (sa1, s1) = sa.split_at_mut(sa.len() - lms_len);
         if name < lms_len as u64 {
-            sais_sub(&s1, sa1, &IdConverter::new(name + 1 as u64));
+            sais_sub(&s1, sa1, &IdConverter::new(name + 1));
         } else {
             for (i, &s) in s1.iter().enumerate() {
                 sa1[s as usize] = i as u64
@@ -245,13 +251,13 @@ where
     }
 
     for i in &mut sa[lms_len..] {
-        *i = u64::max_value();
+        *i = u64::MAX;
     }
 
     let mut bucket_end_pos = get_bucket_end_pos(&occs);
     for i in (0..lms_len).rev() {
         let j = sa[i] as usize;
-        sa[i] = u64::max_value();
+        sa[i] = u64::MAX;
         let c = if j == n {
             0
         } else {
@@ -289,7 +295,13 @@ mod tests {
         let lms_expected = marks_to_lms("  *   *   *     *");
         let (types, lms) = get_types(text);
         let types_actual = (0..n)
-            .map(|i| if types.get_bit(i) { 'S' } else { 'L' })
+            .map(|i| {
+                if types.is_bit_set(i).unwrap() {
+                    'S'
+                } else {
+                    'L'
+                }
+            })
             .collect::<String>();
 
         assert_eq!(types_expected, types_actual);
@@ -304,7 +316,13 @@ mod tests {
         let lms_expected = marks_to_lms(" *  *");
         let (types, lms) = get_types(text);
         let types_actual = (0..n)
-            .map(|i| if types.get_bit(i) { 'S' } else { 'L' })
+            .map(|i| {
+                if types.is_bit_set(i).unwrap() {
+                    'S'
+                } else {
+                    'L'
+                }
+            })
             .collect::<String>();
 
         assert_eq!(types_expected, types_actual);
@@ -356,7 +374,7 @@ mod tests {
     #[test]
     fn test_sais_1() {
         let text = &[0u8];
-        let sa = sais(&text, &IdConverter::new(4));
+        let sa = sais(text, &IdConverter::new(4));
         let expected = get_suffix_array(text);
         assert_eq!(sa, expected);
     }
@@ -364,7 +382,7 @@ mod tests {
     #[test]
     fn test_sais_2() {
         let text = &[3u8, 0];
-        let sa = sais(&text, &IdConverter::new(4));
+        let sa = sais(text, &IdConverter::new(4));
         let expected = get_suffix_array(text);
         assert_eq!(sa, expected);
     }
@@ -372,7 +390,7 @@ mod tests {
     #[test]
     fn test_sais_4() {
         let text = &[3u8, 2, 1, 0];
-        let sa = sais(&text, &IdConverter::new(4));
+        let sa = sais(text, &IdConverter::new(4));
         let expected = get_suffix_array(text);
         assert_eq!(sa, expected);
     }

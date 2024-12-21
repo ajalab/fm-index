@@ -1,8 +1,8 @@
 use fm_index::suffix_array::NullSampler;
 use fm_index::{BackwardSearchIndex, FMIndex, RLFMIndex};
 
-use criterion::{AxisScale, BatchSize, BenchmarkId, Criterion, PlotConfiguration, Throughput};
 use criterion::{criterion_group, criterion_main};
+use criterion::{AxisScale, BatchSize, BenchmarkId, Criterion, PlotConfiguration, Throughput};
 
 mod common;
 

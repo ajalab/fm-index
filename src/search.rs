@@ -26,7 +26,7 @@ impl<'a, I> Search<'a, I>
 where
     I: BackwardSearchIndex,
 {
-    fn new(index: &'a I) -> Search<I> {
+    fn new(index: &'a I) -> Search<'a, I> {
         Search {
             index,
             s: 0,
@@ -65,7 +65,7 @@ where
     }
 }
 
-impl<'a, I> Search<'a, I>
+impl<I> Search<'_, I>
 where
     I: BackwardIterableIndex,
 {
@@ -79,7 +79,7 @@ where
     }
 }
 
-impl<'a, I> Search<'a, I>
+impl<I> Search<'_, I>
 where
     I: BackwardSearchIndex + ForwardIterableIndex,
 {
@@ -93,7 +93,7 @@ where
     }
 }
 
-impl<'a, I> Search<'a, I>
+impl<I> Search<'_, I>
 where
     I: BackwardSearchIndex + IndexWithSA,
 {

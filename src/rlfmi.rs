@@ -3,19 +3,18 @@ use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
 use crate::suffix_array::{ArraySampler, IndexWithSA, PartialArray};
 use crate::util;
-use crate::wavelet_matrix::WaveletMatrix;
 use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
-use fid::FID;
 use serde::{Deserialize, Serialize};
+use vers_vecs::{BitVec, RsVec, WaveletMatrix};
 
 #[derive(Serialize, Deserialize)]
 pub struct RLFMIndex<T, C, S> {
     converter: C,
     suffix_array: S,
     s: WaveletMatrix,
-    b: fid::BitVector,
-    bp: fid::BitVector,
+    b: RsVec,
+    bp: RsVec,
     cs: Vec<u64>,
     len: u64,
     _t: std::marker::PhantomData<T>,
@@ -39,7 +38,7 @@ where
         let mut s = Vec::new();
         // sequence of run lengths
         // run length `l` is encoded as 10^{l-1}
-        let mut b = fid::BitVector::new();
+        let mut b = BitVec::new();
         let mut runs_by_char: Vec<Vec<usize>> = vec![vec![]; m as usize];
         for &k in &sa {
             let k = k as usize;
@@ -48,10 +47,10 @@ where
             // so text[sa[0] - 1] = text[n - 2] is not zero.
             if c0 != c {
                 s.push(c);
-                b.push(true);
+                b.append(true);
                 runs_by_char[c.into() as usize].push(1);
             } else {
-                b.push(false);
+                b.append(false);
                 match runs_by_char[c.into() as usize].last_mut() {
                     Some(r) => *r += 1,
                     None => unreachable!(),
@@ -59,21 +58,24 @@ where
             }
             c0 = c;
         }
-        let s = WaveletMatrix::new_with_size(s, util::log2(m - 1) + 1);
-        let mut bp = fid::BitVector::new();
+        let s: Vec<u64> = s.into_iter().map(|c| c.into()).collect();
+        let s = WaveletMatrix::from_slice(&s, (util::log2(m - 1) + 1) as u16);
+        let mut bp = BitVec::new();
         let mut cs = vec![0u64; m as usize];
         let mut c = 0;
         for (rs, ci) in runs_by_char.into_iter().zip(&mut cs) {
             *ci = c;
             c += rs.len() as u64;
             for r in rs {
-                bp.push(true);
+                bp.append(true);
                 for _ in 0..(r - 1) {
-                    bp.push(false);
+                    bp.append(false);
                 }
             }
         }
 
+        let b = RsVec::from_bit_vec(b);
+        let bp = RsVec::from_bit_vec(bp);
         RLFMIndex {
             converter,
             suffix_array: sampler.sample(sa),
@@ -87,7 +89,7 @@ where
     }
 
     pub fn runs(&self) -> u64 {
-        self.s.len()
+        self.s.len() as u64
     }
 
     pub fn len(&self) -> u64 {
@@ -102,9 +104,9 @@ where
 impl<T, C> RLFMIndex<T, C, ()> {
     pub fn size(&self) -> usize {
         std::mem::size_of::<Self>()
-            + self.s.size()
-            + self.b.size()
-            + self.bp.size()
+            + self.s.heap_size()
+            + self.b.heap_size()
+            + self.bp.heap_size()
             + self.cs.len() * std::mem::size_of::<Vec<u64>>()
     }
 }
@@ -115,9 +117,9 @@ where
 {
     pub fn size(&self) -> usize {
         std::mem::size_of::<Self>()
-            + self.s.size()
-            + self.b.size()
-            + self.bp.size()
+            + self.s.heap_size()
+            + self.b.heap_size()
+            + self.bp.heap_size()
             + self.cs.len() * std::mem::size_of::<Vec<u64>>()
             + self.suffix_array.size()
     }
@@ -136,24 +138,26 @@ where
 
     fn get_l(&self, i: u64) -> T {
         // note: b[0] is always 1
-        self.s.access(self.b.rank1(i + 1) - 1)
+        T::from_u64(self.s.get_u64_unchecked(self.b.rank1(i as usize + 1) - 1))
     }
 
     fn lf_map(&self, i: u64) -> u64 {
         let c = self.get_l(i);
-        let j = self.b.rank1(i);
-        let nr = self.s.rank(c, j);
-        self.bp.select1(self.cs[c.into() as usize] + nr) + i - self.b.select1(j)
+        let j = self.b.rank1(i as usize);
+        let nr = self.s.rank_u64_unchecked(j, c.into());
+        self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64 + i
+            - self.b.select1(j) as u64
     }
 
     fn lf_map2(&self, c: T, i: u64) -> u64 {
         let c = self.converter.convert(c);
-        let j = self.b.rank1(i);
-        let nr = self.s.rank(c, j);
+        let j = self.b.rank1(i as usize);
+        let nr = self.s.rank_u64_unchecked(j, c.into());
         if self.get_l(i) != c {
-            self.bp.select1(self.cs[c.into() as usize] + nr)
+            self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64
         } else {
-            self.bp.select1(self.cs[c.into() as usize] + nr) + i - self.b.select1(j)
+            self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64 + i
+                - self.b.select1(j) as u64
         }
     }
 }
@@ -167,8 +171,8 @@ where
 
     fn get_f(&self, i: u64) -> Self::T {
         let mut s = 0;
-        let mut e = self.cs.len() as usize;
-        let r = self.bp.rank1(i + 1) - 1;
+        let mut e = self.cs.len();
+        let r = (self.bp.rank1(i as usize + 1) - 1) as u64;
         while e - s > 1 {
             let m = s + (e - s) / 2;
             if self.cs[m] <= r {
@@ -182,19 +186,23 @@ where
 
     fn fl_map(&self, i: u64) -> u64 {
         let c = self.get_f(i);
-        let j = self.bp.rank1(i + 1) - 1;
-        let p = self.bp.select1(j);
-        let m = self.s.select(c, j - self.cs[c.into() as usize]);
-        let n = self.b.select1(m);
+        let j = self.bp.rank1(i as usize + 1) - 1;
+        let p = self.bp.select1(j) as u64;
+        let m = self
+            .s
+            .select_u64_unchecked(j - self.cs[c.into() as usize] as usize, c.into());
+        let n = self.b.select1(m) as u64;
         n + i - p
     }
 
     fn fl_map2(&self, c: Self::T, i: u64) -> u64 {
         let c = self.converter.convert(c);
-        let j = self.bp.rank1(i + 1) - 1;
-        let p = self.bp.select1(j);
-        let m = self.s.select(c, j - self.cs[c.into() as usize]);
-        let n = self.b.select1(m);
+        let j = self.bp.rank1(i as usize + 1) - 1;
+        let p = self.bp.select1(j) as u64;
+        let m = self
+            .s
+            .select_u64_unchecked(j - self.cs[c.into() as usize] as usize, c.into());
+        let n = self.b.select1(m) as u64;
         n + i - p
     }
 
@@ -242,8 +250,6 @@ mod tests {
     use crate::converter::RangeConverter;
     use crate::search::BackwardSearchIndex;
     use crate::suffix_array::{NullSampler, SuffixOrderSampler};
-
-    use fid::FID;
 
     #[test]
     fn test_count() {
@@ -317,7 +323,7 @@ mod tests {
         let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
         let ans = "ipsm\0pisi".to_string().into_bytes();
         for (i, a) in ans.into_iter().enumerate() {
-            let l: u8 = rlfmi.s.access(i as u64);
+            let l: u8 = rlfmi.s.get_u64_unchecked(i) as u8;
             assert_eq!(rlfmi.converter.convert_inv(l), a);
         }
     }
@@ -334,9 +340,14 @@ mod tests {
         // rank_1  1233456788999
         // s:      ipsm$pisi
         //         012345678
-        assert_eq!(n, rlfmi.b.len());
+        assert_eq!(n as usize, rlfmi.b.len());
         for (i, a) in ans.into_iter().enumerate() {
-            assert_eq!(rlfmi.b.get(i as u64), a != 0, "failed at b[{}]", i);
+            assert_eq!(
+                rlfmi.b.get(i).unwrap(),
+                (a != 0) as u64,
+                "failed at b[{}]",
+                i
+            );
         }
     }
 
@@ -346,9 +357,14 @@ mod tests {
         let rlfmi = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), NullSampler::new());
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0];
-        assert_eq!(n, rlfmi.bp.len());
+        assert_eq!(n as usize, rlfmi.bp.len());
         for (i, a) in ans.into_iter().enumerate() {
-            assert_eq!(rlfmi.bp.get(i as u64), a != 0, "failed at bp[{}]", i);
+            assert_eq!(
+                rlfmi.bp.get(i).unwrap(),
+                (a != 0) as u64,
+                "failed at bp[{}]",
+                i
+            );
         }
     }
 
@@ -371,7 +387,7 @@ mod tests {
 
         for (i, a) in ans.into_iter().enumerate() {
             let l = rlfmi.get_l(i as u64);
-            assert_eq!(rlfmi.converter.convert_inv(l as u8), a);
+            assert_eq!(rlfmi.converter.convert_inv(l), a);
         }
     }
 
@@ -462,7 +478,7 @@ mod tests {
 
         for (i, a) in ans.into_iter().enumerate() {
             let f = rlfmi.get_f(i as u64);
-            assert_eq!(rlfmi.converter.convert_inv(f as u8), a);
+            assert_eq!(rlfmi.converter.convert_inv(f), a);
         }
     }
 

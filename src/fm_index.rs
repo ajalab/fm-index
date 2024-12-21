@@ -3,10 +3,10 @@ use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
 use crate::suffix_array::{ArraySampler, IndexWithSA, PartialArray};
 use crate::util;
-use crate::wavelet_matrix::WaveletMatrix;
 use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
 use serde::{Deserialize, Serialize};
+use vers_vecs::WaveletMatrix;
 
 #[derive(Serialize, Deserialize)]
 pub struct FMIndex<T, C, S> {
@@ -39,7 +39,9 @@ where
                 bw[i] = converter.convert(text[k - 1]);
             }
         }
-        let bw = WaveletMatrix::new_with_size(bw, util::log2(converter.len() - 1) + 1);
+        let bw = bw.into_iter().map(|c| c.into()).collect::<Vec<u64>>();
+
+        let bw = WaveletMatrix::from_slice(&bw, (util::log2(converter.len() - 1) + 1) as u16);
 
         FMIndex {
             cs,
@@ -51,14 +53,14 @@ where
     }
 
     pub fn len(&self) -> u64 {
-        self.bw.len()
+        self.bw.len() as u64
     }
 }
 
 impl<T, C> FMIndex<T, C, ()> {
     pub fn size(&self) -> usize {
         std::mem::size_of::<Self>()
-            + self.bw.size()
+            + self.bw.heap_size()
             + self.cs.len() * std::mem::size_of::<Vec<u64>>()
     }
 }
@@ -69,7 +71,7 @@ where
 {
     pub fn size(&self) -> usize {
         std::mem::size_of::<Self>()
-            + self.bw.size()
+            + self.bw.heap_size()
             + self.cs.len() * std::mem::size_of::<Vec<u64>>()
             + self.suffix_array.size()
     }
@@ -83,21 +85,21 @@ where
     type T = T;
 
     fn get_l(&self, i: u64) -> Self::T {
-        self.bw.access(i)
+        Self::T::from_u64(self.bw.get_u64_unchecked(i as usize))
     }
 
     fn lf_map(&self, i: u64) -> u64 {
         let c = self.get_l(i);
-        self.cs[c.into() as usize] + self.bw.rank(c, i)
+        self.cs[c.into() as usize] + self.bw.rank_u64_unchecked(i as usize, c.into()) as u64
     }
 
     fn lf_map2(&self, c: T, i: u64) -> u64 {
         let c = self.converter.convert(c);
-        self.cs[c.into() as usize] + self.bw.rank(c, i)
+        self.cs[c.into() as usize] + self.bw.rank_u64_unchecked(i as usize, c.into()) as u64
     }
 
     fn len(&self) -> u64 {
-        self.bw.len()
+        self.bw.len() as u64
     }
 }
 
@@ -126,16 +128,20 @@ where
 
     fn fl_map(&self, i: u64) -> u64 {
         let c = self.get_f(i);
-        self.bw.select(c, i - self.cs[c.into() as usize])
+        self.bw
+            .select_u64_unchecked(i as usize - self.cs[c.into() as usize] as usize, c.into())
+            as u64
     }
 
     fn fl_map2(&self, c: Self::T, i: u64) -> u64 {
         let c = self.converter.convert(c);
-        self.bw.select(c, i - self.cs[c.into() as usize])
+        self.bw
+            .select_u64_unchecked((i - self.cs[c.into() as usize]) as usize, c.into())
+            as u64
     }
 
     fn len(&self) -> u64 {
-        self.bw.len()
+        self.bw.len() as u64
     }
 }
 
@@ -150,7 +156,7 @@ where
         loop {
             match self.suffix_array.get(i) {
                 Some(sa) => {
-                    return (sa + steps) % self.bw.len();
+                    return (sa + steps) % self.bw.len() as u64;
                 }
                 None => {
                     i = self.lf_map(i);

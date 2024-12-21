@@ -13,7 +13,6 @@ pub trait BackwardIterableIndex: Sized {
     }
 }
 
-
 pub struct BackwardIterator<'a, I>
 where
     I: BackwardIterableIndex,
@@ -22,7 +21,7 @@ where
     i: u64,
 }
 
-impl<'a, T, I> Iterator for BackwardIterator<'a, I>
+impl<T, I> Iterator for BackwardIterator<'_, I>
 where
     T: Copy + Clone,
     I: BackwardIterableIndex<T = T> + IndexWithConverter<T>,
@@ -56,7 +55,7 @@ where
     i: u64,
 }
 
-impl<'a, T, I> Iterator for ForwardIterator<'a, I>
+impl<T, I> Iterator for ForwardIterator<'_, I>
 where
     T: Copy + Clone,
     I: ForwardIterableIndex<T = T> + IndexWithConverter<T>,

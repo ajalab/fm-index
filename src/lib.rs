@@ -93,9 +93,9 @@
 //! - a wavelet matrix that stores the run heads of BWT of the text string
 //! - a succinct bit vector which stores the run lengths of BWT of the text string
 //! - a succinct bit vector which stores the run lengths of BWT of the text string
-//! sorted in alphabetical order of corresponding run heads
+//!   sorted in alphabetical order of corresponding run heads
 //! - an array of size _O(σ)_ (_σ_: number of characters)
-//! which stores the number of characters smaller than a given character in run heads
+//!   which stores the number of characters smaller than a given character in run heads
 //!
 //! # Reference
 //!
@@ -118,7 +118,6 @@ mod rlfmi;
 mod sais;
 mod search;
 mod util;
-mod wavelet_matrix;
 
 pub use crate::fm_index::FMIndex;
 pub use crate::rlfmi::RLFMIndex;
