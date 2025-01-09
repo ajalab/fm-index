@@ -300,7 +300,7 @@ mod tests {
     }
 
     #[test]
-    fn test_search_backword() {
+    fn test_search_backward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
         let word_pairs = vec![("ipsum", " dolor"), ("sit", " amet"), ("sed", " do")];
         let fm_index = FMIndex::new(
