@@ -40,7 +40,7 @@ where
     ///   contrain characters to a particular range. See [`converter`] for more
     ///   details.
     ///
-    /// - `sampler` is an [`ArraySampler``] used to sample the suffix array to
+    /// - `sampler` is an [`ArraySampler`] used to sample the suffix array to
     ///   construct the index.
     pub fn new<B: ArraySampler<S>>(mut text: Vec<T>, converter: C, sampler: B) -> Self {
         if !text[text.len() - 1].is_zero() {
