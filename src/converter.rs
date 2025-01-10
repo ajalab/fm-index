@@ -1,13 +1,31 @@
+//! Converters for restricting the alphabet of a [`Character`].
+//!
 use crate::character::Character;
 
 use serde::{Deserialize, Serialize};
 
+/// If we know a [Character] data type can only consists of particular values,
+/// they can be restricted to a smaller alphabet. This helps both speed of
+/// search and memory usage.
+///
+/// A converter can be used to restrict a character of a type to a certain
+/// alphabet.
 pub trait Converter<T> {
+    /// Convert a character to a new character in the restricted alphabet.
     fn convert(&self, c: T) -> T;
+    /// Convert a character back to the original character.
     fn convert_inv(&self, c: T) -> T;
+    /// Get the size of the restricted alphabet.
     fn len(&self) -> u64;
 }
 
+/// Restrict characters to a range defining the alphabet.
+///
+/// Characters are normalized to fit in the range `1..=(max - min)`.
+///
+/// The range is defined by the minimum and maximum values of the alphabet.
+///
+/// The null (zero) character is handled separately and is always accepted.
 #[derive(Serialize, Deserialize)]
 pub struct RangeConverter<T> {
     min: T,
@@ -18,6 +36,7 @@ impl<T> RangeConverter<T>
 where
     T: Character,
 {
+    /// Create a new converter that restricts characters to a range.
     pub fn new(min: T, max: T) -> Self {
         debug_assert!(!T::is_zero(&min), "min should not be zero");
         RangeConverter { min, max }
@@ -50,11 +69,16 @@ where
     }
 }
 
+/// An identity converter that does not restrict the alphabet.
 pub struct IdConverter {
     size: u64,
 }
 
 impl IdConverter {
+    /// Create a new IdConverter.
+    ///
+    /// The size given should be the size of the alphabet, so for u8 it would
+    /// be 256, for u16 it would be 65536, etc
     pub fn new(size: u64) -> Self {
         IdConverter { size }
     }
@@ -72,7 +96,11 @@ impl<T> Converter<T> for IdConverter {
     }
 }
 
+/// A way to obtain the converter for a given index.
 pub trait IndexWithConverter<T> {
+    /// The converter type.
     type C: Converter<T>;
+
+    /// Get the converter for this index.
     fn get_converter(&self) -> &Self::C;
 }

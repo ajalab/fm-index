@@ -1,4 +1,6 @@
 use crate::character::Character;
+#[cfg(doc)]
+use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
 use crate::suffix_array::{ArraySampler, IndexWithSA, PartialArray};
@@ -8,6 +10,9 @@ use crate::{BackwardIterableIndex, ForwardIterableIndex};
 use serde::{Deserialize, Serialize};
 use vers_vecs::{BitVec, RsVec, WaveletMatrix};
 
+/// A Run-Length FM-index.
+///
+/// This can be more space-efficient than the FM-index, but is slower.
 #[derive(Serialize, Deserialize)]
 pub struct RLFMIndex<T, C, S> {
     converter: C,
@@ -25,6 +30,18 @@ where
     T: Character,
     C: Converter<T>,
 {
+    /// Create a new RLFM-Index from a text.
+    ///
+    /// - `text` is a vector of [`Character`]s.
+    ///
+    /// - `converter` is a [`Converter`] is used to convert the characters to a
+    ///   smaller alphabet. Use [`converter::IdConverter`] if you don't need to
+    ///   restrict the alphabet. Use [`converter::RangeConverter`] if you can
+    ///   contrain characters to a particular range. See [`converter`] for more
+    ///   details.
+    ///
+    /// - `sampler` is an [`ArraySampler``] used to sample the suffix array to
+    ///   construct the index.
     pub fn new<B: ArraySampler<S>>(mut text: Vec<T>, converter: C, sampler: B) -> Self {
         if !text[text.len() - 1].is_zero() {
             text.push(T::zero());
@@ -88,20 +105,26 @@ where
         }
     }
 
+    /// The amount of repeated runs in the text.
     pub fn runs(&self) -> u64 {
         self.s.len() as u64
     }
 
+    /// The length of the text.
     pub fn len(&self) -> u64 {
         self.len
     }
 
+    /// True if the index is empty.
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
 }
 
 impl<T, C> RLFMIndex<T, C, ()> {
+    /// Heap size of the index.
+    ///
+    /// No suffix array information is stored in this index.
     pub fn size(&self) -> usize {
         std::mem::size_of::<Self>()
             + self.s.heap_size()
@@ -115,6 +138,9 @@ impl<T, C, S> RLFMIndex<T, C, S>
 where
     S: PartialArray,
 {
+    /// The size on the heap of the FM-Index.
+    ///
+    /// Sampled suffix array data is stored in this index.
     pub fn size(&self) -> usize {
         std::mem::size_of::<Self>()
             + self.s.heap_size()

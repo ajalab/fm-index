@@ -1,7 +1,15 @@
 use crate::iter::{BackwardIterableIndex, BackwardIterator, ForwardIterableIndex, ForwardIterator};
 use crate::suffix_array::IndexWithSA;
 
+#[cfg(doc)]
+use crate::character::Character;
+
+/// A search index that can be searched.
 pub trait BackwardSearchIndex: BackwardIterableIndex {
+    /// Search for a pattern in the text.
+    ///
+    /// Return a [`Search`] object with information about the search
+    /// result.
     fn search_backward<K>(&self, pattern: K) -> Search<Self>
     where
         K: AsRef<[Self::T]>,
@@ -12,6 +20,10 @@ pub trait BackwardSearchIndex: BackwardIterableIndex {
 
 impl<I: BackwardIterableIndex> BackwardSearchIndex for I {}
 
+/// An object containing the result of a search.
+///
+/// This is expanded with a `locate` method if the index is
+/// supplied with a sampled suffix array.
 pub struct Search<'a, I>
 where
     I: BackwardSearchIndex,
@@ -35,6 +47,10 @@ where
         }
     }
 
+    /// Search in the current search result, refining it.
+    ///
+    /// This adds a prefix `pattern` to the existing pattern, and
+    /// looks for those expanded patterns in the text.
     pub fn search_backward<K: AsRef<[I::T]>>(&self, pattern: K) -> Self {
         let mut s = self.s;
         let mut e = self.e;
@@ -56,10 +72,12 @@ where
         }
     }
 
-    pub fn get_range(&self) -> (u64, u64) {
+    #[cfg(test)]
+    pub(crate) fn get_range(&self) -> (u64, u64) {
         (self.s, self.e)
     }
 
+    /// Count the number of occurrences.
     pub fn count(&self) -> u64 {
         self.e - self.s
     }
@@ -69,6 +87,8 @@ impl<I> Search<'_, I>
 where
     I: BackwardIterableIndex,
 {
+    /// Get an iterator that goes backwards through the text, producing
+    /// [`Character`].
     pub fn iter_backward(&self, i: u64) -> BackwardIterator<I> {
         let m = self.count();
 
@@ -83,6 +103,8 @@ impl<I> Search<'_, I>
 where
     I: BackwardSearchIndex + ForwardIterableIndex,
 {
+    /// Get an iterator that goes forwards through the text, producing
+    /// [`Character`].
     pub fn iter_forward(&self, i: u64) -> ForwardIterator<I> {
         let m = self.count();
 
@@ -97,6 +119,7 @@ impl<I> Search<'_, I>
 where
     I: BackwardSearchIndex + IndexWithSA,
 {
+    /// List the position of all occurrences.
     pub fn locate(&self) -> Vec<u64> {
         let mut results: Vec<u64> = Vec::with_capacity((self.e - self.s) as usize);
         for k in self.s..self.e {

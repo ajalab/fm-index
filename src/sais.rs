@@ -1,6 +1,6 @@
 //! SA-IS implementation based on
 //!    Ge Nong, Sen Zhang, & Wai Hong Chan. (2010). Two Efficient Algorithms for Linear Time Suffix Array Construction.
-//!    IEEE Transactions on Computers, 60(10), 1471–1484. https://doi.org/10.1109/tc.2010.188
+//!    IEEE Transactions on Computers, 60(10), 1471–1484. <https://doi.org/10.1109/tc.2010.188>
 
 use std::fmt::Debug;
 
