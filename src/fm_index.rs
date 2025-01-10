@@ -71,7 +71,7 @@ where
         }
     }
 
-    /// The length of the underlying wavelet matrix.
+    /// The length of the text.
     pub fn len(&self) -> u64 {
         self.bw.len() as u64
     }
