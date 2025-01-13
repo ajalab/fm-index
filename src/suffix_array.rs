@@ -69,7 +69,7 @@ impl fmt::Debug for SuffixOrderSampledArray {
     }
 }
 
-pub(crate) fn sample(sa: Vec<u64>, level: usize) -> SuffixOrderSampledArray {
+pub(crate) fn sample(sa: &[u64], level: usize) -> SuffixOrderSampledArray {
     let n = sa.len();
     let word_size = (util::log2(n as u64) + 1) as usize;
     debug_assert!(n > 0);
@@ -111,7 +111,7 @@ mod tests {
         ];
         for &(level, n) in cases.iter() {
             let sa = (0..n).collect::<Vec<u64>>();
-            let ssa = sample(sa, level);
+            let ssa = sample(&sa, level);
             for i in 0..n {
                 let v = ssa.get(i);
                 if i & ((1 << level) - 1) == 0 {

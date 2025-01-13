@@ -1,4 +1,4 @@
-use crate::character::Character;
+use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
@@ -33,7 +33,8 @@ where
     T: Character,
     C: Converter<T>,
 {
-    /// Create a new RLFM-Index from a text.
+    /// Create a new RLFM-Index from a text. The index only supports the count
+    /// operation.
     ///
     /// - `text` is a vector of [`Character`]s.
     ///
@@ -42,70 +43,8 @@ where
     ///   restrict the alphabet. Use [`converter::RangeConverter`] if you can
     ///   contrain characters to a particular range. See [`converter`] for more
     ///   details.
-    ///
-    /// - `sampler` is an [`ArraySampler`] used to sample the suffix array to
-    ///   construct the index.
-    pub fn count_only(mut text: Vec<T>, converter: C) -> Self {
-        if !text[text.len() - 1].is_zero() {
-            text.push(T::zero());
-        }
-        let n = text.len();
-        let m = converter.len();
-        let sa = sais::sais(&text, &converter);
-
-        let mut c0 = T::zero();
-        // sequence of run heads
-        let mut s = Vec::new();
-        // sequence of run lengths
-        // run length `l` is encoded as 10^{l-1}
-        let mut b = BitVec::new();
-        let mut runs_by_char: Vec<Vec<usize>> = vec![vec![]; m as usize];
-        for &k in &sa {
-            let k = k as usize;
-            let c = converter.convert(if k > 0 { text[k - 1] } else { text[n - 1] });
-            // We do not allow consecutive occurrences of zeroes,
-            // so text[sa[0] - 1] = text[n - 2] is not zero.
-            if c0 != c {
-                s.push(c);
-                b.append(true);
-                runs_by_char[c.into() as usize].push(1);
-            } else {
-                b.append(false);
-                match runs_by_char[c.into() as usize].last_mut() {
-                    Some(r) => *r += 1,
-                    None => unreachable!(),
-                };
-            }
-            c0 = c;
-        }
-        let s: Vec<u64> = s.into_iter().map(|c| c.into()).collect();
-        let s = WaveletMatrix::from_slice(&s, (util::log2(m - 1) + 1) as u16);
-        let mut bp = BitVec::new();
-        let mut cs = vec![0u64; m as usize];
-        let mut c = 0;
-        for (rs, ci) in runs_by_char.into_iter().zip(&mut cs) {
-            *ci = c;
-            c += rs.len() as u64;
-            for r in rs {
-                bp.append(true);
-                for _ in 0..(r - 1) {
-                    bp.append(false);
-                }
-            }
-        }
-
-        let b = RsVec::from_bit_vec(b);
-        let bp = RsVec::from_bit_vec(bp);
-        RLFMIndex {
-            converter,
-            suffix_array: (),
-            s,
-            b,
-            bp,
-            cs,
-            len: n as u64,
-            _t: std::marker::PhantomData::<T>,
-        }
+    pub fn count_only(text: Vec<T>, converter: C) -> Self {
+        Self::create(text, converter, |_sa| ())
     }
 }
 
@@ -114,7 +53,8 @@ where
     T: Character,
     C: Converter<T>,
 {
-    /// Create a new RLFM-Index from a text.
+    /// Create a new RLFM-Index from a text. The index supports both the count
+    /// and locate operations.
     ///
     /// - `text` is a vector of [`Character`]s.
     ///
@@ -124,12 +64,25 @@ where
     ///   contrain characters to a particular range. See [`converter`] for more
     ///   details.
     ///
-    /// - `sampler` is an [`ArraySampler`] used to sample the suffix array to
-    ///   construct the index.
-    pub fn new(mut text: Vec<T>, converter: C, level: usize) -> Self {
-        if !text[text.len() - 1].is_zero() {
-            text.push(T::zero());
-        }
+    /// - `level` is the sampling level to use for position lookup. A sampling
+    ///   level of 0 means the most memory is used (a full suffix-array is
+    ///   retained), while looking up positions is faster. A sampling level of
+    ///   1 means half the memory is used, but looking up positions is slower.
+    ///   Each increase in level halves the memory usage but slows down
+    ///   position lookup.
+    pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
+        Self::create(text, converter, |sa| suffix_array::sample(sa, level))
+    }
+}
+
+impl<T, C, S> RLFMIndex<T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    fn create(text: Vec<T>, converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
+        let text = prepare_text(text);
+
         let n = text.len();
         let m = converter.len();
         let sa = sais::sais(&text, &converter);
@@ -179,7 +132,7 @@ where
         let bp = RsVec::from_bit_vec(bp);
         RLFMIndex {
             converter,
-            suffix_array: suffix_array::sample(sa, level),
+            suffix_array: get_sample(&sa),
             s,
             b,
             bp,
@@ -188,13 +141,7 @@ where
             _t: std::marker::PhantomData::<T>,
         }
     }
-}
 
-impl<T, C, S> RLFMIndex<T, C, S>
-where
-    T: Character,
-    C: Converter<T>,
-{
     /// The amount of repeated runs in the text.
     pub fn runs(&self) -> u64 {
         self.s.len() as u64

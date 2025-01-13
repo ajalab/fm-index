@@ -1,4 +1,4 @@
-use crate::character::Character;
+use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
@@ -29,7 +29,7 @@ where
     T: Character,
     C: Converter<T>,
 {
-    /// Create a new FM-Index from a text that only supports the count
+    /// Create a new FM-Index from a text. The index only supports the count
     /// operation.
     ///
     /// - `text` is a vector of [`Character`]s.
@@ -40,18 +40,7 @@ where
     ///   contrain characters to a particular range. See [`converter`] for more
     ///   details.
     pub fn count_only(text: Vec<T>, converter: C) -> Self {
-        let text = Self::prepare_text(text);
-        let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
-        let sa = sais::sais(&text, &converter);
-        let bw = Self::wavelet_matrix(text, &sa, &converter);
-
-        FMIndex {
-            cs,
-            bw,
-            converter,
-            suffix_array: (),
-            _t: std::marker::PhantomData::<T>,
-        }
+        Self::create(text, converter, |_| ())
     }
 }
 impl<T, C> FMIndex<T, C, SuffixOrderSampledArray>
@@ -59,8 +48,8 @@ where
     T: Character,
     C: Converter<T>,
 {
-    /// Create a new FM-Index from a text that supports both the count and
-    /// locate operations.
+    /// Create a new FM-Index from a text. The index supports both the count
+    /// and locate operations.
     ///
     /// - `text` is a vector of [`Character`]s.
     ///
@@ -77,18 +66,7 @@ where
     ///   Each increase in level halves the memory usage but slows down
     ///   position lookup.
     pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
-        let text = Self::prepare_text(text);
-        let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
-        let sa = sais::sais(&text, &converter);
-        let bw = Self::wavelet_matrix(text, &sa, &converter);
-
-        FMIndex {
-            cs,
-            bw,
-            converter,
-            suffix_array: suffix_array::sample(sa, level),
-            _t: std::marker::PhantomData::<T>,
-        }
+        Self::create(text, converter, |sa| suffix_array::sample(sa, level))
     }
 }
 
@@ -98,11 +76,19 @@ where
     T: Character,
     C: Converter<T>,
 {
-    fn prepare_text(mut text: Vec<T>) -> Vec<T> {
-        if !text[text.len() - 1].is_zero() {
-            text.push(T::zero());
+    fn create(text: Vec<T>, converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
+        let text = prepare_text(text);
+        let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
+        let sa = sais::sais(&text, &converter);
+        let bw = Self::wavelet_matrix(text, &sa, &converter);
+
+        FMIndex {
+            cs,
+            bw,
+            converter,
+            suffix_array: get_sample(&sa),
+            _t: std::marker::PhantomData::<T>,
         }
-        text
     }
 
     fn wavelet_matrix(text: Vec<T>, sa: &[u64], converter: &C) -> WaveletMatrix {
