@@ -158,6 +158,30 @@ impl ArraySampler<SuffixOrderSampledArray> for SuffixOrderSampler {
     }
 }
 
+pub(crate) fn sample(sa: Vec<u64>, level: usize) -> SuffixOrderSampledArray {
+    let n = sa.len();
+    let word_size = (util::log2(n as u64) + 1) as usize;
+    debug_assert!(n > 0);
+    debug_assert!(
+        n > (1 << level),
+        "sampling level L must satisfy 2^L < text_len (L = {}, text_len = {})",
+        level,
+        n,
+    );
+    let sa_samples_len = ((n - 1) >> level) + 1;
+    let mut sa_samples = BitVec::with_capacity(sa_samples_len);
+    // fid::BitArray::with_word_size(word_size, sa_samples_len);
+    for i in 0..sa_samples_len {
+        sa_samples.append_bits(sa[i << level], word_size);
+    }
+    SuffixOrderSampledArray {
+        level,
+        word_size,
+        sa: sa_samples,
+        len: sa.len(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -3,9 +3,7 @@ use crate::character::Character;
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::suffix_array::{
-    private, ArraySampler, Locatable, NullSampler, SuffixOrderSampledArray, SuffixOrderSampler,
-};
+use crate::suffix_array::{self, private, Locatable, SuffixOrderSampledArray};
 use crate::util;
 use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
@@ -84,12 +82,11 @@ where
         let sa = sais::sais(&text, &converter);
         let bw = Self::wavelet_matrix(text, &sa, &converter);
 
-        let sampler = SuffixOrderSampler::new().level(level);
         FMIndex {
             cs,
             bw,
             converter,
-            suffix_array: sampler.sample::<private::Local>(sa),
+            suffix_array: suffix_array::sample(sa, level),
             _t: std::marker::PhantomData::<T>,
         }
     }
@@ -257,7 +254,6 @@ mod tests {
     use super::*;
     use crate::converter::RangeConverter;
     use crate::search::BackwardSearchIndex;
-    use crate::suffix_array::{NullSampler, SuffixOrderSampler};
 
     #[test]
     fn test_small() {
