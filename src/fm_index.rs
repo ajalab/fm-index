@@ -31,25 +31,21 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub fn count_only(mut text: Vec<T>, converter: C) -> Self {
-        if !text[text.len() - 1].is_zero() {
-            text.push(T::zero());
-        }
-        let n = text.len();
-
+    /// Create a new FM-Index from a text that only supports the count
+    /// operation.
+    ///
+    /// - `text` is a vector of [`Character`]s.
+    ///
+    /// - `converter` is a [`Converter`] is used to convert the characters to a
+    ///   smaller alphabet. Use [`converter::IdConverter`] if you don't need to
+    ///   restrict the alphabet. Use [`converter::RangeConverter`] if you can
+    ///   contrain characters to a particular range. See [`converter`] for more
+    ///   details.
+    pub fn count_only(text: Vec<T>, converter: C) -> Self {
+        let text = Self::prepare_text(text);
         let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
         let sa = sais::sais(&text, &converter);
-
-        let mut bw = vec![T::zero(); n];
-        for i in 0..n {
-            let k = sa[i] as usize;
-            if k > 0 {
-                bw[i] = converter.convert(text[k - 1]);
-            }
-        }
-        let bw = bw.into_iter().map(|c| c.into()).collect::<Vec<u64>>();
-
-        let bw = WaveletMatrix::from_slice(&bw, (util::log2(converter.len() - 1) + 1) as u16);
+        let bw = Self::wavelet_matrix(text, &sa, &converter);
 
         FMIndex {
             cs,
@@ -65,27 +61,30 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub fn new(mut text: Vec<T>, converter: C, level: usize) -> Self {
-        let sampler = SuffixOrderSampler::new().level(level);
-        if !text[text.len() - 1].is_zero() {
-            text.push(T::zero());
-        }
-        let n = text.len();
-
+    /// Create a new FM-Index from a text that supports both the count and
+    /// locate operations.
+    ///
+    /// - `text` is a vector of [`Character`]s.
+    ///
+    /// - `converter` is a [`Converter`] is used to convert the characters to a
+    ///   smaller alphabet. Use [`converter::IdConverter`] if you don't need to
+    ///   restrict the alphabet. Use [`converter::RangeConverter`] if you can
+    ///   contrain characters to a particular range. See [`converter`] for more
+    ///   details.
+    ///
+    /// - `level` is the sampling level to use for position lookup. A sampling
+    ///   level of 0 means the most memory is used (a full suffix-array is
+    ///   retained), while looking up positions is faster. A sampling level of
+    ///   1 means half the memory is used, but looking up positions is slower.
+    ///   Each increase in level halves the memory usage but slows down
+    ///   position lookup.
+    pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
+        let text = Self::prepare_text(text);
         let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
         let sa = sais::sais(&text, &converter);
+        let bw = Self::wavelet_matrix(text, &sa, &converter);
 
-        let mut bw = vec![T::zero(); n];
-        for i in 0..n {
-            let k = sa[i] as usize;
-            if k > 0 {
-                bw[i] = converter.convert(text[k - 1]);
-            }
-        }
-        let bw = bw.into_iter().map(|c| c.into()).collect::<Vec<u64>>();
-
-        let bw = WaveletMatrix::from_slice(&bw, (util::log2(converter.len() - 1) + 1) as u16);
-
+        let sampler = SuffixOrderSampler::new().level(level);
         FMIndex {
             cs,
             bw,
@@ -102,31 +101,15 @@ where
     T: Character,
     C: Converter<T>,
 {
-    /// Create a new FM-Index from a text.
-    ///
-    /// - `text` is a vector of [`Character`]s.
-    ///
-    /// - `converter` is a [`Converter`] is used to convert the characters to a
-    ///   smaller alphabet. Use [`converter::IdConverter`] if you don't need to
-    ///   restrict the alphabet. Use [`converter::RangeConverter`] if you can
-    ///   contrain characters to a particular range. See [`converter`] for more
-    ///   details.
-    ///
-    /// - `sampler` is an [`ArraySampler`] used to sample the suffix array to
-    ///   construct the index.
-    fn with_sampler<B: ArraySampler<S>>(
-        mut text: Vec<T>,
-        converter: C,
-        sampler: B,
-    ) -> FMIndex<T, C, S> {
+    fn prepare_text(mut text: Vec<T>) -> Vec<T> {
         if !text[text.len() - 1].is_zero() {
             text.push(T::zero());
         }
+        text
+    }
+
+    fn wavelet_matrix(text: Vec<T>, sa: &[u64], converter: &C) -> WaveletMatrix {
         let n = text.len();
-
-        let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
-        let sa = sais::sais(&text, &converter);
-
         let mut bw = vec![T::zero(); n];
         for i in 0..n {
             let k = sa[i] as usize;
@@ -136,15 +119,7 @@ where
         }
         let bw = bw.into_iter().map(|c| c.into()).collect::<Vec<u64>>();
 
-        let bw = WaveletMatrix::from_slice(&bw, (util::log2(converter.len() - 1) + 1) as u16);
-
-        FMIndex {
-            cs,
-            bw,
-            converter,
-            suffix_array: sampler.sample::<private::Local>(sa),
-            _t: std::marker::PhantomData::<T>,
-        }
+        WaveletMatrix::from_slice(&bw, (util::log2(converter.len() - 1) + 1) as u16)
     }
 
     /// The length of the text.
