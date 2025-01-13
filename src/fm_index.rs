@@ -3,7 +3,7 @@ use crate::character::Character;
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::suffix_array::{ArraySampler, IndexWithSA, PartialArray};
+use crate::suffix_array::{ArraySampler, IndexWithSA, SuffixOrderSampledArray};
 use crate::util;
 use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
@@ -88,10 +88,7 @@ impl<T, C> FMIndex<T, C, ()> {
     }
 }
 
-impl<T, C, S> FMIndex<T, C, S>
-where
-    S: PartialArray,
-{
+impl<T, C> FMIndex<T, C, SuffixOrderSampledArray> {
     /// The size on the heap of the FM-Index.
     ///
     /// Sampled suffix array data is stored in this index.
@@ -171,11 +168,10 @@ where
     }
 }
 
-impl<T, C, S> IndexWithSA for FMIndex<T, C, S>
+impl<T, C> IndexWithSA for FMIndex<T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,
-    S: PartialArray,
 {
     fn get_sa(&self, mut i: u64) -> u64 {
         let mut steps = 0;

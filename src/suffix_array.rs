@@ -11,10 +11,10 @@ pub trait IndexWithSA {
     fn get_sa(&self, i: u64) -> u64;
 }
 
-pub(crate) trait PartialArray {
-    fn get(&self, i: u64) -> Option<u64>;
-    fn size(&self) -> usize;
-}
+// pub(crate) trait PartialArray {
+//     fn get(&self, i: u64) -> Option<u64>;
+//     fn size(&self) -> usize;
+// }
 
 /// A sampled suffix array, stored within the index.
 #[derive(Serialize, Deserialize)]
@@ -25,8 +25,8 @@ pub struct SuffixOrderSampledArray {
     len: usize,
 }
 
-impl PartialArray for SuffixOrderSampledArray {
-    fn get(&self, i: u64) -> Option<u64> {
+impl SuffixOrderSampledArray {
+    pub(crate) fn get(&self, i: u64) -> Option<u64> {
         debug_assert!(i < self.len as u64);
         if i & ((1 << self.level) - 1) == 0 {
             Some(
@@ -40,7 +40,7 @@ impl PartialArray for SuffixOrderSampledArray {
         }
     }
 
-    fn size(&self) -> usize {
+    pub(crate) fn size(&self) -> usize {
         std::mem::size_of::<Self>() + self.sa.heap_size()
     }
 }

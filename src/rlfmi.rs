@@ -3,7 +3,7 @@ use crate::character::Character;
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::suffix_array::{ArraySampler, IndexWithSA, PartialArray};
+use crate::suffix_array::{ArraySampler, IndexWithSA, SuffixOrderSampledArray};
 use crate::util;
 use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
@@ -140,10 +140,9 @@ where
     }
 }
 
-impl<T, C, S> RLFMIndex<T, C, S>
+impl<T, C> RLFMIndex<T, C, SuffixOrderSampledArray>
 where
     T: Character,
-    S: PartialArray,
 {
     /// The size on the heap of the FM-Index.
     ///
@@ -244,11 +243,10 @@ where
     }
 }
 
-impl<T, C, S> IndexWithSA for RLFMIndex<T, C, S>
+impl<T, C> IndexWithSA for RLFMIndex<T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,
-    S: PartialArray,
 {
     fn get_sa(&self, mut i: u64) -> u64 {
         let mut steps = 0;
