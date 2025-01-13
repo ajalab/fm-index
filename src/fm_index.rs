@@ -3,7 +3,7 @@ use crate::character::Character;
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::suffix_array::{ArraySampler, Locatable, SuffixOrderSampledArray};
+use crate::suffix_array::{private, ArraySampler, Locatable, SuffixOrderSampledArray};
 use crate::util;
 use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
@@ -173,7 +173,7 @@ where
     T: Character,
     C: Converter<T>,
 {
-    fn get_sa(&self, mut i: u64) -> u64 {
+    fn get_sa<L: private::IsLocal>(&self, mut i: u64) -> u64 {
         let mut steps = 0;
         loop {
             match self.suffix_array.get(i) {

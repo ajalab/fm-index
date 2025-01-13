@@ -7,14 +7,26 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 use vers_vecs::BitVec;
 
-pub trait Locatable {
-    fn get_sa(&self, i: u64) -> u64;
+pub(crate) mod private {
+    // https://jack.wrenn.fyi/blog/private-trait-methods/
+
+    // An effectively private type to encode locality. We make it uninhabited
+    // so we *cannot* accidentally leak it.
+    pub enum Local {}
+
+    // We pair it with a 'sealed' trait that is *only* implemented for `Local`.
+    pub trait IsLocal {}
+
+    impl IsLocal for Local {}
 }
 
-// pub(crate) trait PartialArray {
-//     fn get(&self, i: u64) -> Option<u64>;
-//     fn size(&self) -> usize;
-// }
+/// A trait for an index that supports locate queries.
+///
+/// This is only supported when [`SuffixOrderSampledArray`] is passed in.
+pub trait Locatable {
+    #[doc(hidden)]
+    fn get_sa<L: private::IsLocal>(&self, i: u64) -> u64;
+}
 
 /// A sampled suffix array, stored within the index.
 #[derive(Serialize, Deserialize)]

@@ -1,5 +1,5 @@
 use crate::iter::{BackwardIterableIndex, BackwardIterator, ForwardIterableIndex, ForwardIterator};
-use crate::suffix_array::Locatable;
+use crate::suffix_array::{private, Locatable};
 
 #[cfg(doc)]
 use crate::character::Character;
@@ -123,7 +123,7 @@ where
     pub fn locate(&self) -> Vec<u64> {
         let mut results: Vec<u64> = Vec::with_capacity((self.e - self.s) as usize);
         for k in self.s..self.e {
-            results.push(self.index.get_sa(k));
+            results.push(self.index.get_sa::<private::Local>(k));
         }
         results
     }
