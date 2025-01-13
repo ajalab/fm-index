@@ -24,7 +24,7 @@
 //! # Example
 //! ```
 //! use fm_index::converter::RangeConverter;
-//! use fm_index::{BackwardSearchIndex, FMIndex};
+//! use fm_index::FMIndex;
 //!
 //! // Prepare a text string to search for patterns.
 //! let text = concat!(
@@ -42,14 +42,16 @@
 //! // is used depends on the `level` arguments passed. `0` retains the full
 //! // information, but we don't need the whole array since we can interpolate
 //! // missing elements in a suffix array from others. A sampler will _sieve_ a
-//! // suffix array for this purpose.
+//! // suffix array for this purpose. Here we use a `level` of 2, store 1/4th of the
+//! // data.
+//! //
 //! // You can also use `FMIndex::count_only()` if you don't perform location
 //! // queries (disabled in type-level).
 //! let index = FMIndex::new(text, converter, 2);
 //!
 //! // Search for a pattern string.
 //! let pattern = "dolor";
-//! let search = index.search_backward(pattern);
+//! let search = index.search(pattern);
 //!
 //! // Count the number of occurrences.
 //! let n = search.count();
@@ -149,4 +151,4 @@ pub use crate::rlfmi::RLFMIndex;
 
 pub use character::Character;
 pub use iter::{BackwardIterableIndex, ForwardIterableIndex};
-pub use search::{BackwardSearchIndex, Search};
+pub use search::{Search, SearchIndex};

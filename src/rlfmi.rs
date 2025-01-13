@@ -2,9 +2,10 @@ use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
-use crate::sais;
+use crate::search::SearchIndex;
 use crate::suffix_array::{self, private, Locatable, SuffixOrderSampledArray};
 use crate::util;
+use crate::{sais, Search};
 use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
 use serde::{Deserialize, Serialize};
@@ -140,6 +141,17 @@ where
             len: n as u64,
             _t: std::marker::PhantomData::<T>,
         }
+    }
+
+    /// Search for a pattern in the text.
+    ///
+    /// Return a [`Search`] object with information about the search
+    /// result.
+    pub fn search<K>(&self, pattern: K) -> Search<Self>
+    where
+        K: AsRef<[T]>,
+    {
+        SearchIndex::search(self, pattern)
     }
 
     /// The amount of repeated runs in the text.
@@ -314,7 +326,6 @@ where
 mod tests {
     use super::*;
     use crate::converter::RangeConverter;
-    use crate::search::BackwardSearchIndex;
 
     #[test]
     fn test_count() {
@@ -332,7 +343,7 @@ mod tests {
         ];
         let rlfmi = RLFMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
         for (pattern, expected) in ans {
-            let search = rlfmi.search_backward(pattern);
+            let search = rlfmi.search(pattern);
             let actual = search.count();
             assert_eq!(
                 expected, actual,
@@ -360,7 +371,7 @@ mod tests {
         let fm_index = RLFMIndex::new(text, RangeConverter::new(b'a', b'z'), 2);
 
         for (pattern, positions) in ans {
-            let search = fm_index.search_backward(pattern);
+            let search = fm_index.search(pattern);
             let expected = positions.len() as u64;
             let actual = search.count();
             assert_eq!(
@@ -505,7 +516,7 @@ mod tests {
         let rlfmi = RLFMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
 
         for (s, r) in ans {
-            let search = rlfmi.search_backward(s);
+            let search = rlfmi.search(s);
             assert_eq!(search.get_range(), r);
         }
     }
@@ -514,7 +525,7 @@ mod tests {
     fn test_iter_backward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
         let index = RLFMIndex::count_only(text, RangeConverter::new(b' ', b'~'));
-        let search = index.search_backward("sit ");
+        let search = index.search("sit ");
         let mut prev_seq = search.iter_backward(0).take(6).collect::<Vec<_>>();
         prev_seq.reverse();
         assert_eq!(prev_seq, b"dolor ".to_owned());
@@ -524,7 +535,7 @@ mod tests {
     fn test_iter_forward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
         let index = RLFMIndex::count_only(text, RangeConverter::new(b' ', b'~'));
-        let search = index.search_backward("sit ");
+        let search = index.search("sit ");
         let next_seq = search.iter_forward(0).take(10).collect::<Vec<_>>();
         assert_eq!(next_seq, b"sit amet, ".to_owned());
     }

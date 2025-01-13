@@ -3,14 +3,21 @@ use crate::suffix_array::{private, Locatable};
 
 #[cfg(doc)]
 use crate::character::Character;
+#[cfg(doc)]
+use crate::fm_index::FMIndex;
+#[cfg(doc)]
+use crate::rlfmi::RLFMIndex;
 
-/// A search index that can be searched.
-pub trait BackwardSearchIndex: BackwardIterableIndex {
+/// A search index.
+///
+/// Using this trait, you can use [`FMIndex`] and [`RLFMIndex`]
+/// interchangeably.
+pub trait SearchIndex: BackwardIterableIndex {
     /// Search for a pattern in the text.
     ///
     /// Return a [`Search`] object with information about the search
     /// result.
-    fn search_backward<K>(&self, pattern: K) -> Search<Self>
+    fn search<K>(&self, pattern: K) -> Search<Self>
     where
         K: AsRef<[Self::T]>,
     {
@@ -18,7 +25,7 @@ pub trait BackwardSearchIndex: BackwardIterableIndex {
     }
 }
 
-impl<I: BackwardIterableIndex> BackwardSearchIndex for I {}
+impl<I: BackwardIterableIndex> SearchIndex for I {}
 
 /// An object containing the result of a search.
 ///
@@ -26,7 +33,7 @@ impl<I: BackwardIterableIndex> BackwardSearchIndex for I {}
 /// supplied with a sampled suffix array.
 pub struct Search<'a, I>
 where
-    I: BackwardSearchIndex,
+    I: SearchIndex,
 {
     index: &'a I,
     s: u64,
@@ -36,7 +43,7 @@ where
 
 impl<'a, I> Search<'a, I>
 where
-    I: BackwardSearchIndex,
+    I: SearchIndex,
 {
     fn new(index: &'a I) -> Search<'a, I> {
         Search {
@@ -101,7 +108,7 @@ where
 
 impl<I> Search<'_, I>
 where
-    I: BackwardSearchIndex + ForwardIterableIndex,
+    I: SearchIndex + ForwardIterableIndex,
 {
     /// Get an iterator that goes forwards through the text, producing
     /// [`Character`].
@@ -117,7 +124,7 @@ where
 
 impl<I> Search<'_, I>
 where
-    I: BackwardSearchIndex + Locatable,
+    I: SearchIndex + Locatable,
 {
     /// List the position of all occurrences.
     pub fn locate(&self) -> Vec<u64> {

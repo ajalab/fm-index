@@ -3,8 +3,9 @@ use crate::character::{prepare_text, Character};
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
+use crate::search::SearchIndex;
 use crate::suffix_array::{self, private, Locatable, SuffixOrderSampledArray};
-use crate::util;
+use crate::{util, Search};
 use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
 use serde::{Deserialize, Serialize};
@@ -103,6 +104,17 @@ where
         let bw = bw.into_iter().map(|c| c.into()).collect::<Vec<u64>>();
 
         WaveletMatrix::from_slice(&bw, (util::log2(converter.len() - 1) + 1) as u16)
+    }
+
+    /// Search for a pattern in the text.
+    ///
+    /// Return a [`Search`] object with information about the search
+    /// result.
+    pub fn search<K>(&self, pattern: K) -> Search<Self>
+    where
+        K: AsRef<[T]>,
+    {
+        SearchIndex::search(self, pattern)
     }
 
     /// The length of the text.
@@ -239,7 +251,6 @@ where
 mod tests {
     use super::*;
     use crate::converter::RangeConverter;
-    use crate::search::BackwardSearchIndex;
 
     #[test]
     fn test_small() {
@@ -259,7 +270,7 @@ mod tests {
         let fm_index = FMIndex::new(text, RangeConverter::new(b'a', b'z'), 2);
 
         for (pattern, positions) in ans {
-            let search = fm_index.search_backward(pattern);
+            let search = fm_index.search(pattern);
             let expected = positions.len() as u64;
             let actual = search.count();
             assert_eq!(
@@ -282,12 +293,12 @@ mod tests {
         let text = "miss\0issippi\0".to_string().into_bytes();
         let fm_index = FMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
 
-        assert_eq!(fm_index.search_backward("m").count(), 1);
-        assert_eq!(fm_index.search_backward("ssi").count(), 1);
-        assert_eq!(fm_index.search_backward("iss").count(), 2);
-        assert_eq!(fm_index.search_backward("p").count(), 2);
-        assert_eq!(fm_index.search_backward("\0").count(), 2);
-        assert_eq!(fm_index.search_backward("\0i").count(), 1);
+        assert_eq!(fm_index.search("m").count(), 1);
+        assert_eq!(fm_index.search("ssi").count(), 1);
+        assert_eq!(fm_index.search("iss").count(), 2);
+        assert_eq!(fm_index.search("p").count(), 2);
+        assert_eq!(fm_index.search("\0").count(), 2);
+        assert_eq!(fm_index.search("\0i").count(), 1);
     }
 
     #[test]
@@ -305,7 +316,7 @@ mod tests {
 
         for (pattern, positions) in ans {
             let pattern: Vec<u32> = pattern.chars().map(|c| c as u32).collect();
-            let search = fm_index.search_backward(pattern);
+            let search = fm_index.search(pattern);
             assert_eq!(search.count(), positions.len() as u64);
             let mut res = search.locate();
             res.sort();
@@ -342,9 +353,9 @@ mod tests {
         let word_pairs = vec![("ipsum", " dolor"), ("sit", " amet"), ("sed", " do")];
         let fm_index = FMIndex::new(text, RangeConverter::new(b' ', b'~'), 2);
         for (fst, snd) in word_pairs {
-            let search1 = fm_index.search_backward(snd).search_backward(fst);
+            let search1 = fm_index.search(snd).search_backward(fst);
             let concat = fst.to_owned() + snd;
-            let search2 = fm_index.search_backward(&concat);
+            let search2 = fm_index.search(&concat);
             assert!(search1.count() > 0);
             assert_eq!(search1.count(), search2.count());
             assert_eq!(search1.locate(), search2.locate());
@@ -355,7 +366,7 @@ mod tests {
     fn test_iter_backward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
         let index = FMIndex::count_only(text, RangeConverter::new(b' ', b'~'));
-        let search = index.search_backward("sit ");
+        let search = index.search("sit ");
         let mut prev_seq = search.iter_backward(0).take(6).collect::<Vec<_>>();
         prev_seq.reverse();
         assert_eq!(prev_seq, b"dolor ".to_owned());
@@ -365,7 +376,7 @@ mod tests {
     fn test_iter_forward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
         let index = FMIndex::count_only(text, RangeConverter::new(b' ', b'~'));
-        let search = index.search_backward("sit ");
+        let search = index.search("sit ");
         let next_seq = search.iter_forward(0).take(10).collect::<Vec<_>>();
         assert_eq!(next_seq, b"sit amet, ".to_owned());
     }
