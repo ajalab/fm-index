@@ -7,7 +7,7 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 use vers_vecs::BitVec;
 
-pub trait IndexWithSA {
+pub trait Locatable {
     fn get_sa(&self, i: u64) -> u64;
 }
 

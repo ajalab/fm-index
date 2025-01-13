@@ -1,5 +1,5 @@
 use crate::iter::{BackwardIterableIndex, BackwardIterator, ForwardIterableIndex, ForwardIterator};
-use crate::suffix_array::IndexWithSA;
+use crate::suffix_array::Locatable;
 
 #[cfg(doc)]
 use crate::character::Character;
@@ -117,7 +117,7 @@ where
 
 impl<I> Search<'_, I>
 where
-    I: BackwardSearchIndex + IndexWithSA,
+    I: BackwardSearchIndex + Locatable,
 {
     /// List the position of all occurrences.
     pub fn locate(&self) -> Vec<u64> {

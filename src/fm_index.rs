@@ -3,7 +3,7 @@ use crate::character::Character;
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::suffix_array::{ArraySampler, IndexWithSA, SuffixOrderSampledArray};
+use crate::suffix_array::{ArraySampler, Locatable, SuffixOrderSampledArray};
 use crate::util;
 use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
@@ -168,7 +168,7 @@ where
     }
 }
 
-impl<T, C> IndexWithSA for FMIndex<T, C, SuffixOrderSampledArray>
+impl<T, C> Locatable for FMIndex<T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,
