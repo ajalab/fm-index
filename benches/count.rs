@@ -1,4 +1,3 @@
-use fm_index::suffix_array::NullSampler;
 use fm_index::{BackwardSearchIndex, FMIndex, RLFMIndex};
 
 use criterion::{criterion_group, criterion_main};
@@ -23,10 +22,7 @@ fn prepare_rlfmindex(
 ) -> (impl BackwardSearchIndex<T = u8>, Vec<String>) {
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
-    (
-        RLFMIndex::new(text, converter, NullSampler::new()),
-        patterns,
-    )
+    (RLFMIndex::count_only(text, converter), patterns)
 }
 
 pub fn bench(c: &mut Criterion) {
