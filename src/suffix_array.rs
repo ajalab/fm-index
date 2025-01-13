@@ -76,8 +76,9 @@ impl fmt::Debug for SuffixOrderSampledArray {
 ///
 /// A sampler will _sieve_ a suffix array for this purpose.
 pub trait ArraySampler<S> {
+    #[doc(hidden)]
     /// Given a suffix array, sample it and create a sampled array.
-    fn sample(&self, sa: Vec<u64>) -> S;
+    fn sample<L: private::IsLocal>(&self, sa: Vec<u64>) -> S;
 }
 
 /// The `NullSampler` does not store any sampled information.
@@ -95,7 +96,7 @@ impl NullSampler {
 }
 
 impl ArraySampler<()> for NullSampler {
-    fn sample(&self, _sa: Vec<u64>) {}
+    fn sample<L: private::IsLocal>(&self, _sa: Vec<u64>) {}
 }
 
 /// A sampler that sieves the suffix array for information to retain.
@@ -132,7 +133,7 @@ impl SuffixOrderSampler {
 }
 
 impl ArraySampler<SuffixOrderSampledArray> for SuffixOrderSampler {
-    fn sample(&self, sa: Vec<u64>) -> SuffixOrderSampledArray {
+    fn sample<L: private::IsLocal>(&self, sa: Vec<u64>) -> SuffixOrderSampledArray {
         let n = sa.len();
         let word_size = (util::log2(n as u64) + 1) as usize;
         debug_assert!(n > 0);
@@ -175,7 +176,9 @@ mod tests {
         ];
         for &(level, n) in cases.iter() {
             let sa = (0..n).collect::<Vec<u64>>();
-            let ssa = SuffixOrderSampler::new().level(level).sample(sa);
+            let ssa = SuffixOrderSampler::new()
+                .level(level)
+                .sample::<private::Local>(sa);
             for i in 0..n {
                 let v = ssa.get(i);
                 if i & ((1 << level) - 1) == 0 {

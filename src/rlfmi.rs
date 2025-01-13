@@ -98,7 +98,7 @@ where
         let bp = RsVec::from_bit_vec(bp);
         RLFMIndex {
             converter,
-            suffix_array: sampler.sample(sa),
+            suffix_array: sampler.sample::<private::Local>(sa),
             s,
             b,
             bp,

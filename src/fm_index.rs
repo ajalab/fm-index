@@ -66,7 +66,7 @@ where
             cs,
             bw,
             converter,
-            suffix_array: sampler.sample(sa),
+            suffix_array: sampler.sample::<private::Local>(sa),
             _t: std::marker::PhantomData::<T>,
         }
     }
