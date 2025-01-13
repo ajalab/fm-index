@@ -143,6 +143,7 @@ mod fm_index;
 mod iter;
 mod rlfmi;
 mod sais;
+mod seal;
 mod search;
 mod util;
 

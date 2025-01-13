@@ -3,9 +3,9 @@ use crate::character::{prepare_text, Character};
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::search::SearchIndex;
-use crate::suffix_array::{self, private, Locatable, SuffixOrderSampledArray};
-use crate::util;
+use crate::suffix_array::{self, Locatable, SuffixOrderSampledArray};
 use crate::{sais, Search};
+use crate::{seal, util};
 use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
 use serde::{Deserialize, Serialize};
@@ -294,7 +294,7 @@ where
     T: Character,
     C: Converter<T>,
 {
-    fn get_sa<L: private::IsLocal>(&self, mut i: u64) -> u64 {
+    fn get_sa<L: seal::IsLocal>(&self, mut i: u64) -> u64 {
         let mut steps = 0;
         loop {
             match self.suffix_array.get(i) {
