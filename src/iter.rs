@@ -1,12 +1,11 @@
 use crate::converter::{Converter, IndexWithConverter};
 
-#[cfg(doc)]
 use crate::character::Character;
 
 /// A search index that can be searched backwards.
 pub trait BackwardIterableIndex: Sized {
     /// A [`Character`] type.
-    type T: Copy + Clone;
+    type T: Character;
 
     fn get_l(&self, i: u64) -> Self::T;
     fn lf_map(&self, i: u64) -> u64;
@@ -30,7 +29,7 @@ where
 
 impl<T, I> Iterator for BackwardIterator<'_, I>
 where
-    T: Copy + Clone,
+    T: Character,
     I: BackwardIterableIndex<T = T> + IndexWithConverter<T>,
 {
     type Item = <I as BackwardIterableIndex>::T;
@@ -44,7 +43,7 @@ where
 /// A search index that can be searched forwards.
 pub trait ForwardIterableIndex: Sized {
     /// A [`Character`] type.
-    type T: Copy + Clone;
+    type T: Character;
 
     fn get_f(&self, i: u64) -> Self::T;
     fn fl_map(&self, i: u64) -> u64;
@@ -68,7 +67,7 @@ where
 
 impl<T, I> Iterator for ForwardIterator<'_, I>
 where
-    T: Copy + Clone,
+    T: Character,
     I: ForwardIterableIndex<T = T> + IndexWithConverter<T>,
 {
     type Item = <I as ForwardIterableIndex>::T;

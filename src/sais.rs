@@ -6,11 +6,14 @@ use std::fmt::Debug;
 
 use vers_vecs::BitVec;
 
-use crate::converter::{Converter, IdConverter};
+use crate::{
+    converter::{Converter, IdConverter},
+    Character,
+};
 
 pub fn count_chars<T, C, K>(text: K, converter: &C) -> Vec<u64>
 where
-    T: Copy + Clone + Into<u64>,
+    T: Character,
     K: AsRef<[T]>,
     C: Converter<T>,
 {
@@ -84,7 +87,7 @@ fn is_lms(types: &BitVec, i: u64) -> bool {
 
 fn induced_sort<T, K, C>(text: K, converter: &C, types: &BitVec, occs: &[u64], sa: &mut [u64])
 where
-    T: Into<u64> + Copy + Clone + Ord,
+    T: Character,
     K: AsRef<[T]>,
     C: Converter<T>,
 {
@@ -115,7 +118,7 @@ where
 
 pub fn sais<T, C, K>(text: K, converter: &C) -> Vec<u64>
 where
-    T: Into<u64> + Copy + Clone + Ord + Debug,
+    T: Character,
     K: AsRef<[T]>,
     C: Converter<T>,
 {
@@ -138,7 +141,7 @@ where
 #[allow(clippy::cognitive_complexity)]
 fn sais_sub<T, C, K>(text: K, sa: &mut [u64], converter: &C)
 where
-    T: Into<u64> + Copy + Clone + Ord + Debug,
+    T: Character,
     K: AsRef<[T]>,
     C: Converter<T>,
 {

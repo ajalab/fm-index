@@ -10,7 +10,10 @@ use serde::{Deserialize, Serialize};
 ///
 /// A converter can be used to restrict a character of a type to a certain
 /// alphabet.
-pub trait Converter<T> {
+pub trait Converter<T>
+where
+    T: Character,
+{
     /// Convert a character to a new character in the restricted alphabet.
     fn convert(&self, c: T) -> T;
     /// Convert a character back to the original character.
@@ -27,7 +30,10 @@ pub trait Converter<T> {
 ///
 /// The null (zero) character is handled separately and is always accepted.
 #[derive(Serialize, Deserialize)]
-pub struct RangeConverter<T> {
+pub struct RangeConverter<T>
+where
+    T: Character,
+{
     min: T,
     max: T,
 }
@@ -84,7 +90,10 @@ impl IdConverter {
     }
 }
 
-impl<T> Converter<T> for IdConverter {
+impl<T> Converter<T> for IdConverter
+where
+    T: Character,
+{
     fn convert(&self, c: T) -> T {
         c
     }
@@ -97,7 +106,10 @@ impl<T> Converter<T> for IdConverter {
 }
 
 /// A way to obtain the converter for a given index.
-pub trait IndexWithConverter<T> {
+pub trait IndexWithConverter<T>
+where
+    T: Character,
+{
     /// The converter type.
     type C: Converter<T>;
 
