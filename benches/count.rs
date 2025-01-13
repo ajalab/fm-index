@@ -13,7 +13,7 @@ fn prepare_fmindex(
 ) -> (impl BackwardSearchIndex<T = u8>, Vec<String>) {
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
-    (FMIndex::new(text, converter, NullSampler::new()), patterns)
+    (FMIndex::count_only(text, converter), patterns)
 }
 
 fn prepare_rlfmindex(

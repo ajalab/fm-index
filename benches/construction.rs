@@ -15,7 +15,7 @@ pub fn bench(c: &mut Criterion) {
             b.iter_batched(
                 || common::binary_text_set(n, 0.5),
                 |(text, converter)| {
-                    FMIndex::new(text, converter, NullSampler::new());
+                    FMIndex::count_only(text, converter);
                 },
                 BatchSize::SmallInput,
             )

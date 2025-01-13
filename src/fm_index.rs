@@ -3,7 +3,9 @@ use crate::character::Character;
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::suffix_array::{private, ArraySampler, Locatable, SuffixOrderSampledArray};
+use crate::suffix_array::{
+    private, ArraySampler, Locatable, NullSampler, SuffixOrderSampledArray, SuffixOrderSampler,
+};
 use crate::util;
 use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
@@ -24,6 +26,76 @@ pub struct FMIndex<T, C, S> {
     _t: std::marker::PhantomData<T>,
 }
 
+impl<T, C> FMIndex<T, C, ()>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    pub fn count_only(mut text: Vec<T>, converter: C) -> Self {
+        if !text[text.len() - 1].is_zero() {
+            text.push(T::zero());
+        }
+        let n = text.len();
+
+        let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
+        let sa = sais::sais(&text, &converter);
+
+        let mut bw = vec![T::zero(); n];
+        for i in 0..n {
+            let k = sa[i] as usize;
+            if k > 0 {
+                bw[i] = converter.convert(text[k - 1]);
+            }
+        }
+        let bw = bw.into_iter().map(|c| c.into()).collect::<Vec<u64>>();
+
+        let bw = WaveletMatrix::from_slice(&bw, (util::log2(converter.len() - 1) + 1) as u16);
+
+        FMIndex {
+            cs,
+            bw,
+            converter,
+            suffix_array: (),
+            _t: std::marker::PhantomData::<T>,
+        }
+    }
+}
+impl<T, C> FMIndex<T, C, SuffixOrderSampledArray>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    pub fn new(mut text: Vec<T>, converter: C, level: usize) -> Self {
+        let sampler = SuffixOrderSampler::new().level(level);
+        if !text[text.len() - 1].is_zero() {
+            text.push(T::zero());
+        }
+        let n = text.len();
+
+        let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
+        let sa = sais::sais(&text, &converter);
+
+        let mut bw = vec![T::zero(); n];
+        for i in 0..n {
+            let k = sa[i] as usize;
+            if k > 0 {
+                bw[i] = converter.convert(text[k - 1]);
+            }
+        }
+        let bw = bw.into_iter().map(|c| c.into()).collect::<Vec<u64>>();
+
+        let bw = WaveletMatrix::from_slice(&bw, (util::log2(converter.len() - 1) + 1) as u16);
+
+        FMIndex {
+            cs,
+            bw,
+            converter,
+            suffix_array: sampler.sample::<private::Local>(sa),
+            _t: std::marker::PhantomData::<T>,
+        }
+    }
+}
+
 // TODO: Refactor types (Converter converts T -> u64)
 impl<T, C, S> FMIndex<T, C, S>
 where
@@ -42,7 +114,11 @@ where
     ///
     /// - `sampler` is an [`ArraySampler`] used to sample the suffix array to
     ///   construct the index.
-    pub fn new<B: ArraySampler<S>>(mut text: Vec<T>, converter: C, sampler: B) -> Self {
+    fn with_sampler<B: ArraySampler<S>>(
+        mut text: Vec<T>,
+        converter: C,
+        sampler: B,
+    ) -> FMIndex<T, C, S> {
         if !text[text.len() - 1].is_zero() {
             text.push(T::zero());
         }
@@ -223,11 +299,7 @@ mod tests {
             ("pps", vec![]),
         ];
 
-        let fm_index = FMIndex::new(
-            text,
-            RangeConverter::new(b'a', b'z'),
-            SuffixOrderSampler::new().level(2),
-        );
+        let fm_index = FMIndex::new(text, RangeConverter::new(b'a', b'z'), 2);
 
         for (pattern, positions) in ans {
             let search = fm_index.search_backward(pattern);
@@ -251,11 +323,8 @@ mod tests {
     #[test]
     fn test_small_contain_null() {
         let text = "miss\0issippi\0".to_string().into_bytes();
-        let fm_index = FMIndex::new(
-            text,
-            RangeConverter::new(b'a', b'z'),
-            SuffixOrderSampler::new().level(2),
-        );
+        let fm_index = FMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
+
         assert_eq!(fm_index.search_backward("m").count(), 1);
         assert_eq!(fm_index.search_backward("ssi").count(), 1);
         assert_eq!(fm_index.search_backward("iss").count(), 2);
@@ -275,11 +344,7 @@ mod tests {
             ("みん", vec![0, 3]),
             ("な", vec![2, 5, 10]),
         ];
-        let fm_index = FMIndex::new(
-            text,
-            RangeConverter::new('あ' as u32, 'ん' as u32),
-            SuffixOrderSampler::new().level(2),
-        );
+        let fm_index = FMIndex::new(text, RangeConverter::new('あ' as u32, 'ん' as u32), 2);
 
         for (pattern, positions) in ans {
             let pattern: Vec<u32> = pattern.chars().map(|c| c as u32).collect();
@@ -295,11 +360,7 @@ mod tests {
     fn test_lf_map() {
         let text = "mississippi".to_string().into_bytes();
         let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
-        let fm_index = FMIndex::new(
-            text,
-            RangeConverter::new(b'a', b'z'),
-            SuffixOrderSampler::new().level(2),
-        );
+        let fm_index = FMIndex::new(text, RangeConverter::new(b'a', b'z'), 2);
         let mut i = 0;
         for a in ans {
             i = fm_index.lf_map(i);
@@ -310,11 +371,7 @@ mod tests {
     #[test]
     fn test_fl_map() {
         let text = "mississippi".to_string().into_bytes();
-        let fm_index = FMIndex::new(
-            text,
-            RangeConverter::new(b'a', b'z'),
-            SuffixOrderSampler::new().level(2),
-        );
+        let fm_index = FMIndex::new(text, RangeConverter::new(b'a', b'z'), 2);
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
             let actual = fm_index.fl_map(i as u64);
@@ -326,11 +383,7 @@ mod tests {
     fn test_search_backward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
         let word_pairs = vec![("ipsum", " dolor"), ("sit", " amet"), ("sed", " do")];
-        let fm_index = FMIndex::new(
-            text,
-            RangeConverter::new(b' ', b'~'),
-            SuffixOrderSampler::new().level(2),
-        );
+        let fm_index = FMIndex::new(text, RangeConverter::new(b' ', b'~'), 2);
         for (fst, snd) in word_pairs {
             let search1 = fm_index.search_backward(snd).search_backward(fst);
             let concat = fst.to_owned() + snd;
@@ -344,7 +397,7 @@ mod tests {
     #[test]
     fn test_iter_backward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
-        let index = FMIndex::new(text, RangeConverter::new(b' ', b'~'), NullSampler::new());
+        let index = FMIndex::count_only(text, RangeConverter::new(b' ', b'~'));
         let search = index.search_backward("sit ");
         let mut prev_seq = search.iter_backward(0).take(6).collect::<Vec<_>>();
         prev_seq.reverse();
@@ -354,7 +407,7 @@ mod tests {
     #[test]
     fn test_iter_forward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
-        let index = FMIndex::new(text, RangeConverter::new(b' ', b'~'), NullSampler::new());
+        let index = FMIndex::count_only(text, RangeConverter::new(b' ', b'~'));
         let search = index.search_backward("sit ");
         let next_seq = search.iter_forward(0).take(10).collect::<Vec<_>>();
         assert_eq!(next_seq, b"sit amet, ".to_owned());
