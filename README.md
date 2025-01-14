@@ -30,8 +30,7 @@ fm-index = "0.2"
 ## Example
 ```rust
 use fm_index::converter::RangeConverter;
-use fm_index::suffix_array::SuffixOrderSampler;
-use fm_index::{BackwardSearchIndex, FMIndex};
+use fm_index::FMIndex;
 
 // Prepare a text string to search for patterns.
 let text = concat!(
@@ -45,12 +44,15 @@ let text = concat!(
 // `' '` ~ `'~'` represents a range of ASCII printable characters.
 let converter = RangeConverter::new(b' ', b'~');
 
-// To perform locate queries, we need to retain suffix array generated in the construction phase.
-// However, we don't need the whole array since we can interpolate missing elements in a suffix array from others.
-// A sampler will _sieve_ a suffix array for this purpose.
-// You can also use `NullSampler` if you don't perform location queries (disabled in type-level).
-let sampler = SuffixOrderSampler::new().level(2);
-let index = FMIndex::new(text, converter, sampler);
+// To perform locate queries, we need to use some storage. How much storage
+// is used depends on the `level` arguments passed. `0` retains the full
+// information, but we don't need the whole array since we can interpolate
+// missing elements in a suffix array from others. A sampler will _sieve_ a
+// suffix array for this purpose. Here we use a `level` of 2, store 1/4th of the 
+// data.
+// You can also use `FMIndex::count_only()` if you don't perform location
+// queries (disabled in type-level).
+let index = FMIndex::new(text, converter, 2);
 
 // Search for a pattern string.
 let pattern = "dolor";
@@ -110,15 +112,10 @@ It consists of
 - an array of size _O(σ)_ (_σ_: number of characters) which stores the number
   of characters smaller than a given character in run heads
 
-
-## Background
-
-
 ## Reference
 
 [^1]: Ferragina, P., & Manzini, G. (2000). Opportunistic data structures with
-applications. Annual Symposium on Foundations of Computer Science -
-Proceedings, 390–398. <https://doi.org/10.1109/sfcs.2000.892127>
+applications. Annual Symposium on Foundations of Computer Science \- Proceedings, 390–398. <https://doi.org/10.1109/sfcs.2000.892127>
 
 [^2]: Mäkinen, V., & Navarro, G. (2005). Succinct suffix arrays based on
 run-length encoding. In Lecture Notes in Computer Science (Vol. 3537).

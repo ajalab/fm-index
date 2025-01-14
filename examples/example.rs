@@ -1,6 +1,5 @@
 use fm_index::converter::RangeConverter;
-use fm_index::suffix_array::SuffixOrderSampler;
-use fm_index::{BackwardSearchIndex, FMIndex};
+use fm_index::FMIndex;
 
 fn main() {
     // Prepare a text string to search for patterns.
@@ -15,16 +14,18 @@ fn main() {
     // `' '` ~ `'~'` represents a range of ASCII printable characters.
     let converter = RangeConverter::new(b' ', b'~');
 
-    // To perform locate queries, we need to retain suffix array generated in the construction phase.
-    // However, we don't need the whole array since we can interpolate missing elements in a suffix array from others.
-    // A sampler will _sieve_ a suffix array for this purpose.
-    // You can also use `NullSampler` if you don't perform location queries (disabled in type-level).
-    let sampler = SuffixOrderSampler::new().level(2);
-    let index = FMIndex::new(text, converter, sampler);
+    // To perform locate queries, we need to use some storage. How much storage
+    // is used depends on the `level` arguments passed. `0` retains the full
+    // information, but we don't need the whole array since we can interpolate
+    // missing elements in a suffix array from others. A sampler will _sieve_ a
+    // suffix array for this purpose.
+    // You can also use `FMIndex::count_only()` if you don't perform location
+    // queries (disabled in type-level).
+    let index = FMIndex::new(text, converter, 2);
 
     // Search for a pattern string.
     let pattern = "dolor";
-    let search = index.search_backward(pattern);
+    let search = index.search(pattern);
 
     // Count the number of occurrences.
     let n = search.count();
@@ -46,6 +47,6 @@ fn main() {
     assert_eq!(postfix, b"dolore magna aliqua.".to_owned());
 
     // Search can be chained backward.
-    let search_chained = search.search_backward("et ");
+    let search_chained = search.search("et ");
     assert_eq!(search_chained.count(), 1);
 }

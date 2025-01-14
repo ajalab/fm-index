@@ -24,8 +24,7 @@
 //! # Example
 //! ```
 //! use fm_index::converter::RangeConverter;
-//! use fm_index::suffix_array::SuffixOrderSampler;
-//! use fm_index::{BackwardSearchIndex, FMIndex};
+//! use fm_index::FMIndex;
 //!
 //! // Prepare a text string to search for patterns.
 //! let text = concat!(
@@ -39,16 +38,20 @@
 //! // `' '` ~ `'~'` represents a range of ASCII printable characters.
 //! let converter = RangeConverter::new(b' ', b'~');
 //!
-//! // To perform locate queries, we need to retain suffix array generated in the construction phase.
-//! // However, we don't need the whole array since we can interpolate missing elements in a suffix array from others.
-//! // A sampler will _sieve_ a suffix array for this purpose.
-//! // You can also use `NullSampler` if you don't perform location queries (disabled in type-level).
-//! let sampler = SuffixOrderSampler::new().level(2);
-//! let index = FMIndex::new(text, converter, sampler);
+//! // To perform locate queries, we need to use some storage. How much storage
+//! // is used depends on the `level` arguments passed. `0` retains the full
+//! // information, but we don't need the whole array since we can interpolate
+//! // missing elements in a suffix array from others. A sampler will _sieve_ a
+//! // suffix array for this purpose. Here we use a `level` of 2, store 1/4th of the
+//! // data.
+//! //
+//! // You can also use `FMIndex::count_only()` if you don't perform location
+//! // queries (disabled in type-level).
+//! let index = FMIndex::new(text, converter, 2);
 //!
 //! // Search for a pattern string.
 //! let pattern = "dolor";
-//! let search = index.search_backward(pattern);
+//! let search = index.search(pattern);
 //!
 //! // Count the number of occurrences.
 //! let n = search.count();
@@ -70,7 +73,7 @@
 //! assert_eq!(postfix, b"dolore magna aliqua.".to_owned());
 //!
 //! // Search can be chained backward.
-//! let search_chained = search.search_backward("et ");
+//! let search_chained = search.search("et ");
 //! assert_eq!(search_chained.count(), 1);
 //! ```
 //!
@@ -114,8 +117,8 @@
 //! # Reference
 //!
 //! [^1]: Ferragina, P., & Manzini, G. (2000). Opportunistic data structures
-//!     with applications. Annual Symposium on Foundations of Computer Science - Proceedings,
-//!     390–398. <https://doi.org/10.1109/sfcs.2000.892127>
+//!     with applications. Annual Symposium on Foundations of Computer Science
+//!     \- Proceedings, 390–398. <https://doi.org/10.1109/sfcs.2000.892127>
 //!
 //! [^2]: Mäkinen, V., & Navarro, G. (2005). Succinct suffix arrays based on
 //!     run-length encoding. In Lecture Notes in Computer Science (Vol. 3537).
@@ -140,6 +143,7 @@ mod fm_index;
 mod iter;
 mod rlfmi;
 mod sais;
+mod seal;
 mod search;
 mod util;
 
@@ -147,5 +151,5 @@ pub use crate::fm_index::FMIndex;
 pub use crate::rlfmi::RLFMIndex;
 
 pub use character::Character;
-pub use iter::{BackwardIterableIndex, ForwardIterableIndex};
-pub use search::{BackwardSearchIndex, Search};
+pub use iter::{BackwardIterableIndex, BackwardIterator, ForwardIterableIndex, ForwardIterator};
+pub use search::{Search, SearchIndex};

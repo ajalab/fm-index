@@ -1,4 +1,3 @@
-use fm_index::suffix_array::NullSampler;
 use fm_index::{FMIndex, RLFMIndex};
 
 use criterion::{criterion_group, criterion_main};
@@ -15,7 +14,7 @@ pub fn bench(c: &mut Criterion) {
             b.iter_batched(
                 || common::binary_text_set(n, 0.5),
                 |(text, converter)| {
-                    FMIndex::new(text, converter, NullSampler::new());
+                    FMIndex::count_only(text, converter);
                 },
                 BatchSize::SmallInput,
             )
@@ -25,7 +24,7 @@ pub fn bench(c: &mut Criterion) {
             b.iter_batched(
                 || common::binary_text_set(n, 0.5),
                 |(text, converter)| {
-                    RLFMIndex::new(text, converter, NullSampler::new());
+                    RLFMIndex::count_only(text, converter);
                 },
                 BatchSize::SmallInput,
             )

@@ -1,24 +1,32 @@
 use crate::iter::{BackwardIterableIndex, BackwardIterator, ForwardIterableIndex, ForwardIterator};
-use crate::suffix_array::IndexWithSA;
+use crate::seal;
+use crate::suffix_array::HasPosition;
 
 #[cfg(doc)]
 use crate::character::Character;
+#[cfg(doc)]
+use crate::fm_index::FMIndex;
+#[cfg(doc)]
+use crate::rlfmi::RLFMIndex;
 
-/// A search index that can be searched.
-pub trait BackwardSearchIndex: BackwardIterableIndex {
+/// A search index.
+///
+/// Using this trait, you can use [`FMIndex`] and [`RLFMIndex`]
+/// interchangeably using generics.
+pub trait SearchIndex: BackwardIterableIndex {
     /// Search for a pattern in the text.
     ///
     /// Return a [`Search`] object with information about the search
     /// result.
-    fn search_backward<K>(&self, pattern: K) -> Search<Self>
+    fn search<K>(&self, pattern: K) -> Search<Self>
     where
         K: AsRef<[Self::T]>,
     {
-        Search::new(self).search_backward(pattern)
+        Search::new(self).search(pattern)
     }
 }
 
-impl<I: BackwardIterableIndex> BackwardSearchIndex for I {}
+impl<I: BackwardIterableIndex> SearchIndex for I {}
 
 /// An object containing the result of a search.
 ///
@@ -26,7 +34,7 @@ impl<I: BackwardIterableIndex> BackwardSearchIndex for I {}
 /// supplied with a sampled suffix array.
 pub struct Search<'a, I>
 where
-    I: BackwardSearchIndex,
+    I: SearchIndex,
 {
     index: &'a I,
     s: u64,
@@ -36,13 +44,13 @@ where
 
 impl<'a, I> Search<'a, I>
 where
-    I: BackwardSearchIndex,
+    I: SearchIndex,
 {
     fn new(index: &'a I) -> Search<'a, I> {
         Search {
             index,
             s: 0,
-            e: index.len(),
+            e: index.len::<seal::Local>(),
             pattern: vec![],
         }
     }
@@ -51,13 +59,13 @@ where
     ///
     /// This adds a prefix `pattern` to the existing pattern, and
     /// looks for those expanded patterns in the text.
-    pub fn search_backward<K: AsRef<[I::T]>>(&self, pattern: K) -> Self {
+    pub fn search<K: AsRef<[I::T]>>(&self, pattern: K) -> Self {
         let mut s = self.s;
         let mut e = self.e;
         let mut pattern = pattern.as_ref().to_vec();
         for &c in pattern.iter().rev() {
-            s = self.index.lf_map2(c, s);
-            e = self.index.lf_map2(c, e);
+            s = self.index.lf_map2::<seal::Local>(c, s);
+            e = self.index.lf_map2::<seal::Local>(c, e);
             if s == e {
                 break;
             }
@@ -95,13 +103,13 @@ where
         debug_assert!(m > 0, "cannot iterate from empty search result");
         debug_assert!(i < m, "{} is out of range", i);
 
-        self.index.iter_backward(self.s + i)
+        self.index.iter_backward::<seal::Local>(self.s + i)
     }
 }
 
 impl<I> Search<'_, I>
 where
-    I: BackwardSearchIndex + ForwardIterableIndex,
+    I: SearchIndex + ForwardIterableIndex,
 {
     /// Get an iterator that goes forwards through the text, producing
     /// [`Character`].
@@ -111,19 +119,19 @@ where
         debug_assert!(m > 0, "cannot iterate from empty search result");
         debug_assert!(i < m, "{} is out of range", i);
 
-        self.index.iter_forward(self.s + i)
+        self.index.iter_forward::<seal::Local>(self.s + i)
     }
 }
 
 impl<I> Search<'_, I>
 where
-    I: BackwardSearchIndex + IndexWithSA,
+    I: SearchIndex + HasPosition,
 {
     /// List the position of all occurrences.
     pub fn locate(&self) -> Vec<u64> {
         let mut results: Vec<u64> = Vec::with_capacity((self.e - self.s) as usize);
         for k in self.s..self.e {
-            results.push(self.index.get_sa(k));
+            results.push(self.index.get_sa::<seal::Local>(k));
         }
         results
     }
