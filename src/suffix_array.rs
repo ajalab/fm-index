@@ -1,3 +1,6 @@
+//! Suffix arrays, used to construct the index.
+//!
+//! Can also be used in sampled fashion to perform locate queries.
 use crate::util;
 use std::fmt;
 
@@ -8,11 +11,12 @@ pub trait IndexWithSA {
     fn get_sa(&self, i: u64) -> u64;
 }
 
-pub trait PartialArray {
+pub(crate) trait PartialArray {
     fn get(&self, i: u64) -> Option<u64>;
     fn size(&self) -> usize;
 }
 
+/// A sampled suffix array, stored within the index.
 #[derive(Serialize, Deserialize)]
 pub struct SuffixOrderSampledArray {
     level: usize,
@@ -53,14 +57,26 @@ impl fmt::Debug for SuffixOrderSampledArray {
     }
 }
 
+/// In order to perform locate queries, we need to retain the suffix array that
+/// is generated during the construction phase. But we do not need the whole
+/// array as we can interpolate missing elements in a suffix array from other
+/// elements.
+///
+/// A sampler will _sieve_ a suffix array for this purpose.
 pub trait ArraySampler<S> {
+    /// Given a suffix array, sample it and create a sampled array.
     fn sample(&self, sa: Vec<u64>) -> S;
 }
 
+/// The `NullSampler` does not store any sampled information.
+///
+/// If you do not need `locate` queries you can use this sampler.
+/// You won't have access to `locate` on the type level.
 #[derive(Default)]
 pub struct NullSampler {}
 
 impl NullSampler {
+    /// Construct a new null sampler.
     pub fn new() -> Self {
         NullSampler {}
     }
@@ -70,16 +86,33 @@ impl ArraySampler<()> for NullSampler {
     fn sample(&self, _sa: Vec<u64>) {}
 }
 
+/// A sampler that sieves the suffix array for information to retain.
+///
+/// Use this if you want to perform `locate` queries.
 #[derive(Default)]
 pub struct SuffixOrderSampler {
     level: usize,
 }
 
 impl SuffixOrderSampler {
+    /// Construct a new suffix order sampler.
+    ///
+    /// Defaults to level 0, meaning the information in the suffix array
+    /// is completely retained, with `O(N)` space complexity where `N`
+    /// is the size of the text.
     pub fn new() -> Self {
         SuffixOrderSampler { level: 0 }
     }
 
+    /// Set the sampling level.
+    ///
+    /// The sampling level can be used to reduce the amount of information
+    /// retained at the cost of run-time performance.
+    ///
+    /// The sampling level `L` affects the space complexity of the sampled
+    /// array as `O(N / 2^L)` where `N` is the size of the text.
+    ///
+    /// The sampling level `L` must satisfy `2^L < N`.
     pub fn level(mut self, level: usize) -> Self {
         self.level = level;
         self

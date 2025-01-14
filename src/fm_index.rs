@@ -1,4 +1,6 @@
 use crate::character::Character;
+#[cfg(doc)]
+use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
 use crate::suffix_array::{ArraySampler, IndexWithSA, PartialArray};
@@ -8,6 +10,11 @@ use crate::{BackwardIterableIndex, ForwardIterableIndex};
 use serde::{Deserialize, Serialize};
 use vers_vecs::WaveletMatrix;
 
+/// An FM-Index, a succinct full-text index.
+///
+/// The FM-Index is both a search index as well as compact
+/// representation of the text, all within less space than the
+/// original text.
 #[derive(Serialize, Deserialize)]
 pub struct FMIndex<T, C, S> {
     bw: WaveletMatrix,
@@ -23,6 +30,18 @@ where
     T: Character,
     C: Converter<T>,
 {
+    /// Create a new FM-Index from a text.
+    ///
+    /// - `text` is a vector of [`Character`]s.
+    ///
+    /// - `converter` is a [`Converter`] is used to convert the characters to a
+    ///   smaller alphabet. Use [`converter::IdConverter`] if you don't need to
+    ///   restrict the alphabet. Use [`converter::RangeConverter`] if you can
+    ///   contrain characters to a particular range. See [`converter`] for more
+    ///   details.
+    ///
+    /// - `sampler` is an [`ArraySampler`] used to sample the suffix array to
+    ///   construct the index.
     pub fn new<B: ArraySampler<S>>(mut text: Vec<T>, converter: C, sampler: B) -> Self {
         if !text[text.len() - 1].is_zero() {
             text.push(T::zero());
@@ -52,12 +71,16 @@ where
         }
     }
 
+    /// The length of the text.
     pub fn len(&self) -> u64 {
         self.bw.len() as u64
     }
 }
 
 impl<T, C> FMIndex<T, C, ()> {
+    /// The size on the heap of the FM-Index.
+    ///
+    /// No suffix array information is stored in this index.
     pub fn size(&self) -> usize {
         std::mem::size_of::<Self>()
             + self.bw.heap_size()
@@ -69,6 +92,9 @@ impl<T, C, S> FMIndex<T, C, S>
 where
     S: PartialArray,
 {
+    /// The size on the heap of the FM-Index.
+    ///
+    /// Sampled suffix array data is stored in this index.
     pub fn size(&self) -> usize {
         std::mem::size_of::<Self>()
             + self.bw.heap_size()
@@ -170,6 +196,7 @@ where
 impl<T, C, S> IndexWithConverter<T> for FMIndex<T, C, S>
 where
     C: Converter<T>,
+    T: Character,
 {
     type C = C;
 
@@ -300,7 +327,7 @@ mod tests {
     }
 
     #[test]
-    fn test_search_backword() {
+    fn test_search_backward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
         let word_pairs = vec![("ipsum", " dolor"), ("sit", " amet"), ("sed", " do")];
         let fm_index = FMIndex::new(
