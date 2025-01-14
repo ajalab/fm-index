@@ -14,7 +14,10 @@ use vers_vecs::{BitVec, RsVec, WaveletMatrix};
 ///
 /// This can be more space-efficient than the FM-index, but is slower.
 #[derive(Serialize, Deserialize)]
-pub struct RLFMIndex<T, C, S> {
+pub struct RLFMIndex<T, C, S>
+where
+    T: Character,
+{
     converter: C,
     suffix_array: S,
     s: WaveletMatrix,
@@ -121,7 +124,10 @@ where
     }
 }
 
-impl<T, C> RLFMIndex<T, C, ()> {
+impl<T, C> RLFMIndex<T, C, ()>
+where
+    T: Character,
+{
     /// Heap size of the index.
     ///
     /// No suffix array information is stored in this index.
@@ -136,6 +142,7 @@ impl<T, C> RLFMIndex<T, C, ()> {
 
 impl<T, C, S> RLFMIndex<T, C, S>
 where
+    T: Character,
     S: PartialArray,
 {
     /// The size on the heap of the FM-Index.
@@ -261,6 +268,7 @@ where
 
 impl<T, C, S> IndexWithConverter<T> for RLFMIndex<T, C, S>
 where
+    T: Character,
     C: Converter<T>,
 {
     type C = C;

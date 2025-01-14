@@ -1,5 +1,3 @@
-#![warn(missing_docs)]
-
 //! This crate provides implementations of *FM-Index* and its variants.
 //!
 //! FM-Index, originally proposed by Paolo Ferragina and Giovanni Manzini [^1],
@@ -132,6 +130,7 @@
 //!     String Processing and Information Retrieval. SPIRE 2012.
 //!     <https://doi.org/10.1007/978-3-642-34109-0_18>
 #![allow(clippy::len_without_is_empty)]
+#![warn(missing_docs)]
 
 pub mod converter;
 pub mod suffix_array;
