@@ -1,6 +1,6 @@
 use crate::iter::{BackwardIterableIndex, BackwardIterator, ForwardIterableIndex, ForwardIterator};
 use crate::seal;
-use crate::suffix_array::Locatable;
+use crate::suffix_array::HasPosition;
 
 #[cfg(doc)]
 use crate::character::Character;
@@ -12,7 +12,7 @@ use crate::rlfmi::RLFMIndex;
 /// A search index.
 ///
 /// Using this trait, you can use [`FMIndex`] and [`RLFMIndex`]
-/// interchangeably.
+/// interchangeably using generics.
 pub trait SearchIndex: BackwardIterableIndex {
     /// Search for a pattern in the text.
     ///
@@ -22,7 +22,7 @@ pub trait SearchIndex: BackwardIterableIndex {
     where
         K: AsRef<[Self::T]>,
     {
-        Search::new(self).search_backward(pattern)
+        Search::new(self).search(pattern)
     }
 }
 
@@ -50,7 +50,7 @@ where
         Search {
             index,
             s: 0,
-            e: index.len(),
+            e: index.len::<seal::Local>(),
             pattern: vec![],
         }
     }
@@ -59,13 +59,13 @@ where
     ///
     /// This adds a prefix `pattern` to the existing pattern, and
     /// looks for those expanded patterns in the text.
-    pub fn search_backward<K: AsRef<[I::T]>>(&self, pattern: K) -> Self {
+    pub fn search<K: AsRef<[I::T]>>(&self, pattern: K) -> Self {
         let mut s = self.s;
         let mut e = self.e;
         let mut pattern = pattern.as_ref().to_vec();
         for &c in pattern.iter().rev() {
-            s = self.index.lf_map2(c, s);
-            e = self.index.lf_map2(c, e);
+            s = self.index.lf_map2::<seal::Local>(c, s);
+            e = self.index.lf_map2::<seal::Local>(c, e);
             if s == e {
                 break;
             }
@@ -103,7 +103,7 @@ where
         debug_assert!(m > 0, "cannot iterate from empty search result");
         debug_assert!(i < m, "{} is out of range", i);
 
-        self.index.iter_backward(self.s + i)
+        self.index.iter_backward::<seal::Local>(self.s + i)
     }
 }
 
@@ -119,13 +119,13 @@ where
         debug_assert!(m > 0, "cannot iterate from empty search result");
         debug_assert!(i < m, "{} is out of range", i);
 
-        self.index.iter_forward(self.s + i)
+        self.index.iter_forward::<seal::Local>(self.s + i)
     }
 }
 
 impl<I> Search<'_, I>
 where
-    I: SearchIndex + Locatable,
+    I: SearchIndex + HasPosition,
 {
     /// List the position of all occurrences.
     pub fn locate(&self) -> Vec<u64> {

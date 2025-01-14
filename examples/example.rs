@@ -47,6 +47,6 @@ fn main() {
     assert_eq!(postfix, b"dolore magna aliqua.".to_owned());
 
     // Search can be chained backward.
-    let search_chained = search.search_backward("et ");
+    let search_chained = search.search("et ");
     assert_eq!(search_chained.count(), 1);
 }

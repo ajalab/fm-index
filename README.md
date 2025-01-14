@@ -112,15 +112,10 @@ It consists of
 - an array of size _O(σ)_ (_σ_: number of characters) which stores the number
   of characters smaller than a given character in run heads
 
-
-## Background
-
-
 ## Reference
 
 [^1]: Ferragina, P., & Manzini, G. (2000). Opportunistic data structures with
-applications. Annual Symposium on Foundations of Computer Science -
-Proceedings, 390–398. <https://doi.org/10.1109/sfcs.2000.892127>
+applications. Annual Symposium on Foundations of Computer Science \- Proceedings, 390–398. <https://doi.org/10.1109/sfcs.2000.892127>
 
 [^2]: Mäkinen, V., & Navarro, G. (2005). Succinct suffix arrays based on
 run-length encoding. In Lecture Notes in Computer Science (Vol. 3537).

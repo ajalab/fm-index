@@ -1,19 +1,25 @@
 use crate::converter::{Converter, IndexWithConverter};
 
 use crate::character::Character;
+use crate::seal;
 
 /// A search index that can be searched backwards.
 pub trait BackwardIterableIndex: Sized {
     /// A [`Character`] type.
     type T: Character;
 
-    fn get_l(&self, i: u64) -> Self::T;
-    fn lf_map(&self, i: u64) -> u64;
-    fn lf_map2(&self, c: Self::T, i: u64) -> u64;
-    fn len(&self) -> u64;
+    #[doc(hidden)]
+    fn get_l<L: seal::IsLocal>(&self, i: u64) -> Self::T;
+    #[doc(hidden)]
+    fn lf_map<L: seal::IsLocal>(&self, i: u64) -> u64;
+    #[doc(hidden)]
+    fn lf_map2<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64;
+    #[doc(hidden)]
+    fn len<L: seal::IsLocal>(&self) -> u64;
 
-    fn iter_backward(&self, i: u64) -> BackwardIterator<Self> {
-        debug_assert!(i < self.len());
+    #[doc(hidden)]
+    fn iter_backward<L: seal::IsLocal>(&self, i: u64) -> BackwardIterator<Self> {
+        debug_assert!(i < self.len::<seal::Local>());
         BackwardIterator { index: self, i }
     }
 }
@@ -34,8 +40,8 @@ where
 {
     type Item = <I as BackwardIterableIndex>::T;
     fn next(&mut self) -> Option<Self::Item> {
-        let c = self.index.get_l(self.i);
-        self.i = self.index.lf_map(self.i);
+        let c = self.index.get_l::<seal::Local>(self.i);
+        self.i = self.index.lf_map::<seal::Local>(self.i);
         Some(self.index.get_converter().convert_inv(c))
     }
 }
@@ -45,13 +51,18 @@ pub trait ForwardIterableIndex: Sized {
     /// A [`Character`] type.
     type T: Character;
 
-    fn get_f(&self, i: u64) -> Self::T;
-    fn fl_map(&self, i: u64) -> u64;
-    fn fl_map2(&self, c: Self::T, i: u64) -> u64;
-    fn len(&self) -> u64;
+    #[doc(hidden)]
+    fn get_f<L: seal::IsLocal>(&self, i: u64) -> Self::T;
+    #[doc(hidden)]
+    fn fl_map<L: seal::IsLocal>(&self, i: u64) -> u64;
+    #[doc(hidden)]
+    fn fl_map2<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64;
+    #[doc(hidden)]
+    fn len<L: seal::IsLocal>(&self) -> u64;
 
-    fn iter_forward(&self, i: u64) -> ForwardIterator<Self> {
-        debug_assert!(i < self.len());
+    #[doc(hidden)]
+    fn iter_forward<L: seal::IsLocal>(&self, i: u64) -> ForwardIterator<Self> {
+        debug_assert!(i < self.len::<L>());
         ForwardIterator { index: self, i }
     }
 }
@@ -72,8 +83,8 @@ where
 {
     type Item = <I as ForwardIterableIndex>::T;
     fn next(&mut self) -> Option<Self::Item> {
-        let c = self.index.get_f(self.i);
-        self.i = self.index.fl_map(self.i);
+        let c = self.index.get_f::<seal::Local>(self.i);
+        self.i = self.index.fl_map::<seal::Local>(self.i);
         Some(self.index.get_converter().convert_inv(c))
     }
 }

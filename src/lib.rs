@@ -73,7 +73,7 @@
 //! assert_eq!(postfix, b"dolore magna aliqua.".to_owned());
 //!
 //! // Search can be chained backward.
-//! let search_chained = search.search_backward("et ");
+//! let search_chained = search.search("et ");
 //! assert_eq!(search_chained.count(), 1);
 //! ```
 //!
@@ -118,7 +118,7 @@
 //!
 //! [^1]: Ferragina, P., & Manzini, G. (2000). Opportunistic data structures
 //!     with applications. Annual Symposium on Foundations of Computer Science
-//!     - Proceedings, 390–398. <https://doi.org/10.1109/sfcs.2000.892127>
+//!     \- Proceedings, 390–398. <https://doi.org/10.1109/sfcs.2000.892127>
 //!
 //! [^2]: Mäkinen, V., & Navarro, G. (2005). Succinct suffix arrays based on
 //!     run-length encoding. In Lecture Notes in Computer Science (Vol. 3537).
