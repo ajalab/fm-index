@@ -8,6 +8,7 @@ use crate::character::Character;
 use crate::fm_index::FMIndex;
 #[cfg(doc)]
 use crate::rlfmi::RLFMIndex;
+use crate::text_builder::TextId;
 
 /// A search index.
 ///
@@ -134,5 +135,81 @@ where
             results.push(self.index.get_sa::<seal::Local>(k));
         }
         results
+    }
+
+    /// List the position of all occurrences with an iterator.
+    pub fn locate_iter(&self) -> LocationInfoIterator<I> {
+        LocationInfoIterator::new(self.index, self.s, self.e)
+    }
+}
+
+pub struct LocationInfoIterator<'a, I>
+where
+    I: SearchIndex + HasPosition,
+{
+    index: &'a I,
+    k_iterator: std::ops::Range<u64>,
+}
+
+impl<'a, I> LocationInfoIterator<'a, I>
+where
+    I: SearchIndex + HasPosition,
+{
+    pub fn new(index: &'a I, start: u64, end: u64) -> Self {
+        LocationInfoIterator {
+            index,
+            k_iterator: start..end,
+        }
+    }
+}
+
+impl<'a, I> Iterator for LocationInfoIterator<'a, I>
+where
+    I: SearchIndex + HasPosition,
+{
+    type Item = LocationInfo<'a, I>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let k = self.k_iterator.next()?;
+        Some(LocationInfo {
+            index: self.index,
+            k,
+        })
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.k_iterator.size_hint()
+    }
+}
+
+pub struct LocationInfo<'a, I>
+where
+    I: SearchIndex + HasPosition,
+{
+    index: &'a I,
+    k: u64,
+}
+
+impl<I> LocationInfo<'_, I>
+where
+    I: SearchIndex + HasPosition,
+{
+    /// the position of a location within the larger text
+    pub fn position(&self) -> u64 {
+        self.index.get_sa::<seal::Local>(self.k)
+    }
+
+    /// the text id of the location
+    ///
+    /// Each 0 separated text has a unique id identifying it.
+    pub fn text_id(&self) -> TextId {
+        todo!()
+    }
+
+    /// the original text at this text id
+    ///
+    /// This does not include the 0 characters at its boundaries.
+    pub fn text(&self) -> &[I::T] {
+        todo!()
     }
 }

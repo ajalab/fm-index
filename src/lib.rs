@@ -145,6 +145,7 @@ mod rlfmi;
 mod sais;
 mod seal;
 mod search;
+mod text_builder;
 mod util;
 
 pub use crate::fm_index::FMIndex;
