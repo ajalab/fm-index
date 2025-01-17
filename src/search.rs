@@ -25,6 +25,53 @@ pub trait SearchIndex: BackwardIterableIndex {
     {
         Search::new(self).search(pattern)
     }
+
+    // If we created a HasDoc trait (or something better named) for those
+    // indexes that maintain the `Doc` structure, we could move the following
+    // methods into a trait that depends on that.
+
+    /// Given a text id, return the text associated with it.
+    ///
+    /// This is the actual text, excluding zero separators.
+    fn text(&self, id: TextId) -> &[Self::T] {
+        todo!()
+    }
+
+    /// Search for texts that contain pattern.
+    ///
+    ///
+    /// This is identical to search(), except if pattern were to
+    /// contain a null character. (should we allow it?)
+    fn search_contains<K>(&self, pattern: K) -> Search<Self>
+    where
+        K: AsRef<[Self::T]>,
+    {
+        todo!();
+    }
+
+    /// Search for texts that start with pattern.
+    fn search_start_with<K>(&self, pattern: K) -> Search<Self>
+    where
+        K: AsRef<[Self::T]>,
+    {
+        todo!();
+    }
+
+    /// Search for texts that end with pattern.
+    fn search_ends_with<K>(&self, pattern: K) -> Search<Self>
+    where
+        K: AsRef<[Self::T]>,
+    {
+        todo!();
+    }
+
+    /// Search for texts that are exactly pattern.
+    fn search_exact<K>(&self, pattern: K) -> Search<Self>
+    where
+        K: AsRef<[Self::T]>,
+    {
+        todo!();
+    }
 }
 
 impl<I: BackwardIterableIndex> SearchIndex for I {}
@@ -138,6 +185,8 @@ where
     }
 
     /// List the position of all occurrences with an iterator.
+    ///
+    /// TODO: we could also provide an `IntoIterator` for seach that returns this.
     pub fn locate_iter(&self) -> LocationInfoIterator<I> {
         LocationInfoIterator::new(self.index, self.s, self.e)
     }
@@ -199,7 +248,10 @@ where
         self.index.get_sa::<seal::Local>(self.k)
     }
 
-    /// the text id of the location
+    // the existence of the following methods could depend on the
+    // `HasDoc` trait.
+
+    /// the text id that the location belongs to.
     ///
     /// Each 0 separated text has a unique id identifying it.
     pub fn text_id(&self) -> TextId {
