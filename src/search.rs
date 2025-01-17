@@ -33,7 +33,7 @@ pub trait SearchIndex: BackwardIterableIndex {
     /// Given a text id, return the text associated with it.
     ///
     /// This is the actual text, excluding zero separators.
-    fn text(&self, id: TextId) -> &[Self::T] {
+    fn text(&self, id: TextId) -> Vec<Self::T> {
         todo!()
     }
 
@@ -261,7 +261,7 @@ where
     /// the original text at this text id
     ///
     /// This does not include the 0 characters at its boundaries.
-    pub fn text(&self) -> &[I::T] {
+    pub fn text(&self) -> Vec<I::T> {
         todo!()
     }
 }
