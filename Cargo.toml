@@ -12,9 +12,6 @@ license = "MIT OR Apache-2.0"
 keywords = ["fm-index", "self-index", "succinct", "search", "vers"]
 categories = ["data-structures", "algorithms"]
 
-[badges]
-travis-ci = { repository = "ajalab/fm-index" }
-
 [dependencies]
 vers-vecs = { version = "1.5.1", features = ["serde"] }
 num-traits = "0.2"
