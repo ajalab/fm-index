@@ -16,6 +16,7 @@ pub fn binary_text_set(len: usize, prob: f64) -> (Vec<u8>, impl Converter<u8>) {
     (text, converter)
 }
 
+#[allow(dead_code)] // False positive?
 pub fn binary_patterns(m: usize) -> Vec<String> {
     let mut patterns: Vec<String> = vec!["".to_owned()];
     for _ in 0..m {
