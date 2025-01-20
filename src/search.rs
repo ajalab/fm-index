@@ -1,4 +1,4 @@
-use crate::iter::{BackwardIterator, ForwardIterator, IterableIndex};
+use crate::iter::{BackwardIterator, ForwardIterator, SearchIndexBackend};
 use crate::seal;
 use crate::suffix_array::HasPosition;
 
@@ -13,7 +13,7 @@ use crate::rlfmi::RLFMIndex;
 ///
 /// Using this trait, you can use [`FMIndex`] and [`RLFMIndex`]
 /// interchangeably using generics.
-pub trait SearchIndex: IterableIndex {
+pub trait SearchIndex: SearchIndexBackend {
     /// Search for a pattern in the text.
     ///
     /// Return a [`Search`] object with information about the search
@@ -26,7 +26,7 @@ pub trait SearchIndex: IterableIndex {
     }
 }
 
-impl<I: IterableIndex> SearchIndex for I {}
+impl<I: SearchIndexBackend> SearchIndex for I {}
 
 /// An object containing the result of a search.
 ///
@@ -93,7 +93,7 @@ where
 
 impl<I> Search<'_, I>
 where
-    I: IterableIndex,
+    I: SearchIndexBackend,
 {
     /// Get an iterator that goes backwards through the text, producing
     /// [`Character`].
@@ -109,7 +109,7 @@ where
 
 impl<I> Search<'_, I>
 where
-    I: SearchIndex + IterableIndex,
+    I: SearchIndex + SearchIndexBackend,
 {
     /// Get an iterator that goes forwards through the text, producing
     /// [`Character`].

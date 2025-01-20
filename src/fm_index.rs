@@ -4,7 +4,7 @@ use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::search::SearchIndex;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
-use crate::IterableIndex;
+use crate::SearchIndexBackend;
 use crate::{sais, seal};
 use crate::{util, Search};
 
@@ -146,7 +146,7 @@ impl<T, C> FMIndex<T, C, SuffixOrderSampledArray> {
     }
 }
 
-impl<T, C, S> IterableIndex for FMIndex<T, C, S>
+impl<T, C, S> SearchIndexBackend for FMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,

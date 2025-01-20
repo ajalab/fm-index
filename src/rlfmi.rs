@@ -4,7 +4,7 @@ use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::search::SearchIndex;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
-use crate::{sais, IterableIndex, Search};
+use crate::{sais, Search, SearchIndexBackend};
 use crate::{seal, util};
 
 use serde::{Deserialize, Serialize};
@@ -202,7 +202,7 @@ where
     }
 }
 
-impl<T, C, S> IterableIndex for RLFMIndex<T, C, S>
+impl<T, C, S> SearchIndexBackend for RLFMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,
