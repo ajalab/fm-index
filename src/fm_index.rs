@@ -4,9 +4,9 @@ use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::search::SearchIndex;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
+use crate::IterableIndex;
 use crate::{sais, seal};
 use crate::{util, Search};
-use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::WaveletMatrix;
@@ -146,7 +146,7 @@ impl<T, C> FMIndex<T, C, SuffixOrderSampledArray> {
     }
 }
 
-impl<T, C, S> BackwardIterableIndex for FMIndex<T, C, S>
+impl<T, C, S> IterableIndex for FMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,
@@ -167,17 +167,6 @@ where
         self.cs[c.into() as usize] + self.bw.rank_u64_unchecked(i as usize, c.into()) as u64
     }
 
-    fn len_backward<L: seal::IsLocal>(&self) -> u64 {
-        self.bw.len() as u64
-    }
-}
-
-impl<T, C, S> ForwardIterableIndex for FMIndex<T, C, S>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    type T = T;
     fn get_f_forward<L: seal::IsLocal>(&self, i: u64) -> Self::T {
         // binary search to find c s.t. cs[c] <= i < cs[c+1]
         // <=> c is the greatest index s.t. cs[c] <= i

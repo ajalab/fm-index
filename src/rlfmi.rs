@@ -4,9 +4,8 @@ use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::search::SearchIndex;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
-use crate::{sais, Search};
+use crate::{sais, IterableIndex, Search};
 use crate::{seal, util};
-use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::{BitVec, RsVec, WaveletMatrix};
@@ -203,16 +202,12 @@ where
     }
 }
 
-impl<T, C, S> BackwardIterableIndex for RLFMIndex<T, C, S>
+impl<T, C, S> IterableIndex for RLFMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,
 {
     type T = T;
-
-    fn len_backward<L: seal::IsLocal>(&self) -> u64 {
-        self.len
-    }
 
     fn get_l_backward<L: seal::IsLocal>(&self, i: u64) -> T {
         // note: b[0] is always 1
@@ -238,14 +233,6 @@ where
                 - self.b.select1(j) as u64
         }
     }
-}
-
-impl<T, C, S> ForwardIterableIndex for RLFMIndex<T, C, S>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    type T = T;
 
     fn get_f_forward<L: seal::IsLocal>(&self, i: u64) -> Self::T {
         let mut s = 0;
