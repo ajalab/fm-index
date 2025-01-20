@@ -50,7 +50,7 @@ where
         Search {
             index,
             s: 0,
-            e: index.len::<seal::Local>(),
+            e: index.len_backward::<seal::Local>(),
             pattern: vec![],
         }
     }
@@ -64,8 +64,8 @@ where
         let mut e = self.e;
         let mut pattern = pattern.as_ref().to_vec();
         for &c in pattern.iter().rev() {
-            s = self.index.lf_map2::<seal::Local>(c, s);
-            e = self.index.lf_map2::<seal::Local>(c, e);
+            s = self.index.lf_map2_backward::<seal::Local>(c, s);
+            e = self.index.lf_map2_backward::<seal::Local>(c, e);
             if s == e {
                 break;
             }

@@ -9,17 +9,17 @@ pub trait BackwardIterableIndex: Sized {
     type T: Character;
 
     #[doc(hidden)]
-    fn get_l<L: seal::IsLocal>(&self, i: u64) -> Self::T;
+    fn get_l_backward<L: seal::IsLocal>(&self, i: u64) -> Self::T;
     #[doc(hidden)]
-    fn lf_map<L: seal::IsLocal>(&self, i: u64) -> u64;
+    fn lf_map_backward<L: seal::IsLocal>(&self, i: u64) -> u64;
     #[doc(hidden)]
-    fn lf_map2<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64;
+    fn lf_map2_backward<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64;
     #[doc(hidden)]
-    fn len<L: seal::IsLocal>(&self) -> u64;
+    fn len_backward<L: seal::IsLocal>(&self) -> u64;
 
     #[doc(hidden)]
     fn iter_backward<L: seal::IsLocal>(&self, i: u64) -> BackwardIterator<Self> {
-        debug_assert!(i < self.len::<seal::Local>());
+        debug_assert!(i < self.len_backward::<seal::Local>());
         BackwardIterator { index: self, i }
     }
 }
@@ -40,8 +40,8 @@ where
 {
     type Item = <I as BackwardIterableIndex>::T;
     fn next(&mut self) -> Option<Self::Item> {
-        let c = self.index.get_l::<seal::Local>(self.i);
-        self.i = self.index.lf_map::<seal::Local>(self.i);
+        let c = self.index.get_l_backward::<seal::Local>(self.i);
+        self.i = self.index.lf_map_backward::<seal::Local>(self.i);
         Some(self.index.get_converter().convert_inv(c))
     }
 }
@@ -52,11 +52,11 @@ pub trait ForwardIterableIndex: Sized {
     type T: Character;
 
     #[doc(hidden)]
-    fn get_f<L: seal::IsLocal>(&self, i: u64) -> Self::T;
+    fn get_f_forward<L: seal::IsLocal>(&self, i: u64) -> Self::T;
     #[doc(hidden)]
-    fn fl_map<L: seal::IsLocal>(&self, i: u64) -> u64;
+    fn fl_map_forward<L: seal::IsLocal>(&self, i: u64) -> u64;
     #[doc(hidden)]
-    fn fl_map2<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64;
+    fn fl_map2_forward<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64;
     #[doc(hidden)]
     fn len<L: seal::IsLocal>(&self) -> u64;
 
@@ -83,8 +83,8 @@ where
 {
     type Item = <I as ForwardIterableIndex>::T;
     fn next(&mut self) -> Option<Self::Item> {
-        let c = self.index.get_f::<seal::Local>(self.i);
-        self.i = self.index.fl_map::<seal::Local>(self.i);
+        let c = self.index.get_f_forward::<seal::Local>(self.i);
+        self.i = self.index.fl_map_forward::<seal::Local>(self.i);
         Some(self.index.get_converter().convert_inv(c))
     }
 }
