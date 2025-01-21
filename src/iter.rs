@@ -2,11 +2,23 @@ use crate::converter::{Converter, IndexWithConverter};
 
 use crate::character::Character;
 use crate::seal;
+use crate::search::Search;
 
 /// A search index backend.
 pub trait SearchIndexBackend: Sized {
     /// A [`Character`] type.
     type T: Character;
+
+    /// Search for a pattern in the text.
+    ///
+    /// Return a [`Search`] object with information about the search
+    /// result.
+    fn search<K>(&self, pattern: K) -> Search<Self>
+    where
+        K: AsRef<[Self::T]>,
+    {
+        Search::new(self).search(pattern)
+    }
 
     #[doc(hidden)]
     fn len<L: seal::IsLocal>(&self) -> u64;

@@ -9,25 +9,6 @@ use crate::fm_index::FMIndexBackend;
 #[cfg(doc)]
 use crate::rlfmi::RLFMIndexBackend;
 
-/// A search index.
-///
-/// Using this trait, you can use [`FMIndex`] and [`RLFMIndex`]
-/// interchangeably using generics.
-pub trait SearchIndex: SearchIndexBackend {
-    /// Search for a pattern in the text.
-    ///
-    /// Return a [`Search`] object with information about the search
-    /// result.
-    fn search<K>(&self, pattern: K) -> Search<Self>
-    where
-        K: AsRef<[Self::T]>,
-    {
-        Search::new(self).search(pattern)
-    }
-}
-
-impl<I: SearchIndexBackend> SearchIndex for I {}
-
 /// An object containing the result of a search.
 ///
 /// This is expanded with a `locate` method if the index is
@@ -46,7 +27,7 @@ impl<'a, I> Search<'a, I>
 where
     I: SearchIndexBackend,
 {
-    fn new(index: &'a I) -> Search<'a, I> {
+    pub(crate) fn new(index: &'a I) -> Search<'a, I> {
         Search {
             index,
             s: 0,

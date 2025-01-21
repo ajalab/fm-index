@@ -4,7 +4,7 @@ use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::iter::SearchIndexBackend;
 use crate::sais;
-use crate::search::{Search, SearchIndex};
+use crate::search::Search;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
 use crate::{seal, util};
 
@@ -151,7 +151,7 @@ where
     where
         K: AsRef<[T]>,
     {
-        SearchIndex::search(self, pattern)
+        SearchIndexBackend::search(self, pattern)
     }
 
     /// The amount of repeated runs in the text.
