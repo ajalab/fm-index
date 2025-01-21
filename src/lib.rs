@@ -147,9 +147,9 @@ mod seal;
 mod search;
 mod util;
 
-pub use crate::fm_index::FMIndex;
+pub use crate::fm_index::DefaultFMIndex;
 pub use crate::rlfmi::RLFMIndex;
 
 pub use character::Character;
-pub use iter::{BackwardIterator, ForwardIterator, SearchIndexInternal};
+pub use iter::{BackwardIterator, ForwardIterator, FMIndex};
 pub use search::{Search, SearchIndex, SearchIndexBuilder};

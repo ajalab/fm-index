@@ -1,12 +1,12 @@
 use crate::converter::{Converter, IndexWithConverter};
-use crate::iter::SearchIndexInternal;
+use crate::iter::FMIndex;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
-use crate::{seal, Character, FMIndex, RLFMIndex};
+use crate::{seal, Character, DefaultFMIndex, RLFMIndex};
 
 #[cfg(doc)]
 use crate::character::Character;
 #[cfg(doc)]
-use crate::fm_index::FMIndex;
+use crate::fm_index::DefaultFMIndex;
 #[cfg(doc)]
 use crate::rlfmi::RLFMIndex;
 
@@ -36,8 +36,12 @@ where
     ///   details.
     pub fn new(
         converter: C,
-    ) -> SearchIndexBuilder<FMIndex<T, C, SuffixOrderSampledArray>, T, C, SuffixOrderSampledArray>
-    {
+    ) -> SearchIndexBuilder<
+        DefaultFMIndex<T, C, SuffixOrderSampledArray>,
+        T,
+        C,
+        SuffixOrderSampledArray,
+    > {
         SearchIndexBuilder {
             converter,
             get_sample: Box::new(|sa| suffix_array::sample(sa, 0)),
@@ -55,7 +59,7 @@ where
     /// Make sure the index only supports the count operation.
     ///
     /// The suffix array for the locate operation will be dropped from the index.
-    pub fn count_only(self) -> SearchIndexBuilder<FMIndex<T, C, ()>, T, C, ()> {
+    pub fn count_only(self) -> SearchIndexBuilder<DefaultFMIndex<T, C, ()>, T, C, ()> {
         SearchIndexBuilder {
             converter: self.converter,
             get_sample: Box::new(|_| ()),
@@ -79,7 +83,7 @@ where
 
 impl<I, T, C> SearchIndexBuilder<I, T, C, SuffixOrderSampledArray>
 where
-    I: SearchIndexInternal,
+    I: FMIndex,
     T: Character,
     C: Converter<T>,
 {
@@ -96,15 +100,15 @@ where
     }
 }
 
-impl<T, C, S> SearchIndexBuilder<FMIndex<T, C, S>, T, C, S>
+impl<T, C, S> SearchIndexBuilder<DefaultFMIndex<T, C, S>, T, C, S>
 where
     T: Character,
     C: Converter<T>,
 {
     /// Build a new [SearchIndex] backed by [FMIndex].
-    pub fn build(self, text: Vec<T>) -> SearchIndex<FMIndex<T, C, S>> {
+    pub fn build(self, text: Vec<T>) -> SearchIndex<DefaultFMIndex<T, C, S>> {
         SearchIndex {
-            index: FMIndex::create(text, self.converter, self.get_sample),
+            index: DefaultFMIndex::create(text, self.converter, self.get_sample),
         }
     }
 }
@@ -123,11 +127,11 @@ where
 }
 
 /// A full-text index backed by FM-Index or its variant.
-pub struct SearchIndex<I: SearchIndexInternal> {
+pub struct SearchIndex<I: FMIndex> {
     index: I,
 }
 
-impl<I: SearchIndexInternal> SearchIndex<I> {
+impl<I: FMIndex> SearchIndex<I> {
     /// Search for a pattern in the text.
     ///
     /// Return a [`Search`] object with information about the search
@@ -141,7 +145,7 @@ impl<I: SearchIndexInternal> SearchIndex<I> {
 ///
 /// This is expanded with a `locate` method if the index is
 /// supplied with a sampled suffix array.
-pub struct Search<'a, I: SearchIndexInternal> {
+pub struct Search<'a, I: FMIndex> {
     index: &'a I,
     s: u64,
     e: u64,
@@ -150,7 +154,7 @@ pub struct Search<'a, I: SearchIndexInternal> {
 
 impl<'a, I> Search<'a, I>
 where
-    I: SearchIndexInternal,
+    I: FMIndex,
 {
     pub(crate) fn new(index: &'a I) -> Search<'a, I> {
         Search {
@@ -199,7 +203,7 @@ where
 
 impl<I> Search<'_, I>
 where
-    I: SearchIndexInternal + IndexWithConverter<I::T>,
+    I: FMIndex + IndexWithConverter<I::T>,
 {
     /// Get an iterator that goes backwards through the text, producing
     /// [`Character`].
@@ -215,7 +219,7 @@ where
 
 impl<I> Search<'_, I>
 where
-    I: SearchIndexInternal + IndexWithConverter<I::T>,
+    I: FMIndex + IndexWithConverter<I::T>,
 {
     /// Get an iterator that goes forwards through the text, producing
     /// [`Character`].
@@ -231,7 +235,7 @@ where
 
 impl<I> Search<'_, I>
 where
-    I: SearchIndexInternal + HasPosition,
+    I: FMIndex + HasPosition,
 {
     /// List the position of all occurrences.
     pub fn locate(&self) -> Vec<u64> {

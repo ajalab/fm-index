@@ -3,8 +3,8 @@ use crate::converter::{Converter, IndexWithConverter};
 use crate::seal;
 use crate::search::Search;
 
-/// A search index that can be searched backwards.
-pub trait SearchIndexInternal: Sized + seal::Sealed {
+/// A FM-Index that can search texts backwards and forwards.
+pub trait FMIndex: Sized + seal::Sealed {
     /// A [`Character`] type.
     type T: Character;
 
@@ -48,7 +48,7 @@ pub trait SearchIndexInternal: Sized + seal::Sealed {
 /// An iterator that goes backwards through the text, producing [`Character`].
 pub struct BackwardIterator<'a, I>
 where
-    I: SearchIndexInternal,
+    I: FMIndex,
 {
     index: &'a I,
     i: u64,
@@ -57,9 +57,9 @@ where
 impl<T, I> Iterator for BackwardIterator<'_, I>
 where
     T: Character,
-    I: SearchIndexInternal<T = T> + IndexWithConverter<T>,
+    I: FMIndex<T = T> + IndexWithConverter<T>,
 {
-    type Item = <I as SearchIndexInternal>::T;
+    type Item = <I as FMIndex>::T;
     fn next(&mut self) -> Option<Self::Item> {
         let c = self.index.get_l::<seal::Local>(self.i);
         self.i = self.index.lf_map::<seal::Local>(self.i);
@@ -70,7 +70,7 @@ where
 /// An iterator that goes forwards through the text, producing [`Character`].
 pub struct ForwardIterator<'a, I>
 where
-    I: SearchIndexInternal,
+    I: FMIndex,
 {
     index: &'a I,
     i: u64,
@@ -79,9 +79,9 @@ where
 impl<T, I> Iterator for ForwardIterator<'_, I>
 where
     T: Character,
-    I: SearchIndexInternal<T = T> + IndexWithConverter<T>,
+    I: FMIndex<T = T> + IndexWithConverter<T>,
 {
-    type Item = <I as SearchIndexInternal>::T;
+    type Item = <I as FMIndex>::T;
     fn next(&mut self) -> Option<Self::Item> {
         let c = self.index.get_f::<seal::Local>(self.i);
         self.i = self.index.fl_map::<seal::Local>(self.i);

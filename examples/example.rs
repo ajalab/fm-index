@@ -1,5 +1,5 @@
 use fm_index::converter::RangeConverter;
-use fm_index::FMIndex;
+use fm_index::DefaultFMIndex;
 
 fn main() {
     // Prepare a text string to search for patterns.
@@ -21,7 +21,7 @@ fn main() {
     // suffix array for this purpose.
     // You can also use `FMIndex::count_only()` if you don't perform location
     // queries (disabled in type-level).
-    let index = FMIndex::new(text, converter, 2);
+    let index = DefaultFMIndex::new(text, converter, 2);
 
     // Search for a pattern string.
     let pattern = "dolor";
