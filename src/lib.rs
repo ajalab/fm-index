@@ -24,7 +24,7 @@
 //! # Example
 //! ```
 //! use fm_index::converter::RangeConverter;
-//! use fm_index::FMIndex;
+//! use fm_index::DefaultFMIndex;
 //!
 //! // Prepare a text string to search for patterns.
 //! let text = concat!(
@@ -47,7 +47,7 @@
 //! //
 //! // You can also use `FMIndex::count_only()` if you don't perform location
 //! // queries (disabled in type-level).
-//! let index = FMIndex::new(text, converter, 2);
+//! let index = DefaultFMIndex::new(text, converter, 2);
 //!
 //! // Search for a pattern string.
 //! let pattern = "dolor";
@@ -151,5 +151,5 @@ pub use crate::fm_index::DefaultFMIndex;
 pub use crate::rlfmi::RLFMIndex;
 
 pub use character::Character;
-pub use iter::{BackwardIterator, ForwardIterator, FMIndex};
+pub use iter::{BackwardIterator, FMIndex, ForwardIterator};
 pub use search::{Search, SearchIndex, SearchIndexBuilder};
