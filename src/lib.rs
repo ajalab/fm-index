@@ -150,9 +150,10 @@ mod seal;
 mod search;
 mod util;
 
-pub use crate::fm_index::FMIndex;
-pub use crate::rlfmi::RLFMIndex;
+pub use crate::fm_index_frontend::FMIndex;
+pub use crate::rlfmi_frontend::RLFMIndex;
+
+pub use frontend::{HasPosition, Search, SearchIndex, SearchIndexWithLocate, SearchWithLocate};
 
 pub use character::Character;
-pub use iter::{BackwardIterator, ForwardIterator, SearchIndexBackend};
-pub use search::{Search, SearchIndex};
+pub use iter::{BackwardIterator, ForwardIterator};

@@ -10,7 +10,7 @@ use vers_vecs::BitVec;
 /// A trait for an index that supports locate queries.
 ///
 /// This is only supported when [`SuffixOrderSampledArray`] is passed in.
-pub trait HasPosition {
+pub(crate) trait HasPosition {
     #[doc(hidden)]
     fn get_sa<L: seal::IsLocal>(&self, i: u64) -> u64;
 }

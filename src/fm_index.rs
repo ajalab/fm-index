@@ -2,11 +2,11 @@ use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
-use crate::search::SearchIndex;
+use crate::iter::SearchIndexBackend;
+use crate::search::{Search, SearchIndex};
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
-use crate::SearchIndexBackend;
+use crate::util;
 use crate::{sais, seal};
-use crate::{util, Search};
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::WaveletMatrix;

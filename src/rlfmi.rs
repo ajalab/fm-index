@@ -2,9 +2,10 @@ use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
-use crate::search::SearchIndex;
+use crate::iter::SearchIndexBackend;
+use crate::sais;
+use crate::search::{Search, SearchIndex};
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
-use crate::{sais, Search, SearchIndexBackend};
 use crate::{seal, util};
 
 use serde::{Deserialize, Serialize};

@@ -1,27 +1,43 @@
-use crate::{converter::Converter, Character};
+use crate::Character;
 
 /// A search index.
 ///
 /// Using this trait, you can use [`FMIndex`] and [`RLFMIndex`]
 /// interchangeably using generics.
-pub trait SearchIndex<T, C>
+pub trait SearchIndex<T>
 where
     T: Character,
-    C: Converter<T>,
 {
     /// Search for a pattern in the text.
     ///
     /// Return a [`Search`] object with information about the search
     /// result.
-    fn search<K>(&self, pattern: K) -> impl Search<T, C>
+    fn search<K>(&self, pattern: K) -> impl Search<T>
     where
         K: AsRef<[T]>;
 }
 
-pub trait Search<T, C>
+/// A search index.
+///
+/// Using this trait, you can use [`FMIndex`] and [`RLFMIndex`]
+/// interchangeably using generics.
+pub trait SearchIndexWithLocate<T>: HasPosition
 where
     T: Character,
-    C: Converter<T>,
+{
+    /// Search for a pattern in the text.
+    ///
+    /// Return a [`Search`] object with information about the search
+    /// result.
+    fn search<K>(&self, pattern: K) -> impl SearchWithLocate<T>
+    where
+        K: AsRef<[T]>;
+}
+
+/// The result of a search.
+pub trait Search<T>
+where
+    T: Character,
 {
     /// Search in the current search result, refining it.
     ///
@@ -33,13 +49,24 @@ where
 
     /// Get the number of matches.
     fn count(&self) -> u64;
+
+    /// Get an iterator that goes backwards through the text, producing
+    /// [`Character`].
+    fn iter_backward(&self, i: u64) -> impl Iterator<Item = T>;
+
+    /// Get an iterator that goes forwards through the text, producing
+    /// [`Character`].
+    fn iter_forward(&self, i: u64) -> impl Iterator<Item = T>;
 }
 
-pub trait SearchWithLocate<T, C>: Search<T, C>
+/// The result of a search with a sampled suffix array.
+pub trait SearchWithLocate<T>: Search<T>
 where
     T: Character,
-    C: Converter<T>,
 {
     /// List the position of all occurrences.
     fn locate(&self) -> Vec<u64>;
 }
+
+/// A trait for an index that supports locate queries.
+pub trait HasPosition {}

@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
 
 use crate::fm_index::FMIndex as FMIndexBackend;
-use crate::frontend::{Search, SearchIndex, SearchWithLocate};
+use crate::frontend::{HasPosition, Search, SearchIndex, SearchWithLocate};
 use crate::search::Search as SearchBackend;
 use crate::suffix_array::{self, SuffixOrderSampledArray};
+use crate::SearchIndexWithLocate;
 use crate::{character::Character, converter::Converter};
 
 /// An FM-Index, a succinct full-text index.
@@ -71,6 +72,13 @@ where
     }
 }
 
+impl<T, C> HasPosition for FMIndex<T, C, SuffixOrderSampledArray>
+where
+    T: Character,
+    C: Converter<T>,
+{
+}
+
 impl<T, C, S> FMIndex<T, C, S>
 where
     T: Character,
@@ -93,13 +101,27 @@ where
     }
 }
 
-impl<T, C, S> SearchIndex<T, C> for FMIndex<T, C, S>
+impl<T, C, S> SearchIndex<T> for FMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,
 {
     #[allow(refining_impl_trait)]
     fn search<K>(&self, pattern: K) -> FMIndexSearch<T, C, S>
+    where
+        K: AsRef<[T]>,
+    {
+        FMIndex::search(self, pattern)
+    }
+}
+
+impl<T, C> SearchIndexWithLocate<T> for FMIndex<T, C, SuffixOrderSampledArray>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    #[allow(refining_impl_trait)]
+    fn search<K>(&self, pattern: K) -> FMIndexSearch<T, C, SuffixOrderSampledArray>
     where
         K: AsRef<[T]>,
     {
@@ -140,17 +162,25 @@ where
     pub fn count(&self) -> u64 {
         self.search_backend.count()
     }
+
+    /// Get an iterator that goes backwards through the text, producing
+    /// [`Character`].
+    pub fn iter_backward(&self, i: u64) -> impl Iterator<Item = T> + '_ {
+        self.search_backend.iter_backward(i)
+    }
+
+    /// Get an iterator that goes forwards through the text, producing
+    /// [`Character`].
+    pub fn iter_forward(&self, i: u64) -> impl Iterator<Item = T> + '_ {
+        self.search_backend.iter_forward(i)
+    }
 }
 
-impl<T, C, S> Search<T, C> for FMIndexSearch<'_, T, C, S>
+impl<T, C, S> Search<T> for FMIndexSearch<'_, T, C, S>
 where
     T: Character,
     C: Converter<T>,
 {
-    /// Search in the current search result, refining it.
-    ///
-    /// This adds a prefix `pattern` to the existing pattern, and
-    /// looks for those expanded patterns in the text.
     fn search<K>(&self, pattern: K) -> Self
     where
         K: AsRef<[T]>,
@@ -158,9 +188,16 @@ where
         FMIndexSearch::search(self, pattern)
     }
 
-    /// Get the number of matches.
     fn count(&self) -> u64 {
         FMIndexSearch::count(self)
+    }
+
+    fn iter_backward(&self, i: u64) -> impl Iterator<Item = T> + '_ {
+        FMIndexSearch::iter_backward(self, i)
+    }
+
+    fn iter_forward(&self, i: u64) -> impl Iterator<Item = T> + '_ {
+        FMIndexSearch::iter_forward(self, i)
     }
 }
 
@@ -175,7 +212,7 @@ where
     }
 }
 
-impl<T, C> SearchWithLocate<T, C> for FMIndexSearch<'_, T, C, SuffixOrderSampledArray>
+impl<T, C> SearchWithLocate<T> for FMIndexSearch<'_, T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,

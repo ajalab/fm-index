@@ -1,5 +1,6 @@
-use fm_index::suffix_array::HasPosition;
-use fm_index::{FMIndex, RLFMIndex, SearchIndex};
+use fm_index::{
+    FMIndex, HasPosition, RLFMIndex, SearchIndex, SearchIndexWithLocate, SearchWithLocate,
+};
 
 use criterion::{criterion_group, criterion_main};
 use criterion::{BatchSize, BenchmarkId, Criterion, Throughput};
@@ -11,7 +12,7 @@ fn prepare_fmindex(
     prob: f64,
     m: usize,
     l: usize,
-) -> (impl SearchIndex<T = u8> + HasPosition, Vec<String>) {
+) -> (impl SearchIndexWithLocate<u8>, Vec<String>) {
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
     (FMIndex::new(text, converter, l), patterns)
@@ -22,7 +23,7 @@ fn prepare_rlfmindex(
     prob: f64,
     m: usize,
     l: usize,
-) -> (impl SearchIndex<T = u8> + HasPosition, Vec<String>) {
+) -> (impl SearchIndexWithLocate<u8> + HasPosition, Vec<String>) {
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
     (RLFMIndex::new(text, converter, l), patterns)
