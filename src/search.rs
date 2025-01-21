@@ -34,7 +34,7 @@ impl<I: SearchIndexBackend> SearchIndex for I {}
 /// supplied with a sampled suffix array.
 pub struct Search<'a, I>
 where
-    I: SearchIndex,
+    I: SearchIndexBackend,
 {
     index: &'a I,
     s: u64,
@@ -44,7 +44,7 @@ where
 
 impl<'a, I> Search<'a, I>
 where
-    I: SearchIndex,
+    I: SearchIndexBackend,
 {
     fn new(index: &'a I) -> Search<'a, I> {
         Search {
@@ -109,7 +109,7 @@ where
 
 impl<I> Search<'_, I>
 where
-    I: SearchIndex + SearchIndexBackend,
+    I: SearchIndexBackend,
 {
     /// Get an iterator that goes forwards through the text, producing
     /// [`Character`].
@@ -125,7 +125,7 @@ where
 
 impl<I> Search<'_, I>
 where
-    I: SearchIndex + HasPosition,
+    I: SearchIndexBackend + HasPosition,
 {
     /// List the position of all occurrences.
     pub fn locate(&self) -> Vec<u64> {
