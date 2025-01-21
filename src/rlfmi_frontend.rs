@@ -1,30 +1,28 @@
 use serde::{Deserialize, Serialize};
 
-use crate::fm_index::FMIndex as FMIndexBackend;
+use crate::rlfmi::RLFMIndex as RLFMIndexBackend;
 use crate::search::Search as SearchBackend;
 use crate::suffix_array::{self, SuffixOrderSampledArray};
 use crate::{character::Character, converter::Converter};
 
-/// An FM-Index, a succinct full-text index.
+/// A Run-Length FM-index.
 ///
-/// The FM-Index is both a search index as well as compact
-/// representation of the text, all within less space than the
-/// original text.
+/// This can be more space-efficient than the FM-index, but is slower.
 #[derive(Serialize, Deserialize)]
-pub struct FMIndex<T, C, S>
+pub struct RLFMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,
 {
-    backend: FMIndexBackend<T, C, S>,
+    backend: RLFMIndexBackend<T, C, S>,
 }
 
-impl<T, C> FMIndex<T, C, ()>
+impl<T, C> RLFMIndex<T, C, ()>
 where
     T: Character,
     C: Converter<T>,
 {
-    /// Create a new FM-Index from a text. The index only supports the count
+    /// Create a new RLFM-Index from a text. The index only supports the count
     /// operation.
     ///
     /// - `text` is a vector of [`Character`]s.
@@ -36,17 +34,17 @@ where
     ///   details.
     pub fn count_only(text: Vec<T>, converter: C) -> Self {
         Self {
-            backend: FMIndexBackend::create(text, converter, |_| ()),
+            backend: RLFMIndexBackend::create(text, converter, |_| ()),
         }
     }
 }
 
-impl<T, C> FMIndex<T, C, SuffixOrderSampledArray>
+impl<T, C> RLFMIndex<T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,
 {
-    /// Create a new FM-Index from a text. The index supports both the count
+    /// Create a new RLFM-Index from a text. The index supports both the count
     /// and locate operations.
     ///
     /// - `text` is a vector of [`Character`]s.
@@ -65,12 +63,14 @@ where
     ///   position lookup.
     pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
         Self {
-            backend: FMIndexBackend::create(text, converter, |sa| suffix_array::sample(sa, level)),
+            backend: RLFMIndexBackend::create(text, converter, |sa| {
+                suffix_array::sample(sa, level)
+            }),
         }
     }
 }
 
-impl<T, C, S> FMIndex<T, C, S>
+impl<T, C, S> RLFMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,
@@ -79,11 +79,11 @@ where
     ///
     /// Return a [`Search`] object with information about the search
     /// result.
-    pub fn search<K>(&self, pattern: K) -> FMIndexSearch<T, C, S>
+    pub fn search<K>(&self, pattern: K) -> RLFMIndexSearch<T, C, S>
     where
         K: AsRef<[T]>,
     {
-        FMIndexSearch::new(self.backend.search(pattern))
+        RLFMIndexSearch::new(self.backend.search(pattern))
     }
 
     /// The length of the text.
@@ -92,21 +92,21 @@ where
     }
 }
 
-pub struct FMIndexSearch<'a, T, C, S>
+pub struct RLFMIndexSearch<'a, T, C, S>
 where
     T: Character,
     C: Converter<T>,
 {
-    search_backend: SearchBackend<'a, FMIndexBackend<T, C, S>>,
+    search_backend: SearchBackend<'a, RLFMIndexBackend<T, C, S>>,
 }
 
-impl<'a, T, C, S> FMIndexSearch<'a, T, C, S>
+impl<'a, T, C, S> RLFMIndexSearch<'a, T, C, S>
 where
     T: Character,
     C: Converter<T>,
 {
-    fn new(search_backend: SearchBackend<'a, FMIndexBackend<T, C, S>>) -> Self {
-        FMIndexSearch { search_backend }
+    fn new(search_backend: SearchBackend<'a, RLFMIndexBackend<T, C, S>>) -> Self {
+        RLFMIndexSearch { search_backend }
     }
 
     /// Search in the current search result, refining it.
@@ -118,7 +118,7 @@ where
         K: AsRef<[T]>,
     {
         let search_backend = self.search_backend.search(pattern);
-        FMIndexSearch { search_backend }
+        RLFMIndexSearch { search_backend }
     }
 
     /// Get the number of matches.
@@ -127,7 +127,7 @@ where
     }
 }
 
-impl<T, C> FMIndexSearch<'_, T, C, SuffixOrderSampledArray>
+impl<T, C> RLFMIndexSearch<'_, T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,
