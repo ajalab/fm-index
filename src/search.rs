@@ -10,6 +10,9 @@ where
     C: Converter<T>,
 {
     converter: C,
+    // We avoid extracting parts into another `type` definition.
+    // Also, we use dyn trait in order not to add another type variable for this closure type.
+    #[allow(clippy::type_complexity)]
     get_sample: Box<dyn Fn(&[u64]) -> S>,
     _i: std::marker::PhantomData<I>,
     _t: std::marker::PhantomData<T>,
