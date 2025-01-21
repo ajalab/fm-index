@@ -21,7 +21,7 @@ where
 ///
 /// Using this trait, you can use [`FMIndex`] and [`RLFMIndex`]
 /// interchangeably using generics.
-pub trait SearchIndexWithLocate<T>: HasPosition
+pub trait SearchIndexWithLocate<T>
 where
     T: Character,
 {
@@ -67,6 +67,3 @@ where
     /// List the position of all occurrences.
     fn locate(&self) -> Vec<u64>;
 }
-
-/// A trait for an index that supports locate queries.
-pub trait HasPosition {}

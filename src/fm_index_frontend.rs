@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::fm_index::FMIndex as FMIndexBackend;
-use crate::frontend::{HasPosition, Search, SearchIndex, SearchWithLocate};
+use crate::frontend::{Search, SearchIndex, SearchWithLocate};
 use crate::search::Search as SearchBackend;
 use crate::suffix_array::{self, SuffixOrderSampledArray};
 use crate::SearchIndexWithLocate;
@@ -70,13 +70,6 @@ where
             backend: FMIndexBackend::create(text, converter, |sa| suffix_array::sample(sa, level)),
         }
     }
-}
-
-impl<T, C> HasPosition for FMIndex<T, C, SuffixOrderSampledArray>
-where
-    T: Character,
-    C: Converter<T>,
-{
 }
 
 impl<T, C, S> FMIndex<T, C, S>

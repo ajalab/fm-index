@@ -153,7 +153,7 @@ mod util;
 pub use crate::fm_index_frontend::FMIndex;
 pub use crate::rlfmi_frontend::RLFMIndex;
 
-pub use frontend::{HasPosition, Search, SearchIndex, SearchIndexWithLocate, SearchWithLocate};
+pub use frontend::{Search, SearchIndex, SearchIndexWithLocate, SearchWithLocate};
 
 pub use character::Character;
 pub use iter::{BackwardIterator, ForwardIterator};

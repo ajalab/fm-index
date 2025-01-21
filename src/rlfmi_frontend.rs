@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::frontend::{HasPosition, Search, SearchIndex, SearchWithLocate};
+use crate::frontend::{Search, SearchIndex, SearchWithLocate};
 use crate::rlfmi::RLFMIndex as RLFMIndexBackend;
 use crate::search::Search as SearchBackend;
 use crate::suffix_array::{self, SuffixOrderSampledArray};
@@ -70,13 +70,6 @@ where
             }),
         }
     }
-}
-
-impl<T, C> HasPosition for RLFMIndex<T, C, SuffixOrderSampledArray>
-where
-    T: Character,
-    C: Converter<T>,
-{
 }
 
 impl<T, C, S> RLFMIndex<T, C, S>
