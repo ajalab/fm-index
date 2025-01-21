@@ -3,13 +3,6 @@ use crate::iter::FMIndex;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
 use crate::{seal, Character, DefaultFMIndex, RLFMIndex};
 
-#[cfg(doc)]
-use crate::character::Character;
-#[cfg(doc)]
-use crate::fm_index::DefaultFMIndex;
-#[cfg(doc)]
-use crate::rlfmi::RLFMIndex;
-
 /// A builder that builds [`SearchIndex`].
 pub struct SearchIndexBuilder<I, T, C, S>
 where
