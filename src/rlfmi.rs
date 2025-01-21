@@ -5,7 +5,7 @@ use crate::converter::{Converter, IndexWithConverter};
 use crate::iter::SearchIndexBackend;
 use crate::sais;
 use crate::search::Search;
-use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
+use crate::suffix_array::{HasPosition, SuffixOrderSampledArray};
 use crate::util;
 
 use serde::{Deserialize, Serialize};
@@ -105,11 +105,6 @@ where
         K: AsRef<[T]>,
     {
         SearchIndexBackend::search(self, pattern)
-    }
-
-    /// The amount of repeated runs in the text.
-    pub fn runs(&self) -> u64 {
-        self.s.len() as u64
     }
 
     /// The length of the text.

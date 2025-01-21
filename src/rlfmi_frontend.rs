@@ -39,6 +39,13 @@ where
             backend: RLFMIndexBackend::create(text, converter, |_| ()),
         }
     }
+
+    /// The size on the heap of the FM-Index.
+    ///
+    /// No suffix array information is stored in this index.
+    pub fn size(&self) -> usize {
+        self.backend.size()
+    }
 }
 
 impl<T, C> RLFMIndex<T, C, SuffixOrderSampledArray>
@@ -69,6 +76,18 @@ where
                 suffix_array::sample(sa, level)
             }),
         }
+    }
+
+    /// The size on the heap of the FM-Index.
+    ///
+    /// No suffix array information is stored in this index.
+    pub fn size(&self) -> usize {
+        self.backend.size()
+    }
+
+    /// True if the index is empty.
+    pub fn is_empty(&self) -> bool {
+        self.backend.is_empty()
     }
 }
 

@@ -75,6 +75,10 @@ where
     pub fn len(&self) -> u64 {
         self.bw.len() as u64
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.bw.len() == 0
+    }
 }
 
 impl<T, C> FMIndexBackend<T, C, ()> {

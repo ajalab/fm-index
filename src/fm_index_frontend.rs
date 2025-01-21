@@ -106,6 +106,11 @@ where
     pub fn len(&self) -> u64 {
         self.backend.len()
     }
+
+    /// True if the index is empty.
+    pub fn is_empty(&self) -> bool {
+        self.backend.is_empty()
+    }
 }
 
 impl<T, C, S> SearchIndex<T> for FMIndex<T, C, S>
