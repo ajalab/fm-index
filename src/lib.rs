@@ -138,11 +138,11 @@
 pub mod converter;
 pub mod suffix_array;
 
+mod backend;
 mod character;
 mod fm_index;
 mod fm_index_frontend;
 mod frontend;
-mod iter;
 mod rlfmi;
 mod rlfmi_frontend;
 mod sais;

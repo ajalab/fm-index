@@ -1,4 +1,4 @@
-use crate::iter::{BackwardIterator, ForwardIterator, SearchIndexBackend};
+use crate::backend::{BackwardIterator, ForwardIterator, SearchIndexBackend};
 use crate::suffix_array::HasPosition;
 
 #[cfg(doc)]
