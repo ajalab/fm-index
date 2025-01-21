@@ -13,7 +13,7 @@ use crate::rlfmi::RLFMIndexBackend;
 ///
 /// This is expanded with a `locate` method if the index is
 /// supplied with a sampled suffix array.
-pub struct Search<'a, I>
+pub(crate) struct Search<'a, I>
 where
     I: SearchIndexBackend,
 {
@@ -40,7 +40,7 @@ where
     ///
     /// This adds a prefix `pattern` to the existing pattern, and
     /// looks for those expanded patterns in the text.
-    pub fn search<K: AsRef<[I::T]>>(&self, pattern: K) -> Self {
+    pub(crate) fn search<K: AsRef<[I::T]>>(&self, pattern: K) -> Self {
         let mut s = self.s;
         let mut e = self.e;
         let mut pattern = pattern.as_ref().to_vec();
@@ -67,7 +67,7 @@ where
     }
 
     /// Count the number of occurrences.
-    pub fn count(&self) -> u64 {
+    pub(crate) fn count(&self) -> u64 {
         self.e - self.s
     }
 }
@@ -78,7 +78,7 @@ where
 {
     /// Get an iterator that goes backwards through the text, producing
     /// [`Character`].
-    pub fn iter_backward(&self, i: u64) -> BackwardIterator<I> {
+    pub(crate) fn iter_backward(&self, i: u64) -> BackwardIterator<I> {
         let m = self.count();
 
         debug_assert!(m > 0, "cannot iterate from empty search result");
@@ -94,7 +94,7 @@ where
 {
     /// Get an iterator that goes forwards through the text, producing
     /// [`Character`].
-    pub fn iter_forward(&self, i: u64) -> ForwardIterator<I> {
+    pub(crate) fn iter_forward(&self, i: u64) -> ForwardIterator<I> {
         let m = self.count();
 
         debug_assert!(m > 0, "cannot iterate from empty search result");
@@ -109,7 +109,7 @@ where
     I: SearchIndexBackend + HasPosition,
 {
     /// List the position of all occurrences.
-    pub fn locate(&self) -> Vec<u64> {
+    pub(crate) fn locate(&self) -> Vec<u64> {
         let mut results: Vec<u64> = Vec::with_capacity((self.e - self.s) as usize);
         for k in self.s..self.e {
             results.push(self.index.get_sa::<seal::Local>(k));
