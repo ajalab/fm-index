@@ -40,7 +40,7 @@ where
         }
     }
 
-    /// The size on the heap of the FM-Index.
+    /// The size on the heap of the RLFM-Index.
     ///
     /// No suffix array information is stored in this index.
     pub fn size(&self) -> usize {
@@ -78,9 +78,9 @@ where
         }
     }
 
-    /// The size on the heap of the FM-Index.
+    /// The size on the heap of the RLFM-Index.
     ///
-    /// No suffix array information is stored in this index.
+    /// Sampled suffix array data is stored in this index.
     pub fn size(&self) -> usize {
         self.backend.size()
     }

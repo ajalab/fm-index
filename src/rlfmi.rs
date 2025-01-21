@@ -11,9 +11,6 @@ use crate::util;
 use serde::{Deserialize, Serialize};
 use vers_vecs::{BitVec, RsVec, WaveletMatrix};
 
-/// A Run-Length FM-index.
-///
-/// This can be more space-efficient than the FM-index, but is slower.
 #[derive(Serialize, Deserialize)]
 pub(crate) struct RLFMIndexBackend<T, C, S>
 where
@@ -96,10 +93,6 @@ where
         }
     }
 
-    /// Search for a pattern in the text.
-    ///
-    /// Return a [`Search`] object with information about the search
-    /// result.
     pub(crate) fn search<K>(&self, pattern: K) -> Search<Self>
     where
         K: AsRef<[T]>,
@@ -107,12 +100,10 @@ where
         SearchIndexBackend::search(self, pattern)
     }
 
-    /// The length of the text.
     pub(crate) fn len(&self) -> u64 {
         self.len
     }
 
-    /// True if the index is empty.
     pub(crate) fn is_empty(&self) -> bool {
         self.len == 0
     }
@@ -122,9 +113,6 @@ impl<T, C> RLFMIndexBackend<T, C, ()>
 where
     T: Character,
 {
-    /// Heap size of the index.
-    ///
-    /// No suffix array information is stored in this index.
     pub(crate) fn size(&self) -> usize {
         std::mem::size_of::<Self>()
             + self.s.heap_size()
@@ -138,9 +126,6 @@ impl<T, C> RLFMIndexBackend<T, C, SuffixOrderSampledArray>
 where
     T: Character,
 {
-    /// The size on the heap of the FM-Index.
-    ///
-    /// Sampled suffix array data is stored in this index.
     pub(crate) fn size(&self) -> usize {
         std::mem::size_of::<Self>()
             + self.s.heap_size()

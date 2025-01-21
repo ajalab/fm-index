@@ -11,11 +11,6 @@ use crate::util;
 use serde::{Deserialize, Serialize};
 use vers_vecs::WaveletMatrix;
 
-/// An FM-Index, a succinct full-text index.
-///
-/// The FM-Index is both a search index as well as compact
-/// representation of the text, all within less space than the
-/// original text.
 #[derive(Serialize, Deserialize)]
 pub(crate) struct FMIndexBackend<T, C, S> {
     bw: WaveletMatrix,
@@ -60,10 +55,6 @@ where
         WaveletMatrix::from_slice(&bw, (util::log2(converter.len() - 1) + 1) as u16)
     }
 
-    /// Search for a pattern in the text.
-    ///
-    /// Return a [`Search`] object with information about the search
-    /// result.
     pub(crate) fn search<K>(&self, pattern: K) -> Search<Self>
     where
         K: AsRef<[T]>,
@@ -71,7 +62,6 @@ where
         SearchIndexBackend::search(self, pattern)
     }
 
-    /// The length of the text.
     pub(crate) fn len(&self) -> u64 {
         self.bw.len() as u64
     }
@@ -82,9 +72,6 @@ where
 }
 
 impl<T, C> FMIndexBackend<T, C, ()> {
-    /// The size on the heap of the FM-Index.
-    ///
-    /// No suffix array information is stored in this index.
     pub(crate) fn size(&self) -> usize {
         std::mem::size_of::<Self>()
             + self.bw.heap_size()
@@ -93,9 +80,6 @@ impl<T, C> FMIndexBackend<T, C, ()> {
 }
 
 impl<T, C> FMIndexBackend<T, C, SuffixOrderSampledArray> {
-    /// The size on the heap of the FM-Index.
-    ///
-    /// Sampled suffix array data is stored in this index.
     pub(crate) fn size(&self) -> usize {
         std::mem::size_of::<Self>()
             + self.bw.heap_size()
