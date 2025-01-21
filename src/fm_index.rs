@@ -17,7 +17,7 @@ use vers_vecs::WaveletMatrix;
 /// representation of the text, all within less space than the
 /// original text.
 #[derive(Serialize, Deserialize)]
-pub struct FMIndex<T, C, S> {
+pub struct FMIndexBackend<T, C, S> {
     bw: WaveletMatrix,
     cs: Vec<u64>,
     converter: C,
@@ -25,7 +25,7 @@ pub struct FMIndex<T, C, S> {
     _t: std::marker::PhantomData<T>,
 }
 
-impl<T, C> FMIndex<T, C, ()>
+impl<T, C> FMIndexBackend<T, C, ()>
 where
     T: Character,
     C: Converter<T>,
@@ -44,7 +44,7 @@ where
         Self::create(text, converter, |_| ())
     }
 }
-impl<T, C> FMIndex<T, C, SuffixOrderSampledArray>
+impl<T, C> FMIndexBackend<T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,
@@ -72,7 +72,7 @@ where
 }
 
 // TODO: Refactor types (Converter converts T -> u64)
-impl<T, C, S> FMIndex<T, C, S>
+impl<T, C, S> FMIndexBackend<T, C, S>
 where
     T: Character,
     C: Converter<T>,
@@ -83,7 +83,7 @@ where
         let sa = sais::sais(&text, &converter);
         let bw = Self::wavelet_matrix(text, &sa, &converter);
 
-        FMIndex {
+        FMIndexBackend {
             cs,
             bw,
             converter,
@@ -123,7 +123,7 @@ where
     }
 }
 
-impl<T, C> FMIndex<T, C, ()> {
+impl<T, C> FMIndexBackend<T, C, ()> {
     /// The size on the heap of the FM-Index.
     ///
     /// No suffix array information is stored in this index.
@@ -134,7 +134,7 @@ impl<T, C> FMIndex<T, C, ()> {
     }
 }
 
-impl<T, C> FMIndex<T, C, SuffixOrderSampledArray> {
+impl<T, C> FMIndexBackend<T, C, SuffixOrderSampledArray> {
     /// The size on the heap of the FM-Index.
     ///
     /// Sampled suffix array data is stored in this index.
@@ -146,7 +146,7 @@ impl<T, C> FMIndex<T, C, SuffixOrderSampledArray> {
     }
 }
 
-impl<T, C, S> SearchIndexBackend for FMIndex<T, C, S>
+impl<T, C, S> SearchIndexBackend for FMIndexBackend<T, C, S>
 where
     T: Character,
     C: Converter<T>,
@@ -203,7 +203,7 @@ where
     }
 }
 
-impl<T, C> HasPosition for FMIndex<T, C, SuffixOrderSampledArray>
+impl<T, C> HasPosition for FMIndexBackend<T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,
@@ -224,7 +224,7 @@ where
     }
 }
 
-impl<T, C, S> IndexWithConverter<T> for FMIndex<T, C, S>
+impl<T, C, S> IndexWithConverter<T> for FMIndexBackend<T, C, S>
 where
     C: Converter<T>,
     T: Character,
@@ -256,7 +256,7 @@ mod tests {
             ("pps", vec![]),
         ];
 
-        let fm_index = FMIndex::new(text, RangeConverter::new(b'a', b'z'), 2);
+        let fm_index = FMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), 2);
 
         for (pattern, positions) in ans {
             let search = fm_index.search(pattern);
@@ -280,7 +280,7 @@ mod tests {
     #[test]
     fn test_small_contain_null() {
         let text = "miss\0issippi\0".to_string().into_bytes();
-        let fm_index = FMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
+        let fm_index = FMIndexBackend::count_only(text, RangeConverter::new(b'a', b'z'));
 
         assert_eq!(fm_index.search("m").count(), 1);
         assert_eq!(fm_index.search("ssi").count(), 1);
@@ -301,7 +301,7 @@ mod tests {
             ("みん", vec![0, 3]),
             ("な", vec![2, 5, 10]),
         ];
-        let fm_index = FMIndex::new(text, RangeConverter::new('あ' as u32, 'ん' as u32), 2);
+        let fm_index = FMIndexBackend::new(text, RangeConverter::new('あ' as u32, 'ん' as u32), 2);
 
         for (pattern, positions) in ans {
             let pattern: Vec<u32> = pattern.chars().map(|c| c as u32).collect();
@@ -317,7 +317,7 @@ mod tests {
     fn test_lf_map() {
         let text = "mississippi".to_string().into_bytes();
         let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
-        let fm_index = FMIndex::new(text, RangeConverter::new(b'a', b'z'), 2);
+        let fm_index = FMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), 2);
         let mut i = 0;
         for a in ans {
             i = fm_index.lf_map_backward::<seal::Local>(i);
@@ -328,7 +328,7 @@ mod tests {
     #[test]
     fn test_fl_map() {
         let text = "mississippi".to_string().into_bytes();
-        let fm_index = FMIndex::new(text, RangeConverter::new(b'a', b'z'), 2);
+        let fm_index = FMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), 2);
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
             let actual = fm_index.fl_map_forward::<seal::Local>(i as u64);
@@ -340,7 +340,7 @@ mod tests {
     fn test_search_backward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
         let word_pairs = vec![("ipsum", " dolor"), ("sit", " amet"), ("sed", " do")];
-        let fm_index = FMIndex::new(text, RangeConverter::new(b' ', b'~'), 2);
+        let fm_index = FMIndexBackend::new(text, RangeConverter::new(b' ', b'~'), 2);
         for (fst, snd) in word_pairs {
             let search1 = fm_index.search(snd).search(fst);
             let concat = fst.to_owned() + snd;
@@ -354,7 +354,7 @@ mod tests {
     #[test]
     fn test_iter_backward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
-        let index = FMIndex::count_only(text, RangeConverter::new(b' ', b'~'));
+        let index = FMIndexBackend::count_only(text, RangeConverter::new(b' ', b'~'));
         let search = index.search("sit ");
         let mut prev_seq = search.iter_backward(0).take(6).collect::<Vec<_>>();
         prev_seq.reverse();
@@ -364,7 +364,7 @@ mod tests {
     #[test]
     fn test_iter_forward() {
         let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
-        let index = FMIndex::count_only(text, RangeConverter::new(b' ', b'~'));
+        let index = FMIndexBackend::count_only(text, RangeConverter::new(b' ', b'~'));
         let search = index.search("sit ");
         let next_seq = search.iter_forward(0).take(10).collect::<Vec<_>>();
         assert_eq!(next_seq, b"sit amet, ".to_owned());

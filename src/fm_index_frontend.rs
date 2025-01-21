@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::fm_index::FMIndex as FMIndexBackend;
+use crate::fm_index::FMIndexBackend as FMIndexBackend;
 use crate::frontend::{Search, SearchIndex, SearchWithLocate};
 use crate::search::Search as SearchBackend;
 use crate::suffix_array::{self, SuffixOrderSampledArray};

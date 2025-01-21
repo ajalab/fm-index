@@ -5,9 +5,9 @@ use crate::suffix_array::HasPosition;
 #[cfg(doc)]
 use crate::character::Character;
 #[cfg(doc)]
-use crate::fm_index::FMIndex;
+use crate::fm_index::FMIndexBackend;
 #[cfg(doc)]
-use crate::rlfmi::RLFMIndex;
+use crate::rlfmi::RLFMIndexBackend;
 
 /// A search index.
 ///
