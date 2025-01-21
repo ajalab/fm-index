@@ -6,7 +6,7 @@ use crate::iter::SearchIndexBackend;
 use crate::sais;
 use crate::search::Search;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
-use crate::{seal, util};
+use crate::util;
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::{BitVec, RsVec, WaveletMatrix};

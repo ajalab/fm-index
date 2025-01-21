@@ -1,7 +1,7 @@
 //! Suffix arrays, used to construct the index.
 //!
 //! Can also be used in sampled fashion to perform locate queries.
-use crate::{seal, util};
+use crate::util;
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
@@ -11,7 +11,6 @@ use vers_vecs::BitVec;
 ///
 /// This is only supported when [`SuffixOrderSampledArray`] is passed in.
 pub(crate) trait HasPosition {
-    #[doc(hidden)]
     fn get_sa(&self, i: u64) -> u64;
 }
 

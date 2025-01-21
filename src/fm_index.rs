@@ -3,10 +3,10 @@ use crate::character::{prepare_text, Character};
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::iter::SearchIndexBackend;
+use crate::sais;
 use crate::search::Search;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
 use crate::util;
-use crate::{sais, seal};
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::WaveletMatrix;

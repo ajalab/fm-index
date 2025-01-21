@@ -146,7 +146,6 @@ mod iter;
 mod rlfmi;
 mod rlfmi_frontend;
 mod sais;
-mod seal;
 mod search;
 mod util;
 
