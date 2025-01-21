@@ -1,13 +1,6 @@
 use crate::backend::{BackwardIterator, ForwardIterator, SearchIndexBackend};
 use crate::suffix_array::HasPosition;
 
-#[cfg(doc)]
-use crate::character::Character;
-#[cfg(doc)]
-use crate::fm_index::FMIndexBackend;
-#[cfg(doc)]
-use crate::rlfmi::RLFMIndexBackend;
-
 /// An object containing the result of a search.
 ///
 /// This is expanded with a `locate` method if the index is
