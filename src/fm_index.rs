@@ -5,7 +5,7 @@ use crate::converter::{Converter, IndexWithConverter};
 use crate::iter::SearchIndexBackend;
 use crate::sais;
 use crate::search::Search;
-use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
+use crate::suffix_array::{HasPosition, SuffixOrderSampledArray};
 use crate::util;
 
 use serde::{Deserialize, Serialize};
@@ -23,52 +23,6 @@ pub struct FMIndexBackend<T, C, S> {
     converter: C,
     suffix_array: S,
     _t: std::marker::PhantomData<T>,
-}
-
-impl<T, C> FMIndexBackend<T, C, ()>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    /// Create a new FM-Index from a text. The index only supports the count
-    /// operation.
-    ///
-    /// - `text` is a vector of [`Character`]s.
-    ///
-    /// - `converter` is a [`Converter`] is used to convert the characters to a
-    ///   smaller alphabet. Use [`converter::IdConverter`] if you don't need to
-    ///   restrict the alphabet. Use [`converter::RangeConverter`] if you can
-    ///   contrain characters to a particular range. See [`converter`] for more
-    ///   details.
-    pub fn count_only(text: Vec<T>, converter: C) -> Self {
-        Self::create(text, converter, |_| ())
-    }
-}
-impl<T, C> FMIndexBackend<T, C, SuffixOrderSampledArray>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    /// Create a new FM-Index from a text. The index supports both the count
-    /// and locate operations.
-    ///
-    /// - `text` is a vector of [`Character`]s.
-    ///
-    /// - `converter` is a [`Converter`] is used to convert the characters to a
-    ///   smaller alphabet. Use [`converter::IdConverter`] if you don't need to
-    ///   restrict the alphabet. Use [`converter::RangeConverter`] if you can
-    ///   contrain characters to a particular range. See [`converter`] for more
-    ///   details.
-    ///
-    /// - `level` is the sampling level to use for position lookup. A sampling
-    ///   level of 0 means the most memory is used (a full suffix-array is
-    ///   retained), while looking up positions is faster. A sampling level of
-    ///   1 means half the memory is used, but looking up positions is slower.
-    ///   Each increase in level halves the memory usage but slows down
-    ///   position lookup.
-    pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
-        Self::create(text, converter, |sa| suffix_array::sample(sa, level))
-    }
 }
 
 // TODO: Refactor types (Converter converts T -> u64)
@@ -239,85 +193,15 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::converter::RangeConverter;
-
-    #[test]
-    fn test_small() {
-        let text = "mississippi".to_string().into_bytes();
-        let ans = vec![
-            ("m", vec![0]),
-            ("mi", vec![0]),
-            ("i", vec![1, 4, 7, 10]),
-            ("iss", vec![1, 4]),
-            ("ss", vec![2, 5]),
-            ("p", vec![8, 9]),
-            ("ppi", vec![8]),
-            ("z", vec![]),
-            ("pps", vec![]),
-        ];
-
-        let fm_index = FMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), 2);
-
-        for (pattern, positions) in ans {
-            let search = fm_index.search(pattern);
-            let expected = positions.len() as u64;
-            let actual = search.count();
-            assert_eq!(
-                expected,
-                actual,
-                "pattern \"{}\" must occur {} times, but {}: {:?}",
-                pattern,
-                expected,
-                actual,
-                search.locate()
-            );
-            let mut res = search.locate();
-            res.sort();
-            assert_eq!(res, positions);
-        }
-    }
-
-    #[test]
-    fn test_small_contain_null() {
-        let text = "miss\0issippi\0".to_string().into_bytes();
-        let fm_index = FMIndexBackend::count_only(text, RangeConverter::new(b'a', b'z'));
-
-        assert_eq!(fm_index.search("m").count(), 1);
-        assert_eq!(fm_index.search("ssi").count(), 1);
-        assert_eq!(fm_index.search("iss").count(), 2);
-        assert_eq!(fm_index.search("p").count(), 2);
-        assert_eq!(fm_index.search("\0").count(), 2);
-        assert_eq!(fm_index.search("\0i").count(), 1);
-    }
-
-    #[test]
-    fn test_utf8() {
-        let text = "みんなみんなきれいだな"
-            .chars()
-            .map(|c| c as u32)
-            .collect::<Vec<u32>>();
-        let ans = vec![
-            ("み", vec![0, 3]),
-            ("みん", vec![0, 3]),
-            ("な", vec![2, 5, 10]),
-        ];
-        let fm_index = FMIndexBackend::new(text, RangeConverter::new('あ' as u32, 'ん' as u32), 2);
-
-        for (pattern, positions) in ans {
-            let pattern: Vec<u32> = pattern.chars().map(|c| c as u32).collect();
-            let search = fm_index.search(pattern);
-            assert_eq!(search.count(), positions.len() as u64);
-            let mut res = search.locate();
-            res.sort();
-            assert_eq!(res, positions);
-        }
-    }
+    use crate::{converter::RangeConverter, suffix_array};
 
     #[test]
     fn test_lf_map() {
         let text = "mississippi".to_string().into_bytes();
         let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
-        let fm_index = FMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), 2);
+        let fm_index = FMIndexBackend::create(text, RangeConverter::new(b'a', b'z'), |sa| {
+            suffix_array::sample(sa, 2)
+        });
         let mut i = 0;
         for a in ans {
             i = fm_index.lf_map_backward(i);
@@ -328,45 +212,13 @@ mod tests {
     #[test]
     fn test_fl_map() {
         let text = "mississippi".to_string().into_bytes();
-        let fm_index = FMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), 2);
+        let fm_index = FMIndexBackend::create(text, RangeConverter::new(b'a', b'z'), |sa| {
+            suffix_array::sample(sa, 2)
+        });
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
             let actual = fm_index.fl_map_forward(i as u64);
             assert_eq!(actual, expected);
         }
-    }
-
-    #[test]
-    fn test_search_backward() {
-        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
-        let word_pairs = vec![("ipsum", " dolor"), ("sit", " amet"), ("sed", " do")];
-        let fm_index = FMIndexBackend::new(text, RangeConverter::new(b' ', b'~'), 2);
-        for (fst, snd) in word_pairs {
-            let search1 = fm_index.search(snd).search(fst);
-            let concat = fst.to_owned() + snd;
-            let search2 = fm_index.search(&concat);
-            assert!(search1.count() > 0);
-            assert_eq!(search1.count(), search2.count());
-            assert_eq!(search1.locate(), search2.locate());
-        }
-    }
-
-    #[test]
-    fn test_iter_backward() {
-        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
-        let index = FMIndexBackend::count_only(text, RangeConverter::new(b' ', b'~'));
-        let search = index.search("sit ");
-        let mut prev_seq = search.iter_backward(0).take(6).collect::<Vec<_>>();
-        prev_seq.reverse();
-        assert_eq!(prev_seq, b"dolor ".to_owned());
-    }
-
-    #[test]
-    fn test_iter_forward() {
-        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
-        let index = FMIndexBackend::count_only(text, RangeConverter::new(b' ', b'~'));
-        let search = index.search("sit ");
-        let next_seq = search.iter_forward(0).take(10).collect::<Vec<_>>();
-        assert_eq!(next_seq, b"sit amet, ".to_owned());
     }
 }

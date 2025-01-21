@@ -29,53 +29,6 @@ where
     _t: std::marker::PhantomData<T>,
 }
 
-impl<T, C> RLFMIndexBackend<T, C, ()>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    /// Create a new RLFM-Index from a text. The index only supports the count
-    /// operation.
-    ///
-    /// - `text` is a vector of [`Character`]s.
-    ///
-    /// - `converter` is a [`Converter`] is used to convert the characters to a
-    ///   smaller alphabet. Use [`converter::IdConverter`] if you don't need to
-    ///   restrict the alphabet. Use [`converter::RangeConverter`] if you can
-    ///   contrain characters to a particular range. See [`converter`] for more
-    ///   details.
-    pub fn count_only(text: Vec<T>, converter: C) -> Self {
-        Self::create(text, converter, |_sa| ())
-    }
-}
-
-impl<T, C> RLFMIndexBackend<T, C, SuffixOrderSampledArray>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    /// Create a new RLFM-Index from a text. The index supports both the count
-    /// and locate operations.
-    ///
-    /// - `text` is a vector of [`Character`]s.
-    ///
-    /// - `converter` is a [`Converter`] is used to convert the characters to a
-    ///   smaller alphabet. Use [`converter::IdConverter`] if you don't need to
-    ///   restrict the alphabet. Use [`converter::RangeConverter`] if you can
-    ///   contrain characters to a particular range. See [`converter`] for more
-    ///   details.
-    ///
-    /// - `level` is the sampling level to use for position lookup. A sampling
-    ///   level of 0 means the most memory is used (a full suffix-array is
-    ///   retained), while looking up positions is faster. A sampling level of
-    ///   1 means half the memory is used, but looking up positions is slower.
-    ///   Each increase in level halves the memory usage but slows down
-    ///   position lookup.
-    pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
-        Self::create(text, converter, |sa| suffix_array::sample(sa, level))
-    }
-}
-
 impl<T, C, S> RLFMIndexBackend<T, C, S>
 where
     T: Character,
@@ -316,71 +269,9 @@ mod tests {
     use crate::converter::RangeConverter;
 
     #[test]
-    fn test_count() {
-        let text = "mississippi".to_string().into_bytes();
-        let ans = vec![
-            ("m", 1),
-            ("mi", 1),
-            ("i", 4),
-            ("iss", 2),
-            ("ss", 2),
-            ("p", 2),
-            ("ppi", 1),
-            ("z", 0),
-            ("pps", 0),
-        ];
-        let rlfmi = RLFMIndexBackend::count_only(text, RangeConverter::new(b'a', b'z'));
-        for (pattern, expected) in ans {
-            let search = rlfmi.search(pattern);
-            let actual = search.count();
-            assert_eq!(
-                expected, actual,
-                "pattern \"{}\" must occur {} times, but {}",
-                pattern, expected, actual,
-            );
-        }
-    }
-
-    #[test]
-    fn test_locate() {
-        let text = "mississippi".to_string().into_bytes();
-        let ans = vec![
-            ("m", vec![0]),
-            ("mi", vec![0]),
-            ("i", vec![1, 4, 7, 10]),
-            ("iss", vec![1, 4]),
-            ("ss", vec![2, 5]),
-            ("p", vec![8, 9]),
-            ("ppi", vec![8]),
-            ("z", vec![]),
-            ("pps", vec![]),
-        ];
-
-        let fm_index = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), 2);
-
-        for (pattern, positions) in ans {
-            let search = fm_index.search(pattern);
-            let expected = positions.len() as u64;
-            let actual = search.count();
-            assert_eq!(
-                expected,
-                actual,
-                "pattern \"{}\" must occur {} times, but {}: {:?}",
-                pattern,
-                expected,
-                actual,
-                search.locate()
-            );
-            let mut res = search.locate();
-            res.sort();
-            assert_eq!(res, positions);
-        }
-    }
-
-    #[test]
     fn test_s() {
         let text = "mississippi".to_string().into_bytes();
-        let rlfmi = RLFMIndexBackend::count_only(text, RangeConverter::new(b'a', b'z'));
+        let rlfmi = RLFMIndexBackend::create(text, RangeConverter::new(b'a', b'z'), |_| ());
         let ans = "ipsm\0pisi".to_string().into_bytes();
         for (i, a) in ans.into_iter().enumerate() {
             let l: u8 = rlfmi.s.get_u64_unchecked(i) as u8;
@@ -391,7 +282,7 @@ mod tests {
     #[test]
     fn test_b() {
         let text = "mississippi".to_string().into_bytes();
-        let rlfmi = RLFMIndexBackend::count_only(text, RangeConverter::new(b'a', b'z'));
+        let rlfmi = RLFMIndexBackend::create(text, RangeConverter::new(b'a', b'z'), |_| ());
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0];
         // l:      ipssm$pissii
@@ -414,7 +305,7 @@ mod tests {
     #[test]
     fn test_bp() {
         let text = "mississippi".to_string().into_bytes();
-        let rlfmi = RLFMIndexBackend::count_only(text, RangeConverter::new(b'a', b'z'));
+        let rlfmi = RLFMIndexBackend::create(text, RangeConverter::new(b'a', b'z'), |_| ());
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0];
         assert_eq!(n as usize, rlfmi.bp.len());
@@ -431,7 +322,7 @@ mod tests {
     #[test]
     fn test_cs() {
         let text = "mississippi".to_string().into_bytes();
-        let rlfmi = RLFMIndexBackend::count_only(text, RangeConverter::new(b'a', b'z'));
+        let rlfmi = RLFMIndexBackend::create(text, RangeConverter::new(b'a', b'z'), |_| ());
         let ans = vec![(b'\0', 0), (b'i', 1), (b'm', 4), (b'p', 5), (b's', 7)];
         for (c, a) in ans {
             let c = rlfmi.converter.convert(c) as usize;
@@ -442,7 +333,7 @@ mod tests {
     #[test]
     fn test_get_l() {
         let text = "mississippi".to_string().into_bytes();
-        let rlfmi = RLFMIndexBackend::count_only(text, RangeConverter::new(b'a', b'z'));
+        let rlfmi = RLFMIndexBackend::create(text, RangeConverter::new(b'a', b'z'), |_| ());
         let ans = "ipssm\0pissii".to_string().into_bytes();
 
         for (i, a) in ans.into_iter().enumerate() {
@@ -455,7 +346,7 @@ mod tests {
     fn test_lf_map() {
         let text = "mississippi".to_string().into_bytes();
         let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
-        let rlfmi = RLFMIndexBackend::count_only(text, RangeConverter::new(b'a', b'z'));
+        let rlfmi = RLFMIndexBackend::create(text, RangeConverter::new(b'a', b'z'), |_| ());
 
         let mut i = 0;
         for a in ans {
@@ -475,7 +366,7 @@ mod tests {
             (b'p', (6, 8)),
             (b's', (8, 12)),
         ];
-        let rlfmi = RLFMIndexBackend::count_only(text, RangeConverter::new(b'a', b'z'));
+        let rlfmi = RLFMIndexBackend::create(text, RangeConverter::new(b'a', b'z'), |_| ());
         let n = rlfmi.len();
 
         for (c, r) in ans {
@@ -493,48 +384,12 @@ mod tests {
     }
 
     #[test]
-    fn test_search_backward() {
-        let text = "mississippi".to_string().into_bytes();
-        let ans = vec![
-            ("iss", (3, 5)),
-            ("ppi", (7, 8)),
-            ("si", (8, 10)),
-            ("ssi", (10, 12)),
-        ];
-        let rlfmi = RLFMIndexBackend::count_only(text, RangeConverter::new(b'a', b'z'));
-
-        for (s, r) in ans {
-            let search = rlfmi.search(s);
-            assert_eq!(search.get_range(), r);
-        }
-    }
-
-    #[test]
-    fn test_iter_backward() {
-        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
-        let index = RLFMIndexBackend::count_only(text, RangeConverter::new(b' ', b'~'));
-        let search = index.search("sit ");
-        let mut prev_seq = search.iter_backward(0).take(6).collect::<Vec<_>>();
-        prev_seq.reverse();
-        assert_eq!(prev_seq, b"dolor ".to_owned());
-    }
-
-    #[test]
-    fn test_iter_forward() {
-        let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.".to_string().into_bytes();
-        let index = RLFMIndexBackend::count_only(text, RangeConverter::new(b' ', b'~'));
-        let search = index.search("sit ");
-        let next_seq = search.iter_forward(0).take(10).collect::<Vec<_>>();
-        assert_eq!(next_seq, b"sit amet, ".to_owned());
-    }
-
-    #[test]
     fn test_get_f() {
         let text = "mississippi".to_string().into_bytes();
         let mut ans = text.clone();
         ans.push(0);
         ans.sort();
-        let rlfmi = RLFMIndexBackend::count_only(text, RangeConverter::new(b'a', b'z'));
+        let rlfmi = RLFMIndexBackend::create(text, RangeConverter::new(b'a', b'z'), |_| ());
 
         for (i, a) in ans.into_iter().enumerate() {
             let f = rlfmi.get_f_forward(i as u64);
@@ -545,11 +400,28 @@ mod tests {
     #[test]
     fn test_fl_map() {
         let text = "mississippi".to_string().into_bytes();
-        let rlfmi = RLFMIndexBackend::count_only(text, RangeConverter::new(b'a', b'z'));
+        let rlfmi = RLFMIndexBackend::create(text, RangeConverter::new(b'a', b'z'), |_| ());
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
             let actual = rlfmi.fl_map_forward(i as u64);
             assert_eq!(actual, expected);
+        }
+    }
+
+    #[test]
+    fn test_search_backward() {
+        let text = "mississippi".to_string().into_bytes();
+        let ans = vec![
+            ("iss", (3, 5)),
+            ("ppi", (7, 8)),
+            ("si", (8, 10)),
+            ("ssi", (10, 12)),
+        ];
+        let rlfmi = RLFMIndexBackend::create(text, RangeConverter::new(b'a', b'z'), |_| ());
+
+        for (s, r) in ans {
+            let search = rlfmi.search(s);
+            assert_eq!(search.get_range(), r);
         }
     }
 }
