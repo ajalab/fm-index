@@ -17,7 +17,7 @@ use vers_vecs::WaveletMatrix;
 /// representation of the text, all within less space than the
 /// original text.
 #[derive(Serialize, Deserialize)]
-pub struct FMIndexBackend<T, C, S> {
+pub(crate) struct FMIndexBackend<T, C, S> {
     bw: WaveletMatrix,
     cs: Vec<u64>,
     converter: C,
@@ -64,7 +64,7 @@ where
     ///
     /// Return a [`Search`] object with information about the search
     /// result.
-    pub fn search<K>(&self, pattern: K) -> Search<Self>
+    pub(crate) fn search<K>(&self, pattern: K) -> Search<Self>
     where
         K: AsRef<[T]>,
     {
@@ -72,11 +72,11 @@ where
     }
 
     /// The length of the text.
-    pub fn len(&self) -> u64 {
+    pub(crate) fn len(&self) -> u64 {
         self.bw.len() as u64
     }
 
-    pub fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.bw.len() == 0
     }
 }
@@ -85,7 +85,7 @@ impl<T, C> FMIndexBackend<T, C, ()> {
     /// The size on the heap of the FM-Index.
     ///
     /// No suffix array information is stored in this index.
-    pub fn size(&self) -> usize {
+    pub(crate) fn size(&self) -> usize {
         std::mem::size_of::<Self>()
             + self.bw.heap_size()
             + self.cs.len() * std::mem::size_of::<Vec<u64>>()
@@ -96,7 +96,7 @@ impl<T, C> FMIndexBackend<T, C, SuffixOrderSampledArray> {
     /// The size on the heap of the FM-Index.
     ///
     /// Sampled suffix array data is stored in this index.
-    pub fn size(&self) -> usize {
+    pub(crate) fn size(&self) -> usize {
         std::mem::size_of::<Self>()
             + self.bw.heap_size()
             + self.cs.len() * std::mem::size_of::<Vec<u64>>()
