@@ -12,7 +12,7 @@ use crate::rlfmi::RLFMIndexBackend;
 ///
 /// This is expanded with a `locate` method if the index is
 /// supplied with a sampled suffix array.
-pub(crate) struct Search<'a, I>
+pub(crate) struct SearchBackend<'a, I>
 where
     I: SearchIndexBackend,
 {
@@ -22,12 +22,12 @@ where
     pattern: Vec<I::T>,
 }
 
-impl<'a, I> Search<'a, I>
+impl<'a, I> SearchBackend<'a, I>
 where
     I: SearchIndexBackend,
 {
-    pub(crate) fn new(index: &'a I) -> Search<'a, I> {
-        Search {
+    pub(crate) fn new(index: &'a I) -> SearchBackend<'a, I> {
+        SearchBackend {
             index,
             s: 0,
             e: index.len(),
@@ -52,7 +52,7 @@ where
         }
         pattern.extend_from_slice(&self.pattern);
 
-        Search {
+        SearchBackend {
             index: self.index,
             s,
             e,
@@ -93,7 +93,7 @@ where
     }
 }
 
-impl<I> Search<'_, I>
+impl<I> SearchBackend<'_, I>
 where
     I: SearchIndexBackend + HasPosition,
 {

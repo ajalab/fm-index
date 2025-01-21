@@ -4,7 +4,7 @@ use crate::character::{prepare_text, Character};
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::sais;
-use crate::search::Search;
+use crate::search::SearchBackend;
 use crate::suffix_array::{HasPosition, SuffixOrderSampledArray};
 use crate::util;
 
@@ -55,7 +55,7 @@ where
         WaveletMatrix::from_slice(&bw, (util::log2(converter.len() - 1) + 1) as u16)
     }
 
-    pub(crate) fn search<K>(&self, pattern: K) -> Search<Self>
+    pub(crate) fn search<K>(&self, pattern: K) -> SearchBackend<Self>
     where
         K: AsRef<[T]>,
     {

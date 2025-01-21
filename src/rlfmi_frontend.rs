@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::frontend::{Search, SearchIndex, SearchWithLocate};
 use crate::rlfmi::RLFMIndexBackend;
-use crate::search::Search as SearchBackend;
+use crate::search::SearchBackend;
 use crate::suffix_array::{self, SuffixOrderSampledArray};
 use crate::SearchIndexWithLocate;
 use crate::{character::Character, converter::Converter};
