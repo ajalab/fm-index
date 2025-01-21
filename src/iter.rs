@@ -5,7 +5,7 @@ use crate::seal;
 use crate::search::Search;
 
 /// A search index backend.
-pub trait SearchIndexBackend: Sized {
+pub(crate) trait SearchIndexBackend: Sized {
     /// A [`Character`] type.
     type T: Character;
 
@@ -51,7 +51,7 @@ pub trait SearchIndexBackend: Sized {
 }
 
 /// An iterator that goes backwards through the text, producing [`Character`].
-pub struct BackwardIterator<'a, I>
+pub(crate) struct BackwardIterator<'a, I>
 where
     I: SearchIndexBackend,
 {
@@ -73,7 +73,7 @@ where
 }
 
 /// An iterator that goes forwards through the text, producing [`Character`].
-pub struct ForwardIterator<'a, I>
+pub(crate) struct ForwardIterator<'a, I>
 where
     I: SearchIndexBackend,
 {
