@@ -70,12 +70,7 @@ where
     pub(crate) fn count(&self) -> u64 {
         self.e - self.s
     }
-}
 
-impl<I> Search<'_, I>
-where
-    I: SearchIndexBackend,
-{
     /// Get an iterator that goes backwards through the text, producing
     /// [`Character`].
     pub(crate) fn iter_backward(&self, i: u64) -> BackwardIterator<I> {
@@ -86,12 +81,7 @@ where
 
         self.index.iter_backward::<seal::Local>(self.s + i)
     }
-}
 
-impl<I> Search<'_, I>
-where
-    I: SearchIndexBackend,
-{
     /// Get an iterator that goes forwards through the text, producing
     /// [`Character`].
     pub(crate) fn iter_forward(&self, i: u64) -> ForwardIterator<I> {
