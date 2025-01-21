@@ -1,5 +1,10 @@
 use crate::Character;
 
+#[cfg(doc)]
+use crate::fm_index_frontend::FMIndex;
+#[cfg(doc)]
+use crate::rlfmi_frontend::RLFMIndex;
+
 /// A search index.
 ///
 /// Using this trait, you can use [`FMIndex`] and [`RLFMIndex`]

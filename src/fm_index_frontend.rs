@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
 
+#[cfg(doc)]
+use crate::converter;
+
 use crate::fm_index::FMIndexBackend;
 use crate::frontend::{Search, SearchIndex, SearchWithLocate};
 use crate::search::SearchBackend;
