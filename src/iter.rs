@@ -32,7 +32,6 @@ pub(crate) trait SearchIndexBackend: Sized {
 
     fn get_f_forward(&self, i: u64) -> Self::T;
     fn fl_map_forward(&self, i: u64) -> u64;
-    fn fl_map2_forward(&self, c: Self::T, i: u64) -> u64;
 
     #[doc(hidden)]
     fn iter_forward(&self, i: u64) -> ForwardIterator<Self> {

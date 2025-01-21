@@ -209,17 +209,6 @@ where
         n + i - p
     }
 
-    fn fl_map2_forward(&self, c: Self::T, i: u64) -> u64 {
-        let c = self.converter.convert(c);
-        let j = self.bp.rank1(i as usize + 1) - 1;
-        let p = self.bp.select1(j) as u64;
-        let m = self
-            .s
-            .select_u64_unchecked(j - self.cs[c.into() as usize] as usize, c.into());
-        let n = self.b.select1(m) as u64;
-        n + i - p
-    }
-
     fn len(&self) -> u64 {
         self.len
     }
