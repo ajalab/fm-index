@@ -31,7 +31,7 @@ where
         Search {
             index,
             s: 0,
-            e: index.len::<seal::Local>(),
+            e: index.len(),
             pattern: vec![],
         }
     }
@@ -45,8 +45,8 @@ where
         let mut e = self.e;
         let mut pattern = pattern.as_ref().to_vec();
         for &c in pattern.iter().rev() {
-            s = self.index.lf_map2_backward::<seal::Local>(c, s);
-            e = self.index.lf_map2_backward::<seal::Local>(c, e);
+            s = self.index.lf_map2_backward(c, s);
+            e = self.index.lf_map2_backward(c, e);
             if s == e {
                 break;
             }
@@ -79,7 +79,7 @@ where
         debug_assert!(m > 0, "cannot iterate from empty search result");
         debug_assert!(i < m, "{} is out of range", i);
 
-        self.index.iter_backward::<seal::Local>(self.s + i)
+        self.index.iter_backward(self.s + i)
     }
 
     /// Get an iterator that goes forwards through the text, producing
@@ -90,7 +90,7 @@ where
         debug_assert!(m > 0, "cannot iterate from empty search result");
         debug_assert!(i < m, "{} is out of range", i);
 
-        self.index.iter_forward::<seal::Local>(self.s + i)
+        self.index.iter_forward(self.s + i)
     }
 }
 
@@ -102,7 +102,7 @@ where
     pub(crate) fn locate(&self) -> Vec<u64> {
         let mut results: Vec<u64> = Vec::with_capacity((self.e - self.s) as usize);
         for k in self.s..self.e {
-            results.push(self.index.get_sa::<seal::Local>(k));
+            results.push(self.index.get_sa(k));
         }
         results
     }

@@ -153,21 +153,21 @@ where
 {
     type T = T;
 
-    fn get_l_backward<L: seal::IsLocal>(&self, i: u64) -> Self::T {
+    fn get_l_backward(&self, i: u64) -> Self::T {
         Self::T::from_u64(self.bw.get_u64_unchecked(i as usize))
     }
 
-    fn lf_map_backward<L: seal::IsLocal>(&self, i: u64) -> u64 {
-        let c = self.get_l_backward::<L>(i);
+    fn lf_map_backward(&self, i: u64) -> u64 {
+        let c = self.get_l_backward(i);
         self.cs[c.into() as usize] + self.bw.rank_u64_unchecked(i as usize, c.into()) as u64
     }
 
-    fn lf_map2_backward<L: seal::IsLocal>(&self, c: T, i: u64) -> u64 {
+    fn lf_map2_backward(&self, c: T, i: u64) -> u64 {
         let c = self.converter.convert(c);
         self.cs[c.into() as usize] + self.bw.rank_u64_unchecked(i as usize, c.into()) as u64
     }
 
-    fn get_f_forward<L: seal::IsLocal>(&self, i: u64) -> Self::T {
+    fn get_f_forward(&self, i: u64) -> Self::T {
         // binary search to find c s.t. cs[c] <= i < cs[c+1]
         // <=> c is the greatest index s.t. cs[c] <= i
         // invariant: c exists in [s, e)
@@ -184,21 +184,21 @@ where
         T::from_u64(s as u64)
     }
 
-    fn fl_map_forward<L: seal::IsLocal>(&self, i: u64) -> u64 {
-        let c = self.get_f_forward::<L>(i);
+    fn fl_map_forward(&self, i: u64) -> u64 {
+        let c = self.get_f_forward(i);
         self.bw
             .select_u64_unchecked(i as usize - self.cs[c.into() as usize] as usize, c.into())
             as u64
     }
 
-    fn fl_map2_forward<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64 {
+    fn fl_map2_forward(&self, c: Self::T, i: u64) -> u64 {
         let c = self.converter.convert(c);
         self.bw
             .select_u64_unchecked((i - self.cs[c.into() as usize]) as usize, c.into())
             as u64
     }
 
-    fn len<L: seal::IsLocal>(&self) -> u64 {
+    fn len(&self) -> u64 {
         self.bw.len() as u64
     }
 }
@@ -208,7 +208,7 @@ where
     T: Character,
     C: Converter<T>,
 {
-    fn get_sa<L: seal::IsLocal>(&self, mut i: u64) -> u64 {
+    fn get_sa(&self, mut i: u64) -> u64 {
         let mut steps = 0;
         loop {
             match self.suffix_array.get(i) {
@@ -216,7 +216,7 @@ where
                     return (sa + steps) % self.bw.len() as u64;
                 }
                 None => {
-                    i = self.lf_map_backward::<seal::Local>(i);
+                    i = self.lf_map_backward(i);
                     steps += 1;
                 }
             }
@@ -320,7 +320,7 @@ mod tests {
         let fm_index = FMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), 2);
         let mut i = 0;
         for a in ans {
-            i = fm_index.lf_map_backward::<seal::Local>(i);
+            i = fm_index.lf_map_backward(i);
             assert_eq!(i, a);
         }
     }
@@ -331,7 +331,7 @@ mod tests {
         let fm_index = FMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), 2);
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
-            let actual = fm_index.fl_map_forward::<seal::Local>(i as u64);
+            let actual = fm_index.fl_map_forward(i as u64);
             assert_eq!(actual, expected);
         }
     }

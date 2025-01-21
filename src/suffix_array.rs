@@ -12,7 +12,7 @@ use vers_vecs::BitVec;
 /// This is only supported when [`SuffixOrderSampledArray`] is passed in.
 pub(crate) trait HasPosition {
     #[doc(hidden)]
-    fn get_sa<L: seal::IsLocal>(&self, i: u64) -> u64;
+    fn get_sa(&self, i: u64) -> u64;
 }
 
 /// A sampled suffix array, stored within the index.

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::fm_index::FMIndexBackend as FMIndexBackend;
+use crate::fm_index::FMIndexBackend;
 use crate::frontend::{Search, SearchIndex, SearchWithLocate};
 use crate::search::Search as SearchBackend;
 use crate::suffix_array::{self, SuffixOrderSampledArray};
@@ -185,11 +185,11 @@ where
         FMIndexSearch::count(self)
     }
 
-    fn iter_backward(&self, i: u64) -> impl Iterator<Item = T> + '_ {
+    fn iter_backward(&self, i: u64) -> impl Iterator<Item = T> {
         FMIndexSearch::iter_backward(self, i)
     }
 
-    fn iter_forward(&self, i: u64) -> impl Iterator<Item = T> + '_ {
+    fn iter_forward(&self, i: u64) -> impl Iterator<Item = T> {
         FMIndexSearch::iter_forward(self, i)
     }
 }

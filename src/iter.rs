@@ -1,7 +1,6 @@
 use crate::converter::{Converter, IndexWithConverter};
 
 use crate::character::Character;
-use crate::seal;
 use crate::search::Search;
 
 /// A search index backend.
@@ -20,32 +19,24 @@ pub(crate) trait SearchIndexBackend: Sized {
         Search::new(self).search(pattern)
     }
 
-    #[doc(hidden)]
-    fn len<L: seal::IsLocal>(&self) -> u64;
+    fn len(&self) -> u64;
 
-    #[doc(hidden)]
-    fn get_l_backward<L: seal::IsLocal>(&self, i: u64) -> Self::T;
-    #[doc(hidden)]
-    fn lf_map_backward<L: seal::IsLocal>(&self, i: u64) -> u64;
-    #[doc(hidden)]
-    fn lf_map2_backward<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64;
+    fn get_l_backward(&self, i: u64) -> Self::T;
+    fn lf_map_backward(&self, i: u64) -> u64;
+    fn lf_map2_backward(&self, c: Self::T, i: u64) -> u64;
 
-    #[doc(hidden)]
-    fn iter_backward<L: seal::IsLocal>(&self, i: u64) -> BackwardIterator<Self> {
-        debug_assert!(i < self.len::<seal::Local>());
+    fn iter_backward(&self, i: u64) -> BackwardIterator<Self> {
+        debug_assert!(i < self.len());
         BackwardIterator { index: self, i }
     }
 
-    #[doc(hidden)]
-    fn get_f_forward<L: seal::IsLocal>(&self, i: u64) -> Self::T;
-    #[doc(hidden)]
-    fn fl_map_forward<L: seal::IsLocal>(&self, i: u64) -> u64;
-    #[doc(hidden)]
-    fn fl_map2_forward<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64;
+    fn get_f_forward(&self, i: u64) -> Self::T;
+    fn fl_map_forward(&self, i: u64) -> u64;
+    fn fl_map2_forward(&self, c: Self::T, i: u64) -> u64;
 
     #[doc(hidden)]
-    fn iter_forward<L: seal::IsLocal>(&self, i: u64) -> ForwardIterator<Self> {
-        debug_assert!(i < self.len::<L>());
+    fn iter_forward(&self, i: u64) -> ForwardIterator<Self> {
+        debug_assert!(i < self.len());
         ForwardIterator { index: self, i }
     }
 }
@@ -66,8 +57,8 @@ where
 {
     type Item = <I as SearchIndexBackend>::T;
     fn next(&mut self) -> Option<Self::Item> {
-        let c = self.index.get_l_backward::<seal::Local>(self.i);
-        self.i = self.index.lf_map_backward::<seal::Local>(self.i);
+        let c = self.index.get_l_backward(self.i);
+        self.i = self.index.lf_map_backward(self.i);
         Some(self.index.get_converter().convert_inv(c))
     }
 }
@@ -88,8 +79,8 @@ where
 {
     type Item = <I as SearchIndexBackend>::T;
     fn next(&mut self) -> Option<Self::Item> {
-        let c = self.index.get_f_forward::<seal::Local>(self.i);
-        self.i = self.index.fl_map_forward::<seal::Local>(self.i);
+        let c = self.index.get_f_forward(self.i);
+        self.i = self.index.fl_map_forward(self.i);
         Some(self.index.get_converter().convert_inv(c))
     }
 }

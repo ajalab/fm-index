@@ -210,24 +210,24 @@ where
 {
     type T = T;
 
-    fn get_l_backward<L: seal::IsLocal>(&self, i: u64) -> T {
+    fn get_l_backward(&self, i: u64) -> T {
         // note: b[0] is always 1
         T::from_u64(self.s.get_u64_unchecked(self.b.rank1(i as usize + 1) - 1))
     }
 
-    fn lf_map_backward<L: seal::IsLocal>(&self, i: u64) -> u64 {
-        let c = self.get_l_backward::<L>(i);
+    fn lf_map_backward(&self, i: u64) -> u64 {
+        let c = self.get_l_backward(i);
         let j = self.b.rank1(i as usize);
         let nr = self.s.rank_u64_unchecked(j, c.into());
         self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64 + i
             - self.b.select1(j) as u64
     }
 
-    fn lf_map2_backward<L: seal::IsLocal>(&self, c: T, i: u64) -> u64 {
+    fn lf_map2_backward(&self, c: T, i: u64) -> u64 {
         let c = self.converter.convert(c);
         let j = self.b.rank1(i as usize);
         let nr = self.s.rank_u64_unchecked(j, c.into());
-        if self.get_l_backward::<L>(i) != c {
+        if self.get_l_backward(i) != c {
             self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64
         } else {
             self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64 + i
@@ -235,7 +235,7 @@ where
         }
     }
 
-    fn get_f_forward<L: seal::IsLocal>(&self, i: u64) -> Self::T {
+    fn get_f_forward(&self, i: u64) -> Self::T {
         let mut s = 0;
         let mut e = self.cs.len();
         let r = (self.bp.rank1(i as usize + 1) - 1) as u64;
@@ -250,8 +250,8 @@ where
         T::from_u64(s as u64)
     }
 
-    fn fl_map_forward<L: seal::IsLocal>(&self, i: u64) -> u64 {
-        let c = self.get_f_forward::<L>(i);
+    fn fl_map_forward(&self, i: u64) -> u64 {
+        let c = self.get_f_forward(i);
         let j = self.bp.rank1(i as usize + 1) - 1;
         let p = self.bp.select1(j) as u64;
         let m = self
@@ -261,7 +261,7 @@ where
         n + i - p
     }
 
-    fn fl_map2_forward<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64 {
+    fn fl_map2_forward(&self, c: Self::T, i: u64) -> u64 {
         let c = self.converter.convert(c);
         let j = self.bp.rank1(i as usize + 1) - 1;
         let p = self.bp.select1(j) as u64;
@@ -272,7 +272,7 @@ where
         n + i - p
     }
 
-    fn len<L: seal::IsLocal>(&self) -> u64 {
+    fn len(&self) -> u64 {
         self.len
     }
 }
@@ -282,7 +282,7 @@ where
     T: Character,
     C: Converter<T>,
 {
-    fn get_sa<L: seal::IsLocal>(&self, mut i: u64) -> u64 {
+    fn get_sa(&self, mut i: u64) -> u64 {
         let mut steps = 0;
         loop {
             match self.suffix_array.get(i) {
@@ -290,7 +290,7 @@ where
                     return (sa + steps) % self.len();
                 }
                 None => {
-                    i = self.lf_map_backward::<seal::Local>(i);
+                    i = self.lf_map_backward(i);
                     steps += 1;
                 }
             }
@@ -446,7 +446,7 @@ mod tests {
         let ans = "ipssm\0pissii".to_string().into_bytes();
 
         for (i, a) in ans.into_iter().enumerate() {
-            let l = rlfmi.get_l_backward::<seal::Local>(i as u64);
+            let l = rlfmi.get_l_backward(i as u64);
             assert_eq!(rlfmi.converter.convert_inv(l), a);
         }
     }
@@ -459,7 +459,7 @@ mod tests {
 
         let mut i = 0;
         for a in ans {
-            let next_i = rlfmi.lf_map_backward::<seal::Local>(i);
+            let next_i = rlfmi.lf_map_backward(i);
             assert_eq!(next_i, a, "should be lf_map({}) == {}", i, a);
             i = next_i;
         }
@@ -479,8 +479,8 @@ mod tests {
         let n = rlfmi.len();
 
         for (c, r) in ans {
-            let s = rlfmi.lf_map2_backward::<seal::Local>(c, 0);
-            let e = rlfmi.lf_map2_backward::<seal::Local>(c, n);
+            let s = rlfmi.lf_map2_backward(c, 0);
+            let e = rlfmi.lf_map2_backward(c, n);
             assert_eq!(
                 (s, e),
                 r,
@@ -537,7 +537,7 @@ mod tests {
         let rlfmi = RLFMIndexBackend::count_only(text, RangeConverter::new(b'a', b'z'));
 
         for (i, a) in ans.into_iter().enumerate() {
-            let f = rlfmi.get_f_forward::<seal::Local>(i as u64);
+            let f = rlfmi.get_f_forward(i as u64);
             assert_eq!(rlfmi.converter.convert_inv(f), a);
         }
     }
@@ -548,7 +548,7 @@ mod tests {
         let rlfmi = RLFMIndexBackend::count_only(text, RangeConverter::new(b'a', b'z'));
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
-            let actual = rlfmi.fl_map_forward::<seal::Local>(i as u64);
+            let actual = rlfmi.fl_map_forward(i as u64);
             assert_eq!(actual, expected);
         }
     }
