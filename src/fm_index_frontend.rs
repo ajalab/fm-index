@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::fm_index::FMIndex as FMIndexBackend;
+use crate::frontend::{Search, SearchIndex, SearchWithLocate};
 use crate::search::Search as SearchBackend;
 use crate::suffix_array::{self, SuffixOrderSampledArray};
 use crate::{character::Character, converter::Converter};
@@ -92,6 +93,20 @@ where
     }
 }
 
+impl<T, C, S> SearchIndex<T, C> for FMIndex<T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    #[allow(refining_impl_trait)]
+    fn search<K>(&self, pattern: K) -> FMIndexSearch<T, C, S>
+    where
+        K: AsRef<[T]>,
+    {
+        FMIndex::search(self, pattern)
+    }
+}
+
 pub struct FMIndexSearch<'a, T, C, S>
 where
     T: Character,
@@ -127,6 +142,28 @@ where
     }
 }
 
+impl<T, C, S> Search<T, C> for FMIndexSearch<'_, T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    /// Search in the current search result, refining it.
+    ///
+    /// This adds a prefix `pattern` to the existing pattern, and
+    /// looks for those expanded patterns in the text.
+    fn search<K>(&self, pattern: K) -> Self
+    where
+        K: AsRef<[T]>,
+    {
+        FMIndexSearch::search(self, pattern)
+    }
+
+    /// Get the number of matches.
+    fn count(&self) -> u64 {
+        FMIndexSearch::count(self)
+    }
+}
+
 impl<T, C> FMIndexSearch<'_, T, C, SuffixOrderSampledArray>
 where
     T: Character,
@@ -135,5 +172,15 @@ where
     /// List the position of all occurrences.
     pub fn locate(&self) -> Vec<u64> {
         self.search_backend.locate()
+    }
+}
+
+impl<T, C> SearchWithLocate<T, C> for FMIndexSearch<'_, T, C, SuffixOrderSampledArray>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    fn locate(&self) -> Vec<u64> {
+        FMIndexSearch::locate(self)
     }
 }

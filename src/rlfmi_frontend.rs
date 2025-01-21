@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use crate::frontend::{Search, SearchIndex, SearchWithLocate};
 use crate::rlfmi::RLFMIndex as RLFMIndexBackend;
 use crate::search::Search as SearchBackend;
 use crate::suffix_array::{self, SuffixOrderSampledArray};
@@ -92,6 +93,20 @@ where
     }
 }
 
+impl<T, C, S> SearchIndex<T, C> for RLFMIndex<T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    #[allow(refining_impl_trait)]
+    fn search<K>(&self, pattern: K) -> RLFMIndexSearch<T, C, S>
+    where
+        K: AsRef<[T]>,
+    {
+        RLFMIndex::search(self, pattern)
+    }
+}
+
 pub struct RLFMIndexSearch<'a, T, C, S>
 where
     T: Character,
@@ -127,6 +142,28 @@ where
     }
 }
 
+impl<T, C, S> Search<T, C> for RLFMIndexSearch<'_, T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    /// Search in the current search result, refining it.
+    ///
+    /// This adds a prefix `pattern` to the existing pattern, and
+    /// looks for those expanded patterns in the text.
+    fn search<K>(&self, pattern: K) -> Self
+    where
+        K: AsRef<[T]>,
+    {
+        RLFMIndexSearch::search(self, pattern)
+    }
+
+    /// Get the number of matches.
+    fn count(&self) -> u64 {
+        RLFMIndexSearch::count(self)
+    }
+}
+
 impl<T, C> RLFMIndexSearch<'_, T, C, SuffixOrderSampledArray>
 where
     T: Character,
@@ -135,5 +172,15 @@ where
     /// List the position of all occurrences.
     pub fn locate(&self) -> Vec<u64> {
         self.search_backend.locate()
+    }
+}
+
+impl<T, C> SearchWithLocate<T, C> for RLFMIndexSearch<'_, T, C, SuffixOrderSampledArray>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    fn locate(&self) -> Vec<u64> {
+        RLFMIndexSearch::locate(self)
     }
 }

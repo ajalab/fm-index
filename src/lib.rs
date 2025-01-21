@@ -141,6 +141,7 @@ pub mod suffix_array;
 mod character;
 mod fm_index;
 mod fm_index_frontend;
+mod frontend;
 mod iter;
 mod rlfmi;
 mod rlfmi_frontend;
