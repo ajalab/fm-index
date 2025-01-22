@@ -1,4 +1,4 @@
-use fm_index::{DefaultFMIndex, RLFMIndex};
+use fm_index::{FMIndex, RLFMIndex};
 
 use criterion::{criterion_group, criterion_main};
 use criterion::{AxisScale, BatchSize, BenchmarkId, Criterion, PlotConfiguration};
@@ -14,7 +14,7 @@ pub fn bench(c: &mut Criterion) {
             b.iter_batched(
                 || common::binary_text_set(n, 0.5),
                 |(text, converter)| {
-                    DefaultFMIndex::count_only(text, converter);
+                    FMIndex::count_only(text, converter);
                 },
                 BatchSize::SmallInput,
             )
