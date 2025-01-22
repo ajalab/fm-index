@@ -1,3 +1,6 @@
+#[cfg(doc)]
+use crate::converter;
+
 use crate::converter::{Converter, IndexWithConverter};
 use crate::iter::FMIndexBackend;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
