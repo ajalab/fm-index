@@ -2,7 +2,7 @@ use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
-use crate::iter::FMIndex;
+use crate::iter::FMIndexBackend;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
 use crate::{sais, seal};
 use crate::{util, Search};
@@ -147,7 +147,7 @@ impl<T, C> DefaultFMIndex<T, C, SuffixOrderSampledArray> {
 
 impl<T, C, S> seal::Sealed for DefaultFMIndex<T, C, S> {}
 
-impl<T, C, S> FMIndex for DefaultFMIndex<T, C, S>
+impl<T, C, S> FMIndexBackend for DefaultFMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,

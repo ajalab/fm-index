@@ -1,5 +1,5 @@
 use crate::converter::{Converter, IndexWithConverter};
-use crate::iter::FMIndex;
+use crate::iter::FMIndexBackend;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
 use crate::{seal, Character, DefaultFMIndex, RLFMIndex};
 
@@ -79,7 +79,7 @@ where
 
 impl<I, T, C> SearchIndexBuilder<I, T, C, SuffixOrderSampledArray>
 where
-    I: FMIndex,
+    I: FMIndexBackend,
     T: Character,
     C: Converter<T>,
 {
@@ -123,11 +123,11 @@ where
 }
 
 /// A full-text index backed by FM-Index or its variant.
-pub struct SearchIndex<I: FMIndex> {
+pub struct SearchIndex<I: FMIndexBackend> {
     index: I,
 }
 
-impl<I: FMIndex> SearchIndex<I> {
+impl<I: FMIndexBackend> SearchIndex<I> {
     /// Search for a pattern in the text.
     ///
     /// Return a [`Search`] object with information about the search
@@ -141,7 +141,7 @@ impl<I: FMIndex> SearchIndex<I> {
 ///
 /// This is expanded with a `locate` method if the index is
 /// supplied with a sampled suffix array.
-pub struct Search<'a, I: FMIndex> {
+pub struct Search<'a, I: FMIndexBackend> {
     index: &'a I,
     s: u64,
     e: u64,
@@ -150,7 +150,7 @@ pub struct Search<'a, I: FMIndex> {
 
 impl<'a, I> Search<'a, I>
 where
-    I: FMIndex,
+    I: FMIndexBackend,
 {
     pub(crate) fn new(index: &'a I) -> Search<'a, I> {
         Search {
@@ -199,7 +199,7 @@ where
 
 impl<I> Search<'_, I>
 where
-    I: FMIndex + IndexWithConverter<I::T>,
+    I: FMIndexBackend + IndexWithConverter<I::T>,
 {
     /// Get an iterator that goes backwards through the text, producing
     /// [`Character`].
@@ -215,7 +215,7 @@ where
 
 impl<I> Search<'_, I>
 where
-    I: FMIndex + IndexWithConverter<I::T>,
+    I: FMIndexBackend + IndexWithConverter<I::T>,
 {
     /// Get an iterator that goes forwards through the text, producing
     /// [`Character`].
@@ -231,7 +231,7 @@ where
 
 impl<I> Search<'_, I>
 where
-    I: FMIndex + HasPosition,
+    I: FMIndexBackend + HasPosition,
 {
     /// List the position of all occurrences.
     pub fn locate(&self) -> Vec<u64> {

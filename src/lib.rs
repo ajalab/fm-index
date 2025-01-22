@@ -151,5 +151,5 @@ pub use crate::fm_index::DefaultFMIndex;
 pub use crate::rlfmi::RLFMIndex;
 
 pub use character::Character;
-pub use iter::{BackwardIterator, FMIndex, ForwardIterator};
+pub use iter::{BackwardIterator, FMIndexBackend, ForwardIterator};
 pub use search::{Search, SearchIndex, SearchIndexBuilder};

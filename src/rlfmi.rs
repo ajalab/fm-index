@@ -2,7 +2,7 @@ use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
-use crate::iter::FMIndex;
+use crate::iter::FMIndexBackend;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
 use crate::{sais, Search};
 use crate::{seal, util};
@@ -201,7 +201,7 @@ where
 
 impl<T, C, S> seal::Sealed for RLFMIndex<T, C, S> {}
 
-impl<T, C, S> FMIndex for RLFMIndex<T, C, S>
+impl<T, C, S> FMIndexBackend for RLFMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,
