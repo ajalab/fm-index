@@ -152,4 +152,4 @@ pub use crate::rlfmi::RLFMIndex;
 
 pub use character::Character;
 pub use iter::{BackwardIterator, FMIndexBackend, ForwardIterator};
-pub use search::{Search, SearchIndex, SearchIndexBuilder};
+pub use search::{Search, SearchIndex};
