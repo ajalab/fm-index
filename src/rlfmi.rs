@@ -77,7 +77,7 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub(crate) fn create(text: Vec<T>, converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
+    fn create(text: Vec<T>, converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
         let text = prepare_text(text);
 
         let n = text.len();
