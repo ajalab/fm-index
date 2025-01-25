@@ -76,7 +76,7 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub(crate) fn create(text: Vec<T>, converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
+    fn create(text: Vec<T>, converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
         let text = prepare_text(text);
         let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
         let sa = sais::sais(&text, &converter);
