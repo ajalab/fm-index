@@ -2,11 +2,10 @@ use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
-use crate::search::SearchIndex;
+use crate::iter::FMIndexBackend;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
 use crate::{sais, Search};
 use crate::{seal, util};
-use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::{BitVec, RsVec, WaveletMatrix};
@@ -15,10 +14,7 @@ use vers_vecs::{BitVec, RsVec, WaveletMatrix};
 ///
 /// This can be more space-efficient than the FM-index, but is slower.
 #[derive(Serialize, Deserialize)]
-pub struct RLFMIndex<T, C, S>
-where
-    T: Character,
-{
+pub struct RLFMIndex<T, C, S> {
     converter: C,
     suffix_array: S,
     s: WaveletMatrix,
@@ -151,7 +147,7 @@ where
     where
         K: AsRef<[T]>,
     {
-        SearchIndex::search(self, pattern)
+        Search::new(self).search(pattern)
     }
 
     /// The amount of repeated runs in the text.
@@ -203,7 +199,9 @@ where
     }
 }
 
-impl<T, C, S> BackwardIterableIndex for RLFMIndex<T, C, S>
+impl<T, C, S> seal::Sealed for RLFMIndex<T, C, S> {}
+
+impl<T, C, S> FMIndexBackend for RLFMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,
@@ -238,14 +236,6 @@ where
                 - self.b.select1(j) as u64
         }
     }
-}
-
-impl<T, C, S> ForwardIterableIndex for RLFMIndex<T, C, S>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    type T = T;
 
     fn get_f<L: seal::IsLocal>(&self, i: u64) -> Self::T {
         let mut s = 0;
@@ -282,10 +272,6 @@ where
             .select_u64_unchecked(j - self.cs[c.into() as usize] as usize, c.into());
         let n = self.b.select1(m) as u64;
         n + i - p
-    }
-
-    fn len<L: seal::IsLocal>(&self) -> u64 {
-        self.len
     }
 }
 

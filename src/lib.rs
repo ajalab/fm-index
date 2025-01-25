@@ -9,8 +9,8 @@
 //!   position.
 //!
 //! `fm-index` crate does not support the third query (extracting a character
-//! from arbitrary position) now. Instead, it provides backward/forward
-//! iterators that return the text characters starting from a search result.
+//! from arbitrary position). Instead, it provides backward/forward iterators
+//! that return the text characters starting from a search result.
 //!
 //! # Usage
 //!
@@ -151,5 +151,5 @@ pub use crate::fm_index::FMIndex;
 pub use crate::rlfmi::RLFMIndex;
 
 pub use character::Character;
-pub use iter::{BackwardIterableIndex, BackwardIterator, ForwardIterableIndex, ForwardIterator};
+pub use iter::{BackwardIterator, FMIndexBackend, ForwardIterator};
 pub use search::{Search, SearchIndex};

@@ -2,11 +2,10 @@ use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
-use crate::search::SearchIndex;
+use crate::iter::FMIndexBackend;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
 use crate::{sais, seal};
 use crate::{util, Search};
-use crate::{BackwardIterableIndex, ForwardIterableIndex};
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::WaveletMatrix;
@@ -114,7 +113,7 @@ where
     where
         K: AsRef<[T]>,
     {
-        SearchIndex::search(self, pattern)
+        Search::new(self).search(pattern)
     }
 
     /// The length of the text.
@@ -146,12 +145,18 @@ impl<T, C> FMIndex<T, C, SuffixOrderSampledArray> {
     }
 }
 
-impl<T, C, S> BackwardIterableIndex for FMIndex<T, C, S>
+impl<T, C, S> seal::Sealed for FMIndex<T, C, S> {}
+
+impl<T, C, S> FMIndexBackend for FMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,
 {
     type T = T;
+
+    fn len<L: seal::IsLocal>(&self) -> u64 {
+        self.bw.len() as u64
+    }
 
     fn get_l<L: seal::IsLocal>(&self, i: u64) -> Self::T {
         Self::T::from_u64(self.bw.get_u64_unchecked(i as usize))
@@ -159,7 +164,9 @@ where
 
     fn lf_map<L: seal::IsLocal>(&self, i: u64) -> u64 {
         let c = self.get_l::<L>(i);
-        self.cs[c.into() as usize] + self.bw.rank_u64_unchecked(i as usize, c.into()) as u64
+        let c_count = self.cs[c.into() as usize];
+        let rank = self.bw.rank_u64_unchecked(i as usize, c.into()) as u64;
+        c_count + rank
     }
 
     fn lf_map2<L: seal::IsLocal>(&self, c: T, i: u64) -> u64 {
@@ -167,17 +174,6 @@ where
         self.cs[c.into() as usize] + self.bw.rank_u64_unchecked(i as usize, c.into()) as u64
     }
 
-    fn len<L: seal::IsLocal>(&self) -> u64 {
-        self.bw.len() as u64
-    }
-}
-
-impl<T, C, S> ForwardIterableIndex for FMIndex<T, C, S>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    type T = T;
     fn get_f<L: seal::IsLocal>(&self, i: u64) -> Self::T {
         // binary search to find c s.t. cs[c] <= i < cs[c+1]
         // <=> c is the greatest index s.t. cs[c] <= i
@@ -207,10 +203,6 @@ where
         self.bw
             .select_u64_unchecked((i - self.cs[c.into() as usize]) as usize, c.into())
             as u64
-    }
-
-    fn len<L: seal::IsLocal>(&self) -> u64 {
-        self.bw.len() as u64
     }
 }
 
