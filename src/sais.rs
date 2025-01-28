@@ -236,7 +236,7 @@ where
     {
         let (sa1, s1) = sa.split_at_mut(sa.len() - lms_len);
         if name < lms_len as u64 {
-            sais_sub(&s1, sa1, &IdConverter::new(name + 1));
+            sais_sub(&s1, sa1, &IdConverter::with_size(name + 1));
         } else {
             for (i, &s) in s1.iter().enumerate() {
                 sa1[s as usize] = i as u64
@@ -374,7 +374,7 @@ mod tests {
     #[test]
     fn test_sais_1() {
         let text = &[0u8];
-        let sa = sais(text, &IdConverter::new(4));
+        let sa = sais(text, &IdConverter::with_size(4));
         let expected = get_suffix_array(text);
         assert_eq!(sa, expected);
     }
@@ -382,7 +382,7 @@ mod tests {
     #[test]
     fn test_sais_2() {
         let text = &[3u8, 0];
-        let sa = sais(text, &IdConverter::new(4));
+        let sa = sais(text, &IdConverter::with_size(4));
         let expected = get_suffix_array(text);
         assert_eq!(sa, expected);
     }
@@ -390,7 +390,7 @@ mod tests {
     #[test]
     fn test_sais_4() {
         let text = &[3u8, 2, 1, 0];
-        let sa = sais(text, &IdConverter::new(4));
+        let sa = sais(text, &IdConverter::with_size(4));
         let expected = get_suffix_array(text);
         assert_eq!(sa, expected);
     }

@@ -1,5 +1,5 @@
 use fm_index::suffix_array::HasPosition;
-use fm_index::{FMIndex, FMIndexBackend, RLFMIndex};
+use fm_index::{FMIndexBackend, SearchIndexBuilder};
 
 use criterion::{criterion_group, criterion_main};
 use criterion::{BatchSize, BenchmarkId, Criterion, Throughput};
@@ -14,7 +14,12 @@ fn prepare_fmindex(
 ) -> (impl FMIndexBackend<T = u8> + HasPosition, Vec<String>) {
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
-    (FMIndex::new(text, converter, l), patterns)
+    (
+        SearchIndexBuilder::with_converter(converter)
+            .sampling_level(l)
+            .build(text),
+        patterns,
+    )
 }
 
 fn prepare_rlfmindex(
@@ -25,7 +30,13 @@ fn prepare_rlfmindex(
 ) -> (impl FMIndexBackend<T = u8> + HasPosition, Vec<String>) {
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
-    (RLFMIndex::new(text, converter, l), patterns)
+    (
+        SearchIndexBuilder::with_converter(converter)
+            .sampling_level(l)
+            .run_length_encoding()
+            .build(text),
+        patterns,
+    )
 }
 
 pub fn bench(c: &mut Criterion) {

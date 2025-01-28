@@ -1,4 +1,6 @@
 #[cfg(doc)]
+use crate::character::Character;
+#[cfg(doc)]
 use crate::converter;
 
 use crate::converter::IndexWithConverter;

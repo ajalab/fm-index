@@ -29,17 +29,7 @@ where
     T: Character,
     C: Converter<T>,
 {
-    /// Create a new FM-Index from a text. The index only supports the count
-    /// operation.
-    ///
-    /// - `text` is a vector of [`Character`]s.
-    ///
-    /// - `converter` is a [`Converter`] is used to convert the characters to a
-    ///   smaller alphabet. Use [`converter::IdConverter`] if you don't need to
-    ///   restrict the alphabet. Use [`converter::RangeConverter`] if you can
-    ///   contrain characters to a particular range. See [`converter`] for more
-    ///   details.
-    pub fn count_only(text: Vec<T>, converter: C) -> Self {
+    pub(crate) fn count_only(text: Vec<T>, converter: C) -> Self {
         Self::create(text, converter, |_| ())
     }
 }
@@ -48,24 +38,7 @@ where
     T: Character,
     C: Converter<T>,
 {
-    /// Create a new FM-Index from a text. The index supports both the count
-    /// and locate operations.
-    ///
-    /// - `text` is a vector of [`Character`]s.
-    ///
-    /// - `converter` is a [`Converter`] is used to convert the characters to a
-    ///   smaller alphabet. Use [`converter::IdConverter`] if you don't need to
-    ///   restrict the alphabet. Use [`converter::RangeConverter`] if you can
-    ///   contrain characters to a particular range. See [`converter`] for more
-    ///   details.
-    ///
-    /// - `level` is the sampling level to use for position lookup. A sampling
-    ///   level of 0 means the most memory is used (a full suffix-array is
-    ///   retained), while looking up positions is faster. A sampling level of
-    ///   1 means half the memory is used, but looking up positions is slower.
-    ///   Each increase in level halves the memory usage but slows down
-    ///   position lookup.
-    pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
+    pub(crate) fn new(text: Vec<T>, converter: C, level: usize) -> Self {
         Self::create(text, converter, |sa| suffix_array::sample(sa, level))
     }
 }
