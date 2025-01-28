@@ -1,4 +1,5 @@
-//! Builder for search indexes
+#[cfg(doc)]
+use crate::converter;
 
 use crate::{
     converter::{Converter, IdConverter},
