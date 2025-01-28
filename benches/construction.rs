@@ -1,4 +1,4 @@
-use fm_index::{FMIndex, RLFMIndex};
+use fm_index::{FMIndex, RLFMIndex, SearchIndexBuilder};
 
 use criterion::{criterion_group, criterion_main};
 use criterion::{AxisScale, BatchSize, BenchmarkId, Criterion, PlotConfiguration};
@@ -14,7 +14,9 @@ pub fn bench(c: &mut Criterion) {
             b.iter_batched(
                 || common::binary_text_set(n, 0.5),
                 |(text, converter)| {
-                    FMIndex::count_only(text, converter);
+                    SearchIndexBuilder::with_converter(converter)
+                        .count_only()
+                        .build(text)
                 },
                 BatchSize::SmallInput,
             )
@@ -24,7 +26,10 @@ pub fn bench(c: &mut Criterion) {
             b.iter_batched(
                 || common::binary_text_set(n, 0.5),
                 |(text, converter)| {
-                    RLFMIndex::count_only(text, converter);
+                    SearchIndexBuilder::with_converter(converter)
+                        .run_length_encoding()
+                        .count_only()
+                        .build(text)
                 },
                 BatchSize::SmallInput,
             )

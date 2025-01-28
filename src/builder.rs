@@ -116,6 +116,9 @@ where
     ///
     /// This way you can restrict the range of characters used in the text,
     /// using less memory.
+    ///
+    /// Use [`converter::RangeConverter`] if you can constrain characters to a
+    /// particular range.
     pub fn with_converter(converter: C) -> Self {
         Self {
             converter,
