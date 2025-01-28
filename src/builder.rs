@@ -28,14 +28,14 @@ use crate::{
 /// Default behavior: all capabilities with maximum performance but most memory
 /// usage.
 /// ```rust
-/// use fm_index::builder::SearchIndexBuilder;
+/// use fm_index::SearchIndexBuilder;
 /// let builder = SearchIndexBuilder::new();
 /// let index = builder.build("text".as_bytes().to_vec());
 /// ```
 ///
 /// Custom converter with a smaller range means less memory usage:
 /// ```rust
-/// use fm_index::builder::SearchIndexBuilder;
+/// use fm_index::SearchIndexBuilder;
 /// use fm_index::converter::RangeConverter;
 /// let converter = RangeConverter::new(b' ', b'~');
 /// let builder = SearchIndexBuilder::with_converter(converter);
@@ -44,28 +44,28 @@ use crate::{
 ///
 /// Sampling level, smaller but slower locate:
 /// ```rust
-/// use fm_index::builder::SearchIndexBuilder;
+/// use fm_index::SearchIndexBuilder;
 /// let builder = SearchIndexBuilder::new().sampling_level(2);
 /// let index = builder.build("text".as_bytes().to_vec());
 /// ```
 ///
 /// Count only, smaller at the cost of locate.
 /// ```rust
-/// use fm_index::builder::SearchIndexBuilder;
+/// use fm_index::SearchIndexBuilder;
 /// let builder = SearchIndexBuilder::new().count_only();
 /// let index = builder.build("text".as_bytes().to_vec());
 /// ```
 ///
 /// Run-length encoding, smaller but slower.
 /// ```rust
-/// use fm_index::builder::SearchIndexBuilder;
+/// use fm_index::SearchIndexBuilder;
 /// let builder = SearchIndexBuilder::new().run_length_encoding();
 /// let index = builder.build("text".as_bytes().to_vec());
 /// ```
 ///
 /// Almost the smallest index (a range converter can still shrink it further):
 /// ```rust
-/// use fm_index::builder::SearchIndexBuilder;
+/// use fm_index::SearchIndexBuilder;
 /// let builder = SearchIndexBuilder::new().count_only().run_length_encoding();
 /// let index = builder.build("text".as_bytes().to_vec());
 /// ```
