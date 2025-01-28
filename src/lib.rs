@@ -137,8 +137,7 @@
 pub mod converter;
 pub mod suffix_array;
 
-// TODO: public module for now so as not to conflict with the other builder
-pub mod builder;
+mod builder;
 mod character;
 mod fm_index;
 mod iter;
