@@ -1,5 +1,6 @@
 //! Converters for restricting the alphabet of a [`Character`].
 //!
+
 use crate::character::Character;
 
 use serde::{Deserialize, Serialize};
@@ -81,11 +82,26 @@ pub struct IdConverter {
 }
 
 impl IdConverter {
+    /// Construct a new IdConverter for a given character type.
+    ///
+    /// Example:
+    ///
+    /// ```
+    /// use fm_index::converter::IdConverter;
+    ///
+    /// IdConverter::new::<u8>();
+    /// ```
+    pub fn new<T: Character>() -> Self {
+        IdConverter {
+            size: T::max_value().into() + 1,
+        }
+    }
+
     /// Create a new IdConverter.
     ///
     /// The size given should be the size of the alphabet, so for u8 it would
     /// be 256, for u16 it would be 65536, etc
-    pub fn new(size: u64) -> Self {
+    pub(crate) fn with_size(size: u64) -> Self {
         IdConverter { size }
     }
 }

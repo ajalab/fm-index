@@ -1,4 +1,4 @@
-use num_traits::Num;
+use num_traits::{Bounded, Num};
 
 /// A character is a type that can be used to store data and to compose a
 /// search pattern over this data.
@@ -9,7 +9,7 @@ use num_traits::Num;
 ///
 /// These can be converted into u64 using `.into()` and from u64 using
 /// `from_u64`. When converted from u64, they are truncated.
-pub trait Character: Into<u64> + Copy + Clone + Num + Ord + std::fmt::Debug {
+pub trait Character: Into<u64> + Copy + Clone + Num + Ord + Bounded + std::fmt::Debug {
     /// Take a u64 and convert it into the given data type.
     ///
     /// Truncates the u64 if it is too large to fit in the type.

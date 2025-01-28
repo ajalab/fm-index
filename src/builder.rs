@@ -89,9 +89,7 @@ where
     /// each character, so for instance 256 for a byte (u8) character.
     pub fn new() -> Self {
         Self {
-            // TODO: this 256 is wrong, but we don't have an automated way to do this
-            // yet as per issue #25
-            converter: IdConverter::new(256),
+            converter: IdConverter::new::<T>(),
             sampling_level: None,
             _t: std::marker::PhantomData,
         }
