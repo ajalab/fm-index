@@ -1,5 +1,5 @@
 use fm_index::suffix_array::HasPosition;
-use fm_index::{FMIndexBackend, RLFMIndex, SearchIndexBuilder};
+use fm_index::{FMIndexBackend, SearchIndexBuilder};
 
 use criterion::{criterion_group, criterion_main};
 use criterion::{BatchSize, BenchmarkId, Criterion, Throughput};
@@ -33,7 +33,8 @@ fn prepare_rlfmindex(
     (
         SearchIndexBuilder::with_converter(converter)
             .sampling_level(l)
-            .run_length_encoding(),
+            .run_length_encoding()
+            .build(text),
         patterns,
     )
 }
