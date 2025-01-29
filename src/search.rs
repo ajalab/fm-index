@@ -8,21 +8,6 @@ use crate::iter::FMIndexBackend;
 use crate::seal;
 use crate::suffix_array::HasPosition;
 
-/// A full-text index backed by FM-Index or its variant.
-pub struct SearchIndex<I: FMIndexBackend> {
-    index: I,
-}
-
-impl<I: FMIndexBackend> SearchIndex<I> {
-    /// Search for a pattern in the text.
-    ///
-    /// Return a [`Search`] object with information about the search
-    /// result.
-    pub fn search<K: AsRef<[I::T]>>(&self, pattern: K) -> Search<I> {
-        self.index.search(pattern)
-    }
-}
-
 /// An object containing the result of a search.
 ///
 /// This is expanded with a `locate` method if the index is
