@@ -3,13 +3,16 @@ use crate::converter::{Converter, IndexWithConverter};
 use crate::seal;
 use crate::search::Search;
 
-/// A FM-Index that can search texts backwards and forwards.
+/// Trait for an FM-Index implementation.
+///
+/// You can use this to implement against a FM-Index generically.
+///
+/// You cannot implement this trait yourself.
 pub trait FMIndexBackend: Sized + seal::Sealed {
     /// A [`Character`] type.
     type T: Character;
 
-    #[doc(hidden)]
-    fn len<L: seal::IsLocal>(&self) -> u64;
+    // We hide all the methods involved in implementation.
 
     #[doc(hidden)]
     fn get_l<L: seal::IsLocal>(&self, i: u64) -> Self::T;
@@ -25,6 +28,23 @@ pub trait FMIndexBackend: Sized + seal::Sealed {
     fn fl_map2<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64;
 
     #[doc(hidden)]
+    fn iter_forward<L: seal::IsLocal>(&self, i: u64) -> ForwardIterator<Self> {
+        debug_assert!(i < self.len());
+        ForwardIterator { index: self, i }
+    }
+
+    #[doc(hidden)]
+    fn iter_backward<L: seal::IsLocal>(&self, i: u64) -> BackwardIterator<Self> {
+        debug_assert!(i < self.len());
+        BackwardIterator { index: self, i }
+    }
+
+    // The following methods are public.
+
+    /// Search for a pattern in the text.
+    ///
+    /// Return a [`Search`] object with information about the search
+    /// result.
     fn search<K>(&self, pattern: K) -> Search<Self>
     where
         K: AsRef<[Self::T]>,
@@ -32,17 +52,20 @@ pub trait FMIndexBackend: Sized + seal::Sealed {
         Search::new(self).search(pattern)
     }
 
-    #[doc(hidden)]
-    fn iter_forward<L: seal::IsLocal>(&self, i: u64) -> ForwardIterator<Self> {
-        debug_assert!(i < self.len::<L>());
-        ForwardIterator { index: self, i }
-    }
+    /// The size of the text in the index
+    ///
+    /// Note that this includes an ending \0 (terminator) character
+    /// so will be one more than the length of the text.
+    fn len(&self) -> u64;
+}
 
-    #[doc(hidden)]
-    fn iter_backward<L: seal::IsLocal>(&self, i: u64) -> BackwardIterator<Self> {
-        debug_assert!(i < self.len::<seal::Local>());
-        BackwardIterator { index: self, i }
-    }
+/// Access the heap size of the structure.
+///
+/// This can be useful if you want to fine-tune the memory usage of your
+/// application.
+pub trait HeapSize {
+    /// The size on the heap of this structure, in bytes.
+    fn size(&self) -> usize;
 }
 
 /// An iterator that goes backwards through the text, producing [`Character`].

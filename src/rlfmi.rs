@@ -4,7 +4,7 @@ use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::iter::FMIndexBackend;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
-use crate::{sais, Search};
+use crate::{sais, HeapSize, Search};
 use crate::{seal, util};
 
 use serde::{Deserialize, Serialize};
@@ -142,6 +142,7 @@ where
 impl<T, C> RLFMIndex<T, C, ()>
 where
     T: Character,
+    C: Converter<T>,
 {
     /// Heap size of the index.
     ///
@@ -158,6 +159,7 @@ where
 impl<T, C> RLFMIndex<T, C, SuffixOrderSampledArray>
 where
     T: Character,
+    C: Converter<T>,
 {
     /// The size on the heap of the FM-Index.
     ///
@@ -172,6 +174,26 @@ where
     }
 }
 
+impl<T, C> HeapSize for RLFMIndex<T, C, SuffixOrderSampledArray>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    fn size(&self) -> usize {
+        RLFMIndex::<T, C, SuffixOrderSampledArray>::size(self)
+    }
+}
+
+impl<T, C> HeapSize for RLFMIndex<T, C, ()>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    fn size(&self) -> usize {
+        RLFMIndex::<T, C, ()>::size(self)
+    }
+}
+
 impl<T, C, S> seal::Sealed for RLFMIndex<T, C, S> {}
 
 impl<T, C, S> FMIndexBackend for RLFMIndex<T, C, S>
@@ -181,7 +203,7 @@ where
 {
     type T = T;
 
-    fn len<L: seal::IsLocal>(&self) -> u64 {
+    fn len(&self) -> u64 {
         self.len
     }
 

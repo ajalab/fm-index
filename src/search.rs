@@ -42,7 +42,7 @@ where
         Search {
             index,
             s: 0,
-            e: index.len::<seal::Local>(),
+            e: index.len(),
             pattern: vec![],
         }
     }
