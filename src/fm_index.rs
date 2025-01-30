@@ -2,9 +2,9 @@ use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
-use crate::iter::FMIndexBackend;
+use crate::iter::{AsCharacters, FMIndexBackend, SearchIndex};
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
-use crate::{sais, seal, HeapSize};
+use crate::{sais, seal, HeapSize, SearchIndexWithLocate};
 use crate::{util, Search};
 
 use serde::{Deserialize, Serialize};
@@ -155,7 +155,7 @@ where
 {
     type T = T;
 
-    fn len(&self) -> u64 {
+    fn len<L: seal::IsLocal>(&self) -> u64 {
         self.bw.len() as u64
     }
 
@@ -204,6 +204,32 @@ where
         self.bw
             .select_u64_unchecked((i - self.cs[c.into() as usize]) as usize, c.into())
             as u64
+    }
+}
+
+impl<T: Character, C: Converter<T>, S> SearchIndex<T> for FMIndex<T, C, S> {
+    type Backend = FMIndex<T, C, S>;
+
+    fn search(&self, pattern: &dyn AsCharacters<T>) -> Search<Self> {
+        Search::new(self).search(pattern.as_characters())
+    }
+
+    fn len(&self) -> u64 {
+        self.len()
+    }
+}
+
+impl<T: Character, C: Converter<T>> SearchIndexWithLocate<T>
+    for FMIndex<T, C, SuffixOrderSampledArray>
+{
+    type Backend = FMIndex<T, C, SuffixOrderSampledArray>;
+
+    fn search(&self, pattern: &dyn AsCharacters<T>) -> Search<Self::Backend> {
+        Search::new(self).search(pattern.as_characters())
+    }
+
+    fn len(&self) -> u64 {
+        self.len()
     }
 }
 

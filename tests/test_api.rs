@@ -1,8 +1,8 @@
 // tests that exercise the public API, especially the traits
 
-use fm_index::{FMIndexBackend, HeapSize};
+use fm_index::{HeapSize, SearchIndex};
 
-fn len<T: FMIndexBackend>(index: &T) -> u64 {
+fn len<T: SearchIndex<u8>>(index: &T) -> u64 {
     index.len()
 }
 

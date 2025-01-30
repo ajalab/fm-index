@@ -1,11 +1,11 @@
-use fm_index::{FMIndexBackend, SearchIndexBuilder};
+use fm_index::{SearchIndex, SearchIndexBuilder};
 
 use criterion::{criterion_group, criterion_main};
 use criterion::{AxisScale, BatchSize, BenchmarkId, Criterion, PlotConfiguration, Throughput};
 
 mod common;
 
-fn prepare_fmindex(len: usize, prob: f64, m: usize) -> (impl FMIndexBackend<T = u8>, Vec<String>) {
+fn prepare_fmindex(len: usize, prob: f64, m: usize) -> (impl SearchIndex<u8>, Vec<String>) {
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
     (
@@ -16,11 +16,7 @@ fn prepare_fmindex(len: usize, prob: f64, m: usize) -> (impl FMIndexBackend<T = 
     )
 }
 
-fn prepare_rlfmindex(
-    len: usize,
-    prob: f64,
-    m: usize,
-) -> (impl FMIndexBackend<T = u8>, Vec<String>) {
+fn prepare_rlfmindex(len: usize, prob: f64, m: usize) -> (impl SearchIndex<u8>, Vec<String>) {
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
     (
@@ -45,7 +41,7 @@ pub fn bench(c: &mut Criterion) {
                 || prepare_fmindex(n, prob, m),
                 |(index, patterns)| {
                     for pattern in patterns {
-                        index.search(pattern).count();
+                        index.search(&pattern).count();
                     }
                 },
                 BatchSize::SmallInput,
@@ -57,7 +53,7 @@ pub fn bench(c: &mut Criterion) {
                 || prepare_rlfmindex(n, prob, m),
                 |(index, patterns)| {
                     for pattern in patterns {
-                        index.search(pattern).count();
+                        index.search(&pattern).count();
                     }
                 },
                 BatchSize::SmallInput,

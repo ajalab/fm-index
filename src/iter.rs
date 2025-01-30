@@ -2,6 +2,61 @@ use crate::character::Character;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::seal;
 use crate::search::Search;
+use crate::suffix_array::HasPosition;
+
+/// AsCharacters exists so we can have the equivalent of AsRef<[T]> on
+/// SearchIndex, but without breaking object-safety. SearchIndex and
+/// SearchIndexWithLocate need to be object-safe (dyn-compatible)
+pub trait AsCharacters<T: Character> {
+    fn as_characters(&self) -> &[T];
+}
+
+// Implement for any type that implements AsRef<[T]>
+impl<T: Character, A: AsRef<[T]>> AsCharacters<T> for A {
+    fn as_characters(&self) -> &[T] {
+        self.as_ref()
+    }
+}
+
+/// A search index that can be used to search for patterns in a text.
+///
+/// This only supports the count operation for search, not locate.
+pub trait SearchIndex<T: Character> {
+    /// The backend type for this search index.
+    type Backend: FMIndexBackend<T = T>;
+
+    /// Search for a pattern in the text.
+    ///
+    /// Return a [`Search`] object with information about the search
+    /// result.
+    fn search(&self, pattern: &dyn AsCharacters<T>) -> Search<Self::Backend>;
+
+    /// The size of the text in the index
+    ///
+    /// Note that this includes an ending \0 (terminator) character
+    /// so will be one more than the length of the text.
+    fn len(&self) -> u64;
+}
+
+/// A search index that can be used to search for patterns in a text.
+///
+/// This also supports the locate operation for search.
+pub trait SearchIndexWithLocate<T: Character> {
+    /// The backend type for this search index.
+    type Backend: FMIndexBackend<T = T> + HasPosition;
+
+    /// Search for a pattern in the text.
+    ///
+    /// Return a [`Search`] object with information about the search
+    /// result.
+    fn search(&self, pattern: &dyn AsCharacters<T>) -> Search<Self::Backend>;
+
+    /// The size of the text in the index
+    ///
+    /// Note that this includes an ending \0 (terminator) character
+    /// so will be one more than the length of the text.
+    fn len(&self) -> u64;
+}
 
 /// Trait for an FM-Index implementation.
 ///
@@ -29,34 +84,18 @@ pub trait FMIndexBackend: Sized + seal::Sealed {
 
     #[doc(hidden)]
     fn iter_forward<L: seal::IsLocal>(&self, i: u64) -> ForwardIterator<Self> {
-        debug_assert!(i < self.len());
+        debug_assert!(i < self.len::<L>());
         ForwardIterator { index: self, i }
     }
 
     #[doc(hidden)]
     fn iter_backward<L: seal::IsLocal>(&self, i: u64) -> BackwardIterator<Self> {
-        debug_assert!(i < self.len());
+        debug_assert!(i < self.len::<L>());
         BackwardIterator { index: self, i }
     }
 
-    // The following methods are public.
-
-    /// Search for a pattern in the text.
-    ///
-    /// Return a [`Search`] object with information about the search
-    /// result.
-    fn search<K>(&self, pattern: K) -> Search<Self>
-    where
-        K: AsRef<[Self::T]>,
-    {
-        Search::new(self).search(pattern)
-    }
-
-    /// The size of the text in the index
-    ///
-    /// Note that this includes an ending \0 (terminator) character
-    /// so will be one more than the length of the text.
-    fn len(&self) -> u64;
+    #[doc(hidden)]
+    fn len<L: seal::IsLocal>(&self) -> u64;
 }
 
 /// Access the heap size of the structure.
