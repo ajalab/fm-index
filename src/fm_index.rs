@@ -4,7 +4,7 @@ use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::iter::FMIndexBackend;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
-use crate::{sais, seal};
+use crate::{sais, seal, HeapSize};
 use crate::{util, Search};
 
 use serde::{Deserialize, Serialize};
@@ -95,7 +95,11 @@ where
     }
 }
 
-impl<T, C> FMIndex<T, C, ()> {
+impl<T, C> FMIndex<T, C, ()>
+where
+    T: Character,
+    C: Converter<T>,
+{
     /// The size on the heap of the FM-Index.
     ///
     /// No suffix array information is stored in this index.
@@ -106,7 +110,11 @@ impl<T, C> FMIndex<T, C, ()> {
     }
 }
 
-impl<T, C> FMIndex<T, C, SuffixOrderSampledArray> {
+impl<T, C> FMIndex<T, C, SuffixOrderSampledArray>
+where
+    T: Character,
+    C: Converter<T>,
+{
     /// The size on the heap of the FM-Index.
     ///
     /// Sampled suffix array data is stored in this index.
@@ -115,6 +123,26 @@ impl<T, C> FMIndex<T, C, SuffixOrderSampledArray> {
             + self.bw.heap_size()
             + self.cs.len() * std::mem::size_of::<Vec<u64>>()
             + self.suffix_array.size()
+    }
+}
+
+impl<T, C> HeapSize for FMIndex<T, C, SuffixOrderSampledArray>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    fn size(&self) -> usize {
+        FMIndex::<T, C, SuffixOrderSampledArray>::size(self)
+    }
+}
+
+impl<T, C> HeapSize for FMIndex<T, C, ()>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    fn size(&self) -> usize {
+        FMIndex::<T, C, ()>::size(self)
     }
 }
 
@@ -127,7 +155,7 @@ where
 {
     type T = T;
 
-    fn len<L: seal::IsLocal>(&self) -> u64 {
+    fn len(&self) -> u64 {
         self.bw.len() as u64
     }
 
