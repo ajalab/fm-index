@@ -1,33 +1,32 @@
 #[cfg(doc)]
-use crate::character::Character;
-#[cfg(doc)]
 use crate::converter;
 
 use crate::converter::IndexWithConverter;
 use crate::iter::FMIndexBackend;
-use crate::seal;
 use crate::suffix_array::HasPosition;
+use crate::{seal, BackwardIterator, Character, ForwardIterator};
 
 /// An object containing the result of a search.
 ///
 /// This is expanded with a `locate` method if the index is
 /// supplied with a sampled suffix array.
-pub struct Search<'a, I: FMIndexBackend> {
+pub struct Search<'a, T: Character, I: FMIndexBackend<T>> {
     index: &'a I,
     s: u64,
     e: u64,
-    pattern: Vec<I::T>,
+    pattern: Vec<T>,
 }
 
-impl<'a, I> Search<'a, I>
+impl<'a, T, I> Search<'a, T, I>
 where
-    I: FMIndexBackend,
+    T: Character,
+    I: FMIndexBackend<T>,
 {
-    pub(crate) fn new(index: &'a I) -> Search<'a, I> {
+    pub(crate) fn new(index: &'a I) -> Search<'a, T, I> {
         Search {
             index,
             s: 0,
-            e: index.len::<seal::Local>(),
+            e: index.len(),
             pattern: vec![],
         }
     }
@@ -36,13 +35,13 @@ where
     ///
     /// This adds a prefix `pattern` to the existing pattern, and
     /// looks for those expanded patterns in the text.
-    pub fn search<K: AsRef<[I::T]>>(&self, pattern: K) -> Self {
+    pub fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self {
         let mut s = self.s;
         let mut e = self.e;
         let mut pattern = pattern.as_ref().to_vec();
         for &c in pattern.iter().rev() {
-            s = self.index.lf_map2::<seal::Local>(c, s);
-            e = self.index.lf_map2::<seal::Local>(c, e);
+            s = self.index.lf_map2(c, s);
+            e = self.index.lf_map2(c, e);
             if s == e {
                 break;
             }
@@ -68,41 +67,44 @@ where
     }
 }
 
-impl<I> Search<'_, I>
+impl<'a, T, I> Search<'a, T, I>
 where
-    I: FMIndexBackend + IndexWithConverter<I::T>,
+    T: Character,
+    I: FMIndexBackend<T> + IndexWithConverter<T>,
 {
     /// Get an iterator that goes backwards through the text, producing
     /// [`Character`].
-    pub fn iter_backward(&self, i: u64) -> impl Iterator<Item = I::T> + use<'_, I> {
+    pub fn iter_backward(&self, i: u64) -> BackwardIterator<'a, T, I> {
         let m = self.count();
 
         debug_assert!(m > 0, "cannot iterate from empty search result");
         debug_assert!(i < m, "{} is out of range", i);
 
-        self.index.iter_backward::<seal::Local>(self.s + i)
+        BackwardIterator::new(self.index, self.s + i)
     }
 }
 
-impl<I> Search<'_, I>
+impl<'a, T, I> Search<'a, T, I>
 where
-    I: FMIndexBackend + IndexWithConverter<I::T>,
+    T: Character,
+    I: FMIndexBackend<T> + IndexWithConverter<T>,
 {
     /// Get an iterator that goes forwards through the text, producing
     /// [`Character`].
-    pub fn iter_forward(&self, i: u64) -> impl Iterator<Item = I::T> + use<'_, I> {
+    pub fn iter_forward(&self, i: u64) -> ForwardIterator<'a, T, I> {
         let m = self.count();
 
         debug_assert!(m > 0, "cannot iterate from empty search result");
         debug_assert!(i < m, "{} is out of range", i);
 
-        self.index.iter_forward::<seal::Local>(self.s + i)
+        ForwardIterator::new(self.index, self.s + i)
     }
 }
 
-impl<I> Search<'_, I>
+impl<T, I> Search<'_, T, I>
 where
-    I: FMIndexBackend + HasPosition,
+    T: Character,
+    I: FMIndexBackend<T> + HasPosition,
 {
     /// List the position of all occurrences.
     pub fn locate(&self) -> Vec<u64> {
