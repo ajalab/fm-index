@@ -3,10 +3,118 @@ use crate::converter;
 
 use crate::{
     converter::{Converter, IdConverter},
-    rlfmi::RLFMIndexLocateSearchIndex,
+    fm_index::{
+        FMIndexCountOnlySearchIndex, FMIndexCountOnlySearchResult, FMIndexLocateSearchIndex,
+        FMIndexLocateSearchResult,
+    },
+    rlfmi::{
+        RLFMIndexCountOnlySearchIndex, RLFMIndexCountOnlySearchResult, RLFMIndexLocateSearchIndex,
+        RLFMIndexLocateSearchResult,
+    },
     suffix_array::SuffixOrderSampledArray,
-    Character, FMIndex, RLFMIndex, SearchIndex, SearchIndexWithLocate,
+    Character, FMIndex, RLFMIndex, SearchIndex, SearchIndexWithLocate, SearchResult,
 };
+
+enum SearchIndexWrapper<T: Character, C: Converter<T>> {
+    FMIndexCountOnly(FMIndexCountOnlySearchIndex<T, C>),
+    FMIndexLocate(FMIndexLocateSearchIndex<T, C>),
+    RLFMIndexCountOnly(RLFMIndexCountOnlySearchIndex<T, C>),
+    RLFMIndexLocate(RLFMIndexLocateSearchIndex<T, C>),
+}
+
+enum SearchIndexResultWrapper<T: Character> {
+    FMIndexCountOnly(FMIndexCountOnlySearchIndex<T, IdConverter>),
+    FMIndexLocate(FMIndexLocateSearchIndex<T, IdConverter>),
+    RLFMIndexCountOnly(RLFMIndexCountOnlySearchIndex<T, IdConverter>),
+    RLFMIndexLocate(RLFMIndexLocateSearchIndex<T, IdConverter>),
+}
+
+enum SearchResultWrapper<'a, T: Character, C: Converter<T>> {
+    FMIndexCountOnly(FMIndexCountOnlySearchResult<'a, T, C>),
+    FMIndexLocate(FMIndexLocateSearchResult<'a, T, C>),
+    RLFMIndexCountOnly(RLFMIndexCountOnlySearchResult<'a, T, C>),
+    RLFMIndexLocate(RLFMIndexLocateSearchResult<'a, T, C>),
+}
+
+impl<'a, T: Character, C: Converter<T>> SearchResult<'a, T> for SearchResultWrapper<'a, T, C> {
+    fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self {
+        match self {
+            SearchResultWrapper::FMIndexCountOnly(result) => {
+                SearchResultWrapper::FMIndexCountOnly(result.search(pattern))
+            }
+            SearchResultWrapper::FMIndexLocate(result) => {
+                SearchResultWrapper::FMIndexLocate(result.search(pattern))
+            }
+            SearchResultWrapper::RLFMIndexCountOnly(result) => {
+                SearchResultWrapper::RLFMIndexCountOnly(result.search(pattern))
+            }
+            SearchResultWrapper::RLFMIndexLocate(result) => {
+                SearchResultWrapper::RLFMIndexLocate(result.search(pattern))
+            }
+        }
+    }
+
+    fn count(&self) -> u64 {
+        match self {
+            SearchResultWrapper::FMIndexCountOnly(result) => result.count(),
+            SearchResultWrapper::FMIndexLocate(result) => result.count(),
+            SearchResultWrapper::RLFMIndexCountOnly(result) => result.count(),
+            SearchResultWrapper::RLFMIndexLocate(result) => result.count(),
+        }
+    }
+
+    fn iter_backward(&self, i: u64) -> Box<dyn Iterator<Item = T> + 'a> {
+        match self {
+            SearchResultWrapper::FMIndexCountOnly(result) => Box::new(result.iter_backward(i)),
+            SearchResultWrapper::FMIndexLocate(result) => Box::new(result.iter_backward(i)),
+            SearchResultWrapper::RLFMIndexCountOnly(result) => Box::new(result.iter_backward(i)),
+            SearchResultWrapper::RLFMIndexLocate(result) => Box::new(result.iter_backward(i)),
+        }
+    }
+
+    fn iter_forward(&self, i: u64) -> Box<dyn Iterator<Item = T> + 'a> {
+        match self {
+            SearchResultWrapper::FMIndexCountOnly(result) => Box::new(result.iter_forward(i)),
+            SearchResultWrapper::FMIndexLocate(result) => Box::new(result.iter_forward(i)),
+            SearchResultWrapper::RLFMIndexCountOnly(result) => Box::new(result.iter_forward(i)),
+            SearchResultWrapper::RLFMIndexLocate(result) => Box::new(result.iter_forward(i)),
+        }
+    }
+}
+
+impl<T: Character, C: Converter<T>> SearchIndex<T> for SearchIndexWrapper<T, C> {
+    type SearchResult<'a>
+        = SearchResultWrapper<'a, T, C>
+    where
+        T: 'a,
+        C: 'a;
+
+    fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self::SearchResult<'_> {
+        match self {
+            SearchIndexWrapper::FMIndexCountOnly(index) => {
+                SearchResultWrapper::FMIndexCountOnly(index.search(pattern))
+            }
+            SearchIndexWrapper::FMIndexLocate(index) => {
+                SearchResultWrapper::FMIndexLocate(index.search(pattern))
+            }
+            SearchIndexWrapper::RLFMIndexCountOnly(index) => {
+                SearchResultWrapper::RLFMIndexCountOnly(index.search(pattern))
+            }
+            SearchIndexWrapper::RLFMIndexLocate(index) => {
+                SearchResultWrapper::RLFMIndexLocate(index.search(pattern))
+            }
+        }
+    }
+
+    fn len(&self) -> u64 {
+        match self {
+            SearchIndexWrapper::FMIndexCountOnly(index) => index.len(),
+            SearchIndexWrapper::FMIndexLocate(index) => index.len(),
+            SearchIndexWrapper::RLFMIndexCountOnly(index) => index.len(),
+            SearchIndexWrapper::RLFMIndexLocate(index) => index.len(),
+        }
+    }
+}
 
 /// Construct a search index
 ///
@@ -170,7 +278,7 @@ where
     }
 
     /// Build the index.
-    pub fn build(self, text: Vec<T>) -> impl SearchIndexWithLocate<T> {
+    pub fn build(self, text: Vec<T>) -> FMIndexLocateSearchIndex<T, C> {
         FMIndex::new(text, self.converter, self.sampling_level.unwrap_or(0))
     }
 }
@@ -199,7 +307,7 @@ where
     }
 
     /// Build the index.
-    pub fn build(self, text: Vec<T>) -> impl SearchIndex<T> {
+    pub fn build(self, text: Vec<T>) -> FMIndexCountOnlySearchIndex<T, C> {
         FMIndex::count_only(text, self.converter)
     }
 }
@@ -272,7 +380,7 @@ where
     C: Converter<T>,
 {
     /// Build the index.
-    pub fn build(self, text: Vec<T>) -> impl SearchIndex<T> {
+    pub fn build(self, text: Vec<T>) -> RLFMIndexCountOnlySearchIndex<T, C> {
         RLFMIndex::count_only(text, self.converter)
     }
 }
