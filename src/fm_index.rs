@@ -229,6 +229,10 @@ impl<T: Character, C: Converter<T>> SearchIndex<T> for FMIndexCountOnlySearchInd
     }
 }
 
+pub struct FMIndexLocateSearchIndex<T: Character, C: Converter<T>>(
+    FMIndex<T, C, SuffixOrderSampledArray>,
+);
+
 impl<T: Character, C: Converter<T>> SearchIndexWithLocate<T> for FMIndexLocateSearchIndex<T, C> {
     type SearchResult<'a>
         = FMIndexLocateSearchResult<'a, T, C>
@@ -268,10 +272,6 @@ impl<'a, T: Character, C: Converter<T>> SearchResult<'a, T>
         self.0.iter_forward(i)
     }
 }
-
-pub struct FMIndexLocateSearchIndex<T: Character, C: Converter<T>>(
-    FMIndex<T, C, SuffixOrderSampledArray>,
-);
 
 pub struct FMIndexLocateSearchResult<'a, T: Character, C: Converter<T>>(
     Search<'a, T, FMIndex<T, C, SuffixOrderSampledArray>>,

@@ -31,8 +31,8 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub(crate) fn count_only(text: Vec<T>, converter: C) -> Self {
-        Self::create(text, converter, |_sa| ())
+    pub(crate) fn count_only(text: Vec<T>, converter: C) -> RLFMIndexCountOnlySearchIndex<T, C> {
+        RLFMIndexCountOnlySearchIndex(Self::create(text, converter, |_sa| ()))
     }
 }
 
@@ -41,8 +41,14 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub(crate) fn new(text: Vec<T>, converter: C, level: usize) -> Self {
-        Self::create(text, converter, |sa| suffix_array::sample(sa, level))
+    pub(crate) fn new(
+        text: Vec<T>,
+        converter: C,
+        level: usize,
+    ) -> RLFMIndexLocateSearchIndex<T, C> {
+        RLFMIndexLocateSearchIndex(Self::create(text, converter, |sa| {
+            suffix_array::sample(sa, level)
+        }))
     }
 }
 
@@ -268,7 +274,10 @@ where
         n + i - p
     }
 }
-impl<T: Character, C: Converter<T>> SearchIndex<T> for RLFMIndex<T, C, ()> {
+
+pub struct RLFMIndexCountOnlySearchIndex<T: Character, C: Converter<T>>(RLFMIndex<T, C, ()>);
+
+impl<T: Character, C: Converter<T>> SearchIndex<T> for RLFMIndexCountOnlySearchIndex<T, C> {
     type SearchResult<'a>
         = RLFMIndexCountOnlySearchResult<'a, T, C>
     where
@@ -276,17 +285,19 @@ impl<T: Character, C: Converter<T>> SearchIndex<T> for RLFMIndex<T, C, ()> {
         C: 'a;
 
     fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self::SearchResult<'_> {
-        RLFMIndexCountOnlySearchResult(Search::new(self).search(pattern))
+        RLFMIndexCountOnlySearchResult(Search::new(&self.0).search(pattern))
     }
 
     fn len(&self) -> u64 {
-        self.len()
+        self.0.len()
     }
 }
 
-impl<T: Character, C: Converter<T>> SearchIndexWithLocate<T>
-    for RLFMIndex<T, C, SuffixOrderSampledArray>
-{
+pub struct RLFMIndexLocateSearchIndex<T: Character, C: Converter<T>>(
+    RLFMIndex<T, C, SuffixOrderSampledArray>,
+);
+
+impl<T: Character, C: Converter<T>> SearchIndexWithLocate<T> for RLFMIndexLocateSearchIndex<T, C> {
     type SearchResult<'a>
         = RLFMIndexLocateSearchResult<'a, T, C>
     where
@@ -294,11 +305,11 @@ impl<T: Character, C: Converter<T>> SearchIndexWithLocate<T>
         C: 'a;
 
     fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self::SearchResult<'_> {
-        RLFMIndexLocateSearchResult(Search::new(self).search(pattern))
+        RLFMIndexLocateSearchResult(Search::new(&self.0).search(pattern))
     }
 
     fn len(&self) -> u64 {
-        self.len()
+        self.0.len()
     }
 }
 
@@ -464,8 +475,8 @@ mod tests {
         let rlfmi = RLFMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
         let ans = "ipsm\0pisi".to_string().into_bytes();
         for (i, a) in ans.into_iter().enumerate() {
-            let l: u8 = rlfmi.s.get_u64_unchecked(i) as u8;
-            assert_eq!(rlfmi.converter.convert_inv(l), a);
+            let l: u8 = rlfmi.0.s.get_u64_unchecked(i) as u8;
+            assert_eq!(rlfmi.0.converter.convert_inv(l), a);
         }
     }
 
@@ -481,10 +492,10 @@ mod tests {
         // rank_1  1233456788999
         // s:      ipsm$pisi
         //         012345678
-        assert_eq!(n as usize, rlfmi.b.len());
+        assert_eq!(n as usize, rlfmi.0.b.len());
         for (i, a) in ans.into_iter().enumerate() {
             assert_eq!(
-                rlfmi.b.get(i).unwrap(),
+                rlfmi.0.b.get(i).unwrap(),
                 (a != 0) as u64,
                 "failed at b[{}]",
                 i
@@ -498,10 +509,10 @@ mod tests {
         let rlfmi = RLFMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0];
-        assert_eq!(n as usize, rlfmi.bp.len());
+        assert_eq!(n as usize, rlfmi.0.bp.len());
         for (i, a) in ans.into_iter().enumerate() {
             assert_eq!(
-                rlfmi.bp.get(i).unwrap(),
+                rlfmi.0.bp.get(i).unwrap(),
                 (a != 0) as u64,
                 "failed at bp[{}]",
                 i
@@ -515,8 +526,8 @@ mod tests {
         let rlfmi = RLFMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
         let ans = vec![(b'\0', 0), (b'i', 1), (b'm', 4), (b'p', 5), (b's', 7)];
         for (c, a) in ans {
-            let c = rlfmi.converter.convert(c) as usize;
-            assert_eq!(rlfmi.cs[c], a);
+            let c = rlfmi.0.converter.convert(c) as usize;
+            assert_eq!(rlfmi.0.cs[c], a);
         }
     }
 
@@ -527,8 +538,8 @@ mod tests {
         let ans = "ipssm\0pissii".to_string().into_bytes();
 
         for (i, a) in ans.into_iter().enumerate() {
-            let l = rlfmi.get_l(i as u64);
-            assert_eq!(rlfmi.converter.convert_inv(l), a);
+            let l = rlfmi.0.get_l(i as u64);
+            assert_eq!(rlfmi.0.converter.convert_inv(l), a);
         }
     }
 
@@ -540,7 +551,7 @@ mod tests {
 
         let mut i = 0;
         for a in ans {
-            let next_i = rlfmi.lf_map(i);
+            let next_i = rlfmi.0.lf_map(i);
             assert_eq!(next_i, a, "should be lf_map({}) == {}", i, a);
             i = next_i;
         }
@@ -560,8 +571,8 @@ mod tests {
         let n = rlfmi.len();
 
         for (c, r) in ans {
-            let s = rlfmi.lf_map2(c, 0);
-            let e = rlfmi.lf_map2(c, n);
+            let s = rlfmi.0.lf_map2(c, 0);
+            let e = rlfmi.0.lf_map2(c, n);
             assert_eq!(
                 (s, e),
                 r,
@@ -586,7 +597,7 @@ mod tests {
 
         for (s, r) in ans {
             let search = rlfmi.search(s);
-            assert_eq!(search.get_range(), r);
+            assert_eq!(search.0.get_range(), r);
         }
     }
 
@@ -618,8 +629,8 @@ mod tests {
         let rlfmi = RLFMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
 
         for (i, a) in ans.into_iter().enumerate() {
-            let f = rlfmi.get_f(i as u64);
-            assert_eq!(rlfmi.converter.convert_inv(f), a);
+            let f = rlfmi.0.get_f(i as u64);
+            assert_eq!(rlfmi.0.converter.convert_inv(f), a);
         }
     }
 
@@ -629,7 +640,7 @@ mod tests {
         let rlfmi = RLFMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
-            let actual = rlfmi.fl_map(i as u64);
+            let actual = rlfmi.0.fl_map(i as u64);
             assert_eq!(actual, expected);
         }
     }

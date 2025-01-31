@@ -3,6 +3,7 @@ use crate::converter;
 
 use crate::{
     converter::{Converter, IdConverter},
+    rlfmi::RLFMIndexLocateSearchIndex,
     suffix_array::SuffixOrderSampledArray,
     Character, FMIndex, RLFMIndex, SearchIndex, SearchIndexWithLocate,
 };
@@ -250,7 +251,7 @@ where
     }
 
     /// Build the index.
-    pub fn build(self, text: Vec<T>) -> impl SearchIndexWithLocate<T> {
+    pub fn build(self, text: Vec<T>) -> RLFMIndexLocateSearchIndex<T, C> {
         RLFMIndex::new(text, self.converter, self.sampling_level.unwrap_or(0))
     }
 }
