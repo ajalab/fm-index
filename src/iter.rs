@@ -68,6 +68,12 @@ pub trait HeapSize {
     fn size(&self) -> usize;
 }
 
+/// A trait for an index that supports locate queries.
+pub trait HasPosition {
+    #[doc(hidden)]
+    fn get_sa<L: seal::IsLocal>(&self, i: u64) -> u64;
+}
+
 /// An iterator that goes backwards through the text, producing [`Character`].
 pub struct BackwardIterator<'a, I>
 where

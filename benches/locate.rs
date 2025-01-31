@@ -1,5 +1,4 @@
-use fm_index::suffix_array::HasPosition;
-use fm_index::{FMIndexBackend, SearchIndexBuilder};
+use fm_index::{FMIndexBackend, HasPosition, SearchIndexBuilder};
 
 use criterion::{criterion_group, criterion_main};
 use criterion::{BatchSize, BenchmarkId, Criterion, Throughput};

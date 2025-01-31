@@ -135,7 +135,6 @@
 #![warn(missing_docs)]
 
 pub mod converter;
-pub mod suffix_array;
 
 mod builder;
 mod character;
@@ -145,6 +144,7 @@ mod rlfmi;
 mod sais;
 mod seal;
 mod search;
+mod suffix_array;
 mod util;
 
 pub use crate::fm_index::FMIndex;
@@ -152,5 +152,5 @@ pub use crate::rlfmi::RLFMIndex;
 
 pub use builder::SearchIndexBuilder;
 pub use character::Character;
-pub use iter::{BackwardIterator, FMIndexBackend, ForwardIterator, HeapSize};
+pub use iter::{BackwardIterator, FMIndexBackend, ForwardIterator, HasPosition, HeapSize};
 pub use search::Search;

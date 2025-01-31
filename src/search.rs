@@ -4,9 +4,8 @@ use crate::character::Character;
 use crate::converter;
 
 use crate::converter::IndexWithConverter;
-use crate::iter::FMIndexBackend;
+use crate::iter::{FMIndexBackend, HasPosition};
 use crate::seal;
-use crate::suffix_array::HasPosition;
 
 /// An object containing the result of a search.
 ///
