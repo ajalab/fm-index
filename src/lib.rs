@@ -135,7 +135,7 @@
 #![warn(missing_docs)]
 
 pub mod converter;
-pub mod suffix_array;
+pub mod sample;
 
 mod builder;
 mod character;

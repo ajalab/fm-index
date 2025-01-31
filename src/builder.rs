@@ -3,7 +3,7 @@ use crate::converter;
 
 use crate::{
     converter::{Converter, IdConverter},
-    suffix_array::SuffixOrderSampledArray,
+    sample::SuffixOrderSampledArray,
     Character, FMIndex, RLFMIndex,
 };
 

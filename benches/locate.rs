@@ -1,4 +1,4 @@
-use fm_index::suffix_array::HasPosition;
+use fm_index::sample::HasPosition;
 use fm_index::{FMIndexBackend, SearchIndexBuilder};
 
 use criterion::{criterion_group, criterion_main};

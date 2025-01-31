@@ -3,7 +3,7 @@ use crate::character::{prepare_text, Character};
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::iter::FMIndexBackend;
-use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
+use crate::sample::{self, HasPosition, SuffixOrderSampledArray};
 use crate::{sais, HeapSize, Search};
 use crate::{seal, util};
 
@@ -41,7 +41,7 @@ where
     C: Converter<T>,
 {
     pub(crate) fn new(text: Vec<T>, converter: C, level: usize) -> Self {
-        Self::create(text, converter, |sa| suffix_array::sample(sa, level))
+        Self::create(text, converter, |sa| sample::sample(sa, level))
     }
 }
 
