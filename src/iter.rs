@@ -1,7 +1,5 @@
 use crate::character::Character;
 use crate::converter::{Converter, IndexWithConverter};
-#[cfg(doc)]
-use crate::sample::SuffixOrderSampledArray;
 use crate::seal;
 use crate::search::Search;
 
@@ -71,8 +69,6 @@ pub trait HeapSize {
 }
 
 /// A trait for an index that supports locate queries.
-///
-/// This is only supported when [`SuffixOrderSampledArray`] is passed in.
 pub trait HasPosition {
     #[doc(hidden)]
     fn get_sa<L: seal::IsLocal>(&self, i: u64) -> u64;
