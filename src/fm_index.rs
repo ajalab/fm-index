@@ -2,10 +2,13 @@ use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
-use crate::iter::{AsCharacters, FMIndexBackend, LocateSearchResult, SearchIndex, SearchResult};
+use crate::iter::{
+    AsCharacters, FMIndexBackend, SearchIndex, SearchResult, SearchResultWithLocate,
+};
+use crate::search::Search;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
+use crate::util;
 use crate::{sais, seal, HeapSize, SearchIndexWithLocate};
-use crate::{util, Search};
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::WaveletMatrix;
@@ -82,7 +85,7 @@ where
     ///
     /// Return a [`Search`] object with information about the search
     /// result.
-    pub fn search<K>(&self, pattern: K) -> Search<T, Self>
+    pub(crate) fn search<K>(&self, pattern: K) -> Search<T, Self>
     where
         K: AsRef<[T]>,
     {
@@ -253,6 +256,14 @@ impl<'a, T: Character, C: Converter<T>> SearchResult<'a, T>
     fn count(&self) -> u64 {
         self.0.count()
     }
+
+    fn iter_backward(&self, i: u64) -> impl Iterator<Item = T> + 'a {
+        self.0.iter_backward(i)
+    }
+
+    fn iter_forward(&self, i: u64) -> impl Iterator<Item = T> + 'a {
+        self.0.iter_forward(i)
+    }
 }
 
 pub struct FMIndexLocateSearchResult<'a, T: Character, C: Converter<T>>(
@@ -269,9 +280,17 @@ impl<'a, T: Character, C: Converter<T>> SearchResult<'a, T>
     fn count(&self) -> u64 {
         self.0.count()
     }
+
+    fn iter_backward(&self, i: u64) -> impl Iterator<Item = T> + 'a {
+        self.0.iter_backward(i)
+    }
+
+    fn iter_forward(&self, i: u64) -> impl Iterator<Item = T> + 'a {
+        self.0.iter_forward(i)
+    }
 }
 
-impl<'a, T: Character, C: Converter<T>> LocateSearchResult<'a, T>
+impl<'a, T: Character, C: Converter<T>> SearchResultWithLocate<'a, T>
     for FMIndexLocateSearchResult<'a, T, C>
 {
     fn locate(&self) -> Vec<u64> {

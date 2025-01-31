@@ -25,6 +25,7 @@
 //! ```
 //! use fm_index::converter::RangeConverter;
 //! use fm_index::SearchIndexBuilder;
+//! use fm_index::{SearchIndexWithLocate, SearchResult, SearchResultWithLocate};
 //!
 //! // Prepare a text string to search for patterns.
 //! let text = concat!(
@@ -50,7 +51,7 @@
 //!
 //! // Search for a pattern string.
 //! let pattern = "dolor";
-//! let search = index.search(pattern);
+//! let search = index.search(&pattern);
 //!
 //! // Count the number of occurrences.
 //! let n = search.count();
@@ -153,7 +154,6 @@ pub use crate::rlfmi::RLFMIndex;
 pub use builder::SearchIndexBuilder;
 pub use character::Character;
 pub use iter::{
-    BackwardIterator, FMIndexBackend, ForwardIterator, HeapSize, LocateSearchResult, SearchIndex,
-    SearchIndexWithLocate, SearchResult,
+    BackwardIterator, ForwardIterator, HeapSize, SearchIndex, SearchIndexWithLocate, SearchResult,
+    SearchResultWithLocate,
 };
-pub use search::Search;

@@ -1,4 +1,4 @@
-use fm_index::{LocateSearchResult, SearchIndexBuilder, SearchIndexWithLocate};
+use fm_index::{SearchResultWithLocate, SearchIndexBuilder, SearchIndexWithLocate};
 
 use criterion::{criterion_group, criterion_main};
 use criterion::{BatchSize, BenchmarkId, Criterion, Throughput};

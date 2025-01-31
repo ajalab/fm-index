@@ -18,12 +18,15 @@ impl<T: Character, A: AsRef<[T]>> AsCharacters<T> for A {
 }
 
 pub trait SearchResult<'a, T: Character> {
-    fn search<K: AsRef<[T]>>(&'a self, pattern: K) -> Self;
+    fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self;
 
     fn count(&self) -> u64;
+
+    fn iter_backward(&self, i: u64) -> impl Iterator<Item = T> + 'a;
+    fn iter_forward(&self, i: u64) -> impl Iterator<Item = T> + 'a;
 }
 
-pub trait LocateSearchResult<'a, T: Character>: SearchResult<'a, T> {
+pub trait SearchResultWithLocate<'a, T: Character>: SearchResult<'a, T> {
     fn locate(&self) -> Vec<u64>;
 }
 
@@ -54,7 +57,7 @@ pub trait SearchIndex<T: Character> {
 ///
 /// This also supports the locate operation for search.
 pub trait SearchIndexWithLocate<T: Character> {
-    type SearchResult<'a>: LocateSearchResult<'a, T>
+    type SearchResult<'a>: SearchResultWithLocate<'a, T>
     where
         Self: 'a;
 
@@ -76,22 +79,19 @@ pub trait SearchIndexWithLocate<T: Character> {
 /// You can use this to implement against a FM-Index generically.
 ///
 /// You cannot implement this trait yourself.
-pub trait FMIndexBackend<T: Character> {
-    // We hide all the methods involved in implementation.
-
-    #[doc(hidden)]
+pub(crate) trait FMIndexBackend<T: Character> {
     fn get_l(&self, i: u64) -> T;
-    #[doc(hidden)]
+
     fn lf_map(&self, i: u64) -> u64;
-    #[doc(hidden)]
+
     fn lf_map2(&self, c: T, i: u64) -> u64;
-    #[doc(hidden)]
+
     fn get_f(&self, i: u64) -> T;
-    #[doc(hidden)]
+
     fn fl_map(&self, i: u64) -> u64;
-    #[doc(hidden)]
+
     fn fl_map2(&self, c: T, i: u64) -> u64;
-    #[doc(hidden)]
+
     fn len(&self) -> u64;
 }
 

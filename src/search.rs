@@ -10,7 +10,7 @@ use crate::{seal, BackwardIterator, Character, ForwardIterator};
 ///
 /// This is expanded with a `locate` method if the index is
 /// supplied with a sampled suffix array.
-pub struct Search<'a, T: Character, I: FMIndexBackend<T>> {
+pub(crate) struct Search<'a, T: Character, I: FMIndexBackend<T>> {
     index: &'a I,
     s: u64,
     e: u64,
