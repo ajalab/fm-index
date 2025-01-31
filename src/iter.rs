@@ -17,18 +17,31 @@ impl<T: Character, A: AsRef<[T]>> AsCharacters<T> for A {
     }
 }
 
+pub trait SearchResult<'a, T: Character> {
+    fn search<K: AsRef<[T]>>(&'a self, pattern: K) -> Self;
+
+    fn count(&self) -> u64;
+}
+
+pub trait LocateSearchResult<'a, T: Character>: SearchResult<'a, T> {
+    fn locate(&self) -> Vec<u64>;
+}
+
 /// A search index that can be used to search for patterns in a text.
 ///
 /// This only supports the count operation for search, not locate.
 pub trait SearchIndex<T: Character> {
-    /// The backend type for this search index.
-    type Backend: FMIndexBackend<T>;
+    type SearchResult<'a>: SearchResult<'a, T>
+    where
+        Self: 'a;
+    // /// The backend type for this search index.
+    // type Backend: FMIndexBackend<T>;
 
     /// Search for a pattern in the text.
     ///
     /// Return a [`Search`] object with information about the search
     /// result.
-    fn search(&self, pattern: &dyn AsCharacters<T>) -> Search<T, Self::Backend>;
+    fn search(&self, pattern: &dyn AsCharacters<T>) -> Self::SearchResult<'_>;
 
     /// The size of the text in the index
     ///
@@ -41,14 +54,15 @@ pub trait SearchIndex<T: Character> {
 ///
 /// This also supports the locate operation for search.
 pub trait SearchIndexWithLocate<T: Character> {
-    /// The backend type for this search index.
-    type Backend: FMIndexBackend<T> + HasPosition;
+    type SearchResult<'a>: LocateSearchResult<'a, T>
+    where
+        Self: 'a;
 
     /// Search for a pattern in the text.
     ///
     /// Return a [`Search`] object with information about the search
     /// result.
-    fn search(&self, pattern: &dyn AsCharacters<T>) -> Search<T, Self::Backend>;
+    fn search(&self, pattern: &dyn AsCharacters<T>) -> Self::SearchResult<'_>;
 
     /// The size of the text in the index
     ///

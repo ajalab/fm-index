@@ -2,7 +2,7 @@ use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
-use crate::iter::{AsCharacters, FMIndexBackend, SearchIndex};
+use crate::iter::{AsCharacters, FMIndexBackend, LocateSearchResult, SearchIndex, SearchResult};
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
 use crate::{sais, HeapSize, Search, SearchIndexWithLocate};
 use crate::{seal, util};
@@ -267,12 +267,15 @@ where
         n + i - p
     }
 }
+impl<T: Character, C: Converter<T>> SearchIndex<T> for RLFMIndex<T, C, ()> {
+    type SearchResult<'a>
+        = RLFMIndexCountOnlySearchResult<'a, T, C>
+    where
+        T: 'a,
+        C: 'a;
 
-impl<T: Character, C: Converter<T>, S> SearchIndex<T> for RLFMIndex<T, C, S> {
-    type Backend = RLFMIndex<T, C, S>;
-
-    fn search(&self, pattern: &dyn AsCharacters<T>) -> Search<T, Self> {
-        Search::new(self).search(pattern.as_characters())
+    fn search(&self, pattern: &dyn AsCharacters<T>) -> Self::SearchResult<'_> {
+        RLFMIndexCountOnlySearchResult(Search::new(self).search(pattern.as_characters()))
     }
 
     fn len(&self) -> u64 {
@@ -283,16 +286,86 @@ impl<T: Character, C: Converter<T>, S> SearchIndex<T> for RLFMIndex<T, C, S> {
 impl<T: Character, C: Converter<T>> SearchIndexWithLocate<T>
     for RLFMIndex<T, C, SuffixOrderSampledArray>
 {
-    type Backend = RLFMIndex<T, C, SuffixOrderSampledArray>;
+    type SearchResult<'a>
+        = RLFMIndexLocateSearchResult<'a, T, C>
+    where
+        T: 'a,
+        C: 'a;
 
-    fn search(&self, pattern: &dyn AsCharacters<T>) -> Search<T, Self::Backend> {
-        Search::new(self).search(pattern.as_characters())
+    fn search(&self, pattern: &dyn AsCharacters<T>) -> Self::SearchResult<'_> {
+        RLFMIndexLocateSearchResult(Search::new(self).search(pattern.as_characters()))
     }
 
     fn len(&self) -> u64 {
         self.len()
     }
 }
+
+pub struct RLFMIndexCountOnlySearchResult<'a, T: Character, C: Converter<T>>(
+    Search<'a, T, RLFMIndex<T, C, ()>>,
+);
+
+impl<'a, T: Character, C: Converter<T>> SearchResult<'a, T>
+    for RLFMIndexCountOnlySearchResult<'a, T, C>
+{
+    fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self {
+        RLFMIndexCountOnlySearchResult(self.0.search(pattern))
+    }
+
+    fn count(&self) -> u64 {
+        self.0.count()
+    }
+}
+
+pub struct RLFMIndexLocateSearchResult<'a, T: Character, C: Converter<T>>(
+    Search<'a, T, RLFMIndex<T, C, SuffixOrderSampledArray>>,
+);
+
+impl<'a, T: Character, C: Converter<T>> SearchResult<'a, T>
+    for RLFMIndexLocateSearchResult<'a, T, C>
+{
+    fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self {
+        RLFMIndexLocateSearchResult(self.0.search(pattern))
+    }
+
+    fn count(&self) -> u64 {
+        self.0.count()
+    }
+}
+
+impl<'a, T: Character, C: Converter<T>> LocateSearchResult<'a, T>
+    for RLFMIndexLocateSearchResult<'a, T, C>
+{
+    fn locate(&self) -> Vec<u64> {
+        self.0.locate()
+    }
+}
+
+// impl<T: Character, C: Converter<T>, S> SearchIndex<T> for RLFMIndex<T, C, S> {
+//     type Backend = RLFMIndex<T, C, S>;
+
+//     fn search(&self, pattern: &dyn AsCharacters<T>) -> Search<T, Self> {
+//         Search::new(self).search(pattern.as_characters())
+//     }
+
+//     fn len(&self) -> u64 {
+//         self.len()
+//     }
+// }
+
+// impl<T: Character, C: Converter<T>> SearchIndexWithLocate<T>
+//     for RLFMIndex<T, C, SuffixOrderSampledArray>
+// {
+//     type Backend = RLFMIndex<T, C, SuffixOrderSampledArray>;
+
+//     fn search(&self, pattern: &dyn AsCharacters<T>) -> Search<T, Self::Backend> {
+//         Search::new(self).search(pattern.as_characters())
+//     }
+
+//     fn len(&self) -> u64 {
+//         self.len()
+//     }
+// }
 
 impl<T, C> HasPosition for RLFMIndex<T, C, SuffixOrderSampledArray>
 where

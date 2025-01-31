@@ -1,4 +1,4 @@
-use fm_index::{SearchIndex, SearchIndexBuilder};
+use fm_index::{SearchIndex, SearchIndexBuilder, SearchResult};
 
 use criterion::{criterion_group, criterion_main};
 use criterion::{AxisScale, BatchSize, BenchmarkId, Criterion, PlotConfiguration, Throughput};
