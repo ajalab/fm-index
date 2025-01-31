@@ -152,5 +152,5 @@ pub use crate::rlfmi::RLFMIndex;
 
 pub use builder::SearchIndexBuilder;
 pub use character::Character;
-pub use iter::{BackwardIterator, FMIndexBackend, ForwardIterator, HeapSize};
+pub use iter::{BackwardIterator, FMIndexBackend, ForwardIterator, HasPosition, HeapSize};
 pub use search::Search;

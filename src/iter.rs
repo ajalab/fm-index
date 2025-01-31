@@ -1,5 +1,7 @@
 use crate::character::Character;
 use crate::converter::{Converter, IndexWithConverter};
+#[cfg(doc)]
+use crate::sample::SuffixOrderSampledArray;
 use crate::seal;
 use crate::search::Search;
 
@@ -66,6 +68,14 @@ pub trait FMIndexBackend: Sized + seal::Sealed {
 pub trait HeapSize {
     /// The size on the heap of this structure, in bytes.
     fn size(&self) -> usize;
+}
+
+/// A trait for an index that supports locate queries.
+///
+/// This is only supported when [`SuffixOrderSampledArray`] is passed in.
+pub trait HasPosition {
+    #[doc(hidden)]
+    fn get_sa<L: seal::IsLocal>(&self, i: u64) -> u64;
 }
 
 /// An iterator that goes backwards through the text, producing [`Character`].
