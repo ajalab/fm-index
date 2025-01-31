@@ -32,17 +32,20 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub(crate) fn count_only(text: Vec<T>, converter: C) -> Self {
-        Self::create(text, converter, |_| ())
+    pub(crate) fn count_only(text: Vec<T>, converter: C) -> FMIndexCountOnlySearchIndex<T, C> {
+        FMIndexCountOnlySearchIndex(Self::create(text, converter, |_| ()))
     }
 }
+
 impl<T, C> FMIndex<T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,
 {
-    pub(crate) fn new(text: Vec<T>, converter: C, level: usize) -> Self {
-        Self::create(text, converter, |sa| suffix_array::sample(sa, level))
+    pub(crate) fn new(text: Vec<T>, converter: C, level: usize) -> FMIndexLocateSearchIndex<T, C> {
+        FMIndexLocateSearchIndex(Self::create(text, converter, |sa| {
+            suffix_array::sample(sa, level)
+        }))
     }
 }
 
@@ -208,37 +211,37 @@ where
     }
 }
 
-impl<T: Character, C: Converter<T>> SearchIndex<T> for FMIndex<T, C, ()> {
+pub struct FMIndexCountOnlySearchIndex<T: Character, C: Converter<T>>(FMIndex<T, C, ()>);
+
+impl<T: Character, C: Converter<T>> SearchIndex<T> for FMIndexCountOnlySearchIndex<T, C> {
     type SearchResult<'a>
         = FMIndexCountOnlySearchResult<'a, T, C>
     where
         T: 'a,
         C: 'a;
 
-    fn search(&self, pattern: &dyn AsCharacters<T>) -> Self::SearchResult<'_> {
-        FMIndexCountOnlySearchResult(Search::new(self).search(pattern.as_characters()))
+    fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self::SearchResult<'_> {
+        FMIndexCountOnlySearchResult(Search::new(&self.0).search(pattern))
     }
 
     fn len(&self) -> u64 {
-        self.len()
+        self.0.len()
     }
 }
 
-impl<T: Character, C: Converter<T>> SearchIndexWithLocate<T>
-    for FMIndex<T, C, SuffixOrderSampledArray>
-{
+impl<T: Character, C: Converter<T>> SearchIndexWithLocate<T> for FMIndexLocateSearchIndex<T, C> {
     type SearchResult<'a>
         = FMIndexLocateSearchResult<'a, T, C>
     where
         T: 'a,
         C: 'a;
 
-    fn search(&self, pattern: &dyn AsCharacters<T>) -> Self::SearchResult<'_> {
-        FMIndexLocateSearchResult(Search::new(self).search(pattern.as_characters()))
+    fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self::SearchResult<'_> {
+        FMIndexLocateSearchResult(Search::new(&self.0).search(pattern))
     }
 
     fn len(&self) -> u64 {
-        self.len()
+        self.0.len()
     }
 }
 
@@ -265,6 +268,10 @@ impl<'a, T: Character, C: Converter<T>> SearchResult<'a, T>
         self.0.iter_forward(i)
     }
 }
+
+pub struct FMIndexLocateSearchIndex<T: Character, C: Converter<T>>(
+    FMIndex<T, C, SuffixOrderSampledArray>,
+);
 
 pub struct FMIndexLocateSearchResult<'a, T: Character, C: Converter<T>>(
     Search<'a, T, FMIndex<T, C, SuffixOrderSampledArray>>,
@@ -415,7 +422,7 @@ mod tests {
         let fm_index = FMIndex::new(text, RangeConverter::new(b'a', b'z'), 2);
         let mut i = 0;
         for a in ans {
-            i = fm_index.lf_map(i);
+            i = fm_index.0.lf_map(i);
             assert_eq!(i, a);
         }
     }
@@ -426,7 +433,7 @@ mod tests {
         let fm_index = FMIndex::new(text, RangeConverter::new(b'a', b'z'), 2);
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
-            let actual = fm_index.fl_map(i as u64);
+            let actual = fm_index.0.fl_map(i as u64);
             assert_eq!(actual, expected);
         }
     }

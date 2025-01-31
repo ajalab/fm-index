@@ -2,9 +2,7 @@ use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
-use crate::iter::{
-    AsCharacters, FMIndexBackend, SearchIndex, SearchResult, SearchResultWithLocate,
-};
+use crate::iter::{FMIndexBackend, SearchIndex, SearchResult, SearchResultWithLocate};
 use crate::search::Search;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
 use crate::{sais, HeapSize, SearchIndexWithLocate};
@@ -277,8 +275,8 @@ impl<T: Character, C: Converter<T>> SearchIndex<T> for RLFMIndex<T, C, ()> {
         T: 'a,
         C: 'a;
 
-    fn search(&self, pattern: &dyn AsCharacters<T>) -> Self::SearchResult<'_> {
-        RLFMIndexCountOnlySearchResult(Search::new(self).search(pattern.as_characters()))
+    fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self::SearchResult<'_> {
+        RLFMIndexCountOnlySearchResult(Search::new(self).search(pattern))
     }
 
     fn len(&self) -> u64 {
@@ -295,8 +293,8 @@ impl<T: Character, C: Converter<T>> SearchIndexWithLocate<T>
         T: 'a,
         C: 'a;
 
-    fn search(&self, pattern: &dyn AsCharacters<T>) -> Self::SearchResult<'_> {
-        RLFMIndexLocateSearchResult(Search::new(self).search(pattern.as_characters()))
+    fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self::SearchResult<'_> {
+        RLFMIndexLocateSearchResult(Search::new(self).search(pattern))
     }
 
     fn len(&self) -> u64 {

@@ -44,7 +44,7 @@ pub trait SearchIndex<T: Character> {
     ///
     /// Return a [`Search`] object with information about the search
     /// result.
-    fn search(&self, pattern: &dyn AsCharacters<T>) -> Self::SearchResult<'_>;
+    fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self::SearchResult<'_>;
 
     /// The size of the text in the index
     ///
@@ -65,7 +65,7 @@ pub trait SearchIndexWithLocate<T: Character> {
     ///
     /// Return a [`Search`] object with information about the search
     /// result.
-    fn search(&self, pattern: &dyn AsCharacters<T>) -> Self::SearchResult<'_>;
+    fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self::SearchResult<'_>;
 
     /// The size of the text in the index
     ///
