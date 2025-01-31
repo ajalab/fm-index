@@ -135,7 +135,6 @@
 #![warn(missing_docs)]
 
 pub mod converter;
-pub mod sample;
 
 mod builder;
 mod character;
@@ -145,6 +144,7 @@ mod rlfmi;
 mod sais;
 mod seal;
 mod search;
+mod suffix_array;
 mod util;
 
 pub use crate::fm_index::FMIndex;

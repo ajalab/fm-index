@@ -1,6 +1,4 @@
-//! Suffix arrays, used to construct the index.
-//!
-//! Can also be used in sampled fashion to perform locate queries.
+//! Sampled suffix arrays to perform locate queries.
 use crate::util;
 use std::fmt;
 

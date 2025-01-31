@@ -3,7 +3,7 @@ use crate::character::{prepare_text, Character};
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::iter::{FMIndexBackend, HasPosition};
-use crate::sample::{self, SuffixOrderSampledArray};
+use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
 use crate::{sais, HeapSize, Search};
 use crate::{seal, util};
 
