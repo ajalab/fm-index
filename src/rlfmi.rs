@@ -2,9 +2,10 @@ use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
-use crate::iter::FMIndexBackend;
+use crate::iter::{FMIndexBackend, SearchIndex, SearchResult, SearchResultWithLocate};
+use crate::search::Search;
 use crate::suffix_array::{self, HasPosition, SuffixOrderSampledArray};
-use crate::{sais, HeapSize, Search};
+use crate::{sais, HeapSize, SearchIndexWithLocate};
 use crate::{seal, util};
 
 use serde::{Deserialize, Serialize};
@@ -30,8 +31,8 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub(crate) fn count_only(text: Vec<T>, converter: C) -> Self {
-        Self::create(text, converter, |_sa| ())
+    pub(crate) fn count_only(text: Vec<T>, converter: C) -> RLFMIndexCountOnlySearchIndex<T, C> {
+        RLFMIndexCountOnlySearchIndex(Self::create(text, converter, |_sa| ()))
     }
 }
 
@@ -40,8 +41,14 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub(crate) fn new(text: Vec<T>, converter: C, level: usize) -> Self {
-        Self::create(text, converter, |sa| suffix_array::sample(sa, level))
+    pub(crate) fn new(
+        text: Vec<T>,
+        converter: C,
+        level: usize,
+    ) -> RLFMIndexLocateSearchIndex<T, C> {
+        RLFMIndexLocateSearchIndex(Self::create(text, converter, |sa| {
+            suffix_array::sample(sa, level)
+        }))
     }
 }
 
@@ -116,7 +123,7 @@ where
     ///
     /// Return a [`Search`] object with information about the search
     /// result.
-    pub fn search<K>(&self, pattern: K) -> Search<Self>
+    pub(crate) fn search<K>(&self, pattern: K) -> Search<T, Self>
     where
         K: AsRef<[T]>,
     {
@@ -196,35 +203,33 @@ where
 
 impl<T, C, S> seal::Sealed for RLFMIndex<T, C, S> {}
 
-impl<T, C, S> FMIndexBackend for RLFMIndex<T, C, S>
+impl<T, C, S> FMIndexBackend<T> for RLFMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,
 {
-    type T = T;
-
     fn len(&self) -> u64 {
         self.len
     }
 
-    fn get_l<L: seal::IsLocal>(&self, i: u64) -> T {
+    fn get_l(&self, i: u64) -> T {
         // note: b[0] is always 1
         T::from_u64(self.s.get_u64_unchecked(self.b.rank1(i as usize + 1) - 1))
     }
 
-    fn lf_map<L: seal::IsLocal>(&self, i: u64) -> u64 {
-        let c = self.get_l::<L>(i);
+    fn lf_map(&self, i: u64) -> u64 {
+        let c = self.get_l(i);
         let j = self.b.rank1(i as usize);
         let nr = self.s.rank_u64_unchecked(j, c.into());
         self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64 + i
             - self.b.select1(j) as u64
     }
 
-    fn lf_map2<L: seal::IsLocal>(&self, c: T, i: u64) -> u64 {
+    fn lf_map2(&self, c: T, i: u64) -> u64 {
         let c = self.converter.convert(c);
         let j = self.b.rank1(i as usize);
         let nr = self.s.rank_u64_unchecked(j, c.into());
-        if self.get_l::<L>(i) != c {
+        if self.get_l(i) != c {
             self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64
         } else {
             self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64 + i
@@ -232,7 +237,7 @@ where
         }
     }
 
-    fn get_f<L: seal::IsLocal>(&self, i: u64) -> Self::T {
+    fn get_f(&self, i: u64) -> T {
         let mut s = 0;
         let mut e = self.cs.len();
         let r = (self.bp.rank1(i as usize + 1) - 1) as u64;
@@ -247,8 +252,8 @@ where
         T::from_u64(s as u64)
     }
 
-    fn fl_map<L: seal::IsLocal>(&self, i: u64) -> u64 {
-        let c = self.get_f::<L>(i);
+    fn fl_map(&self, i: u64) -> u64 {
+        let c = self.get_f(i);
         let j = self.bp.rank1(i as usize + 1) - 1;
         let p = self.bp.select1(j) as u64;
         let m = self
@@ -258,7 +263,7 @@ where
         n + i - p
     }
 
-    fn fl_map2<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64 {
+    fn fl_map2(&self, c: T, i: u64) -> u64 {
         let c = self.converter.convert(c);
         let j = self.bp.rank1(i as usize + 1) - 1;
         let p = self.bp.select1(j) as u64;
@@ -267,6 +272,100 @@ where
             .select_u64_unchecked(j - self.cs[c.into() as usize] as usize, c.into());
         let n = self.b.select1(m) as u64;
         n + i - p
+    }
+}
+
+pub struct RLFMIndexCountOnlySearchIndex<T: Character, C: Converter<T>>(RLFMIndex<T, C, ()>);
+
+impl<T: Character, C: Converter<T>> SearchIndex<T> for RLFMIndexCountOnlySearchIndex<T, C> {
+    type SearchResult<'a>
+        = RLFMIndexCountOnlySearchResult<'a, T, C>
+    where
+        T: 'a,
+        C: 'a;
+
+    fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self::SearchResult<'_> {
+        RLFMIndexCountOnlySearchResult(Search::new(&self.0).search(pattern))
+    }
+
+    fn len(&self) -> u64 {
+        self.0.len()
+    }
+}
+
+pub struct RLFMIndexLocateSearchIndex<T: Character, C: Converter<T>>(
+    RLFMIndex<T, C, SuffixOrderSampledArray>,
+);
+
+impl<T: Character, C: Converter<T>> SearchIndexWithLocate<T> for RLFMIndexLocateSearchIndex<T, C> {
+    type SearchResult<'a>
+        = RLFMIndexLocateSearchResult<'a, T, C>
+    where
+        T: 'a,
+        C: 'a;
+
+    fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self::SearchResult<'_> {
+        RLFMIndexLocateSearchResult(Search::new(&self.0).search(pattern))
+    }
+
+    fn len(&self) -> u64 {
+        self.0.len()
+    }
+}
+
+pub struct RLFMIndexCountOnlySearchResult<'a, T: Character, C: Converter<T>>(
+    Search<'a, T, RLFMIndex<T, C, ()>>,
+);
+
+impl<'a, T: Character, C: Converter<T>> SearchResult<'a, T>
+    for RLFMIndexCountOnlySearchResult<'a, T, C>
+{
+    fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self {
+        RLFMIndexCountOnlySearchResult(self.0.search(pattern))
+    }
+
+    fn count(&self) -> u64 {
+        self.0.count()
+    }
+
+    fn iter_backward(&self, i: u64) -> impl Iterator<Item = T> + 'a {
+        self.0.iter_backward(i)
+    }
+
+    fn iter_forward(&self, i: u64) -> impl Iterator<Item = T> + 'a {
+        self.0.iter_forward(i)
+    }
+}
+
+pub struct RLFMIndexLocateSearchResult<'a, T: Character, C: Converter<T>>(
+    Search<'a, T, RLFMIndex<T, C, SuffixOrderSampledArray>>,
+);
+
+impl<'a, T: Character, C: Converter<T>> SearchResult<'a, T>
+    for RLFMIndexLocateSearchResult<'a, T, C>
+{
+    fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self {
+        RLFMIndexLocateSearchResult(self.0.search(pattern))
+    }
+
+    fn count(&self) -> u64 {
+        self.0.count()
+    }
+
+    fn iter_backward(&self, i: u64) -> impl Iterator<Item = T> + 'a {
+        self.0.iter_backward(i)
+    }
+
+    fn iter_forward(&self, i: u64) -> impl Iterator<Item = T> + 'a {
+        self.0.iter_forward(i)
+    }
+}
+
+impl<'a, T: Character, C: Converter<T>> SearchResultWithLocate<'a, T>
+    for RLFMIndexLocateSearchResult<'a, T, C>
+{
+    fn locate(&self) -> Vec<u64> {
+        self.0.locate()
     }
 }
 
@@ -283,7 +382,7 @@ where
                     return (sa + steps) % self.len();
                 }
                 None => {
-                    i = self.lf_map::<seal::Local>(i);
+                    i = self.lf_map(i);
                     steps += 1;
                 }
             }
@@ -376,8 +475,8 @@ mod tests {
         let rlfmi = RLFMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
         let ans = "ipsm\0pisi".to_string().into_bytes();
         for (i, a) in ans.into_iter().enumerate() {
-            let l: u8 = rlfmi.s.get_u64_unchecked(i) as u8;
-            assert_eq!(rlfmi.converter.convert_inv(l), a);
+            let l: u8 = rlfmi.0.s.get_u64_unchecked(i) as u8;
+            assert_eq!(rlfmi.0.converter.convert_inv(l), a);
         }
     }
 
@@ -393,10 +492,10 @@ mod tests {
         // rank_1  1233456788999
         // s:      ipsm$pisi
         //         012345678
-        assert_eq!(n as usize, rlfmi.b.len());
+        assert_eq!(n as usize, rlfmi.0.b.len());
         for (i, a) in ans.into_iter().enumerate() {
             assert_eq!(
-                rlfmi.b.get(i).unwrap(),
+                rlfmi.0.b.get(i).unwrap(),
                 (a != 0) as u64,
                 "failed at b[{}]",
                 i
@@ -410,10 +509,10 @@ mod tests {
         let rlfmi = RLFMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0];
-        assert_eq!(n as usize, rlfmi.bp.len());
+        assert_eq!(n as usize, rlfmi.0.bp.len());
         for (i, a) in ans.into_iter().enumerate() {
             assert_eq!(
-                rlfmi.bp.get(i).unwrap(),
+                rlfmi.0.bp.get(i).unwrap(),
                 (a != 0) as u64,
                 "failed at bp[{}]",
                 i
@@ -427,8 +526,8 @@ mod tests {
         let rlfmi = RLFMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
         let ans = vec![(b'\0', 0), (b'i', 1), (b'm', 4), (b'p', 5), (b's', 7)];
         for (c, a) in ans {
-            let c = rlfmi.converter.convert(c) as usize;
-            assert_eq!(rlfmi.cs[c], a);
+            let c = rlfmi.0.converter.convert(c) as usize;
+            assert_eq!(rlfmi.0.cs[c], a);
         }
     }
 
@@ -439,8 +538,8 @@ mod tests {
         let ans = "ipssm\0pissii".to_string().into_bytes();
 
         for (i, a) in ans.into_iter().enumerate() {
-            let l = rlfmi.get_l::<seal::Local>(i as u64);
-            assert_eq!(rlfmi.converter.convert_inv(l), a);
+            let l = rlfmi.0.get_l(i as u64);
+            assert_eq!(rlfmi.0.converter.convert_inv(l), a);
         }
     }
 
@@ -452,7 +551,7 @@ mod tests {
 
         let mut i = 0;
         for a in ans {
-            let next_i = rlfmi.lf_map::<seal::Local>(i);
+            let next_i = rlfmi.0.lf_map(i);
             assert_eq!(next_i, a, "should be lf_map({}) == {}", i, a);
             i = next_i;
         }
@@ -472,8 +571,8 @@ mod tests {
         let n = rlfmi.len();
 
         for (c, r) in ans {
-            let s = rlfmi.lf_map2::<seal::Local>(c, 0);
-            let e = rlfmi.lf_map2::<seal::Local>(c, n);
+            let s = rlfmi.0.lf_map2(c, 0);
+            let e = rlfmi.0.lf_map2(c, n);
             assert_eq!(
                 (s, e),
                 r,
@@ -498,7 +597,7 @@ mod tests {
 
         for (s, r) in ans {
             let search = rlfmi.search(s);
-            assert_eq!(search.get_range(), r);
+            assert_eq!(search.0.get_range(), r);
         }
     }
 
@@ -530,8 +629,8 @@ mod tests {
         let rlfmi = RLFMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
 
         for (i, a) in ans.into_iter().enumerate() {
-            let f = rlfmi.get_f::<seal::Local>(i as u64);
-            assert_eq!(rlfmi.converter.convert_inv(f), a);
+            let f = rlfmi.0.get_f(i as u64);
+            assert_eq!(rlfmi.0.converter.convert_inv(f), a);
         }
     }
 
@@ -541,7 +640,7 @@ mod tests {
         let rlfmi = RLFMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
-            let actual = rlfmi.fl_map::<seal::Local>(i as u64);
+            let actual = rlfmi.0.fl_map(i as u64);
             assert_eq!(actual, expected);
         }
     }

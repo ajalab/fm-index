@@ -3,7 +3,8 @@ use crate::converter;
 
 use crate::{
     converter::{Converter, IdConverter},
-    suffix_array::SuffixOrderSampledArray,
+    fm_index::{FMIndexCountOnlySearchIndex, FMIndexLocateSearchIndex},
+    rlfmi::{RLFMIndexCountOnlySearchIndex, RLFMIndexLocateSearchIndex},
     Character, FMIndex, RLFMIndex,
 };
 
@@ -169,7 +170,7 @@ where
     }
 
     /// Build the index.
-    pub fn build(self, text: Vec<T>) -> FMIndex<T, C, SuffixOrderSampledArray> {
+    pub fn build(self, text: Vec<T>) -> FMIndexLocateSearchIndex<T, C> {
         FMIndex::new(text, self.converter, self.sampling_level.unwrap_or(0))
     }
 }
@@ -198,7 +199,7 @@ where
     }
 
     /// Build the index.
-    pub fn build(self, text: Vec<T>) -> FMIndex<T, C, ()> {
+    pub fn build(self, text: Vec<T>) -> FMIndexCountOnlySearchIndex<T, C> {
         FMIndex::count_only(text, self.converter)
     }
 }
@@ -250,7 +251,7 @@ where
     }
 
     /// Build the index.
-    pub fn build(self, text: Vec<T>) -> RLFMIndex<T, C, SuffixOrderSampledArray> {
+    pub fn build(self, text: Vec<T>) -> RLFMIndexLocateSearchIndex<T, C> {
         RLFMIndex::new(text, self.converter, self.sampling_level.unwrap_or(0))
     }
 }
@@ -271,7 +272,7 @@ where
     C: Converter<T>,
 {
     /// Build the index.
-    pub fn build(self, text: Vec<T>) -> RLFMIndex<T, C, ()> {
+    pub fn build(self, text: Vec<T>) -> RLFMIndexCountOnlySearchIndex<T, C> {
         RLFMIndex::count_only(text, self.converter)
     }
 }

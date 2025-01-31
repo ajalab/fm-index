@@ -1,5 +1,5 @@
 use fm_index::converter::RangeConverter;
-use fm_index::SearchIndexBuilder;
+use fm_index::{SearchIndexBuilder, SearchIndexWithLocate, SearchResult, SearchResultWithLocate};
 
 fn main() {
     // Prepare a text string to search for patterns.
@@ -26,7 +26,7 @@ fn main() {
 
     // Search for a pattern string.
     let pattern = "dolor";
-    let search = index.search(pattern);
+    let search = index.search(&pattern);
 
     // Count the number of occurrences.
     let n = search.count();
