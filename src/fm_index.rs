@@ -279,20 +279,6 @@ impl<'a, T: Character, C: Converter<T>> LocateSearchResult<'a, T>
     }
 }
 
-// impl<T: Character, C: Converter<T>> SearchIndexWithLocate<T>
-//     for FMIndex<T, C, SuffixOrderSampledArray>
-// {
-//     type Backend = FMIndex<T, C, SuffixOrderSampledArray>;
-
-//     fn search(&self, pattern: &dyn AsCharacters<T>) -> Search<T, Self::Backend> {
-//         Search::new(self).search(pattern.as_characters())
-//     }
-
-//     fn len(&self) -> u64 {
-//         self.len()
-//     }
-// }
-
 impl<T, C> HasPosition for FMIndex<T, C, SuffixOrderSampledArray>
 where
     T: Character,

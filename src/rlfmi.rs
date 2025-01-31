@@ -341,32 +341,6 @@ impl<'a, T: Character, C: Converter<T>> LocateSearchResult<'a, T>
     }
 }
 
-// impl<T: Character, C: Converter<T>, S> SearchIndex<T> for RLFMIndex<T, C, S> {
-//     type Backend = RLFMIndex<T, C, S>;
-
-//     fn search(&self, pattern: &dyn AsCharacters<T>) -> Search<T, Self> {
-//         Search::new(self).search(pattern.as_characters())
-//     }
-
-//     fn len(&self) -> u64 {
-//         self.len()
-//     }
-// }
-
-// impl<T: Character, C: Converter<T>> SearchIndexWithLocate<T>
-//     for RLFMIndex<T, C, SuffixOrderSampledArray>
-// {
-//     type Backend = RLFMIndex<T, C, SuffixOrderSampledArray>;
-
-//     fn search(&self, pattern: &dyn AsCharacters<T>) -> Search<T, Self::Backend> {
-//         Search::new(self).search(pattern.as_characters())
-//     }
-
-//     fn len(&self) -> u64 {
-//         self.len()
-//     }
-// }
-
 impl<T, C> HasPosition for RLFMIndex<T, C, SuffixOrderSampledArray>
 where
     T: Character,
