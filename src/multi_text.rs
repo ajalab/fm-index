@@ -97,6 +97,12 @@ where
         }
     }
 
+    /**
+     * Compute the suffix array of the given text.
+     * This algorithm is aware of the order of end markers (zeros).
+     *
+     * TODO: Integrate it to SA-IS algorithm.
+     */
     fn suffix_array<K>(text: K, converter: &C) -> Vec<u64>
     where
         K: AsRef<[T]>,
@@ -261,17 +267,11 @@ where
     }
 
     fn fl_map<L: seal::IsLocal>(&self, i: u64) -> u64 {
-        let c = self.get_f::<L>(i);
-        self.bw
-            .select_u64_unchecked(i as usize - self.cs[c.into() as usize] as usize, c.into())
-            as u64
+        todo!("implement inverse LF-mapping");
     }
 
     fn fl_map2<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64 {
-        let c = self.converter.convert(c);
-        self.bw
-            .select_u64_unchecked((i - self.cs[c.into() as usize]) as usize, c.into())
-            as u64
+        todo!("implement inverse LF-mapping");
     }
 }
 
