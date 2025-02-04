@@ -110,7 +110,7 @@ where
         let text = text.as_ref();
         let suffixes = (0..text.len())
             .map(|i| {
-                (&text[i..])
+                text[i..]
                     .iter()
                     .enumerate()
                     .map(|(j, c)| {
@@ -144,7 +144,7 @@ where
         let mut end_marker_rank_l = 0;
         let mut doc = vec![0; end_marker_count];
         while let Some(p) = bw.select_u64(end_marker_rank_l, 0) {
-            let end_marker_idx = modular_sub(sa[p as usize] as usize, 1, sa.len());
+            let end_marker_idx = modular_sub(sa[p] as usize, 1, sa.len());
             let text_id = end_marker_flags.rank1(end_marker_idx);
             doc[end_marker_rank_l] = text_id;
 
@@ -266,11 +266,11 @@ where
         T::from_u64(s as u64)
     }
 
-    fn fl_map<L: seal::IsLocal>(&self, i: u64) -> u64 {
+    fn fl_map<L: seal::IsLocal>(&self, _i: u64) -> u64 {
         todo!("implement inverse LF-mapping");
     }
 
-    fn fl_map2<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64 {
+    fn fl_map2<L: seal::IsLocal>(&self, _c: Self::T, _i: u64) -> u64 {
         todo!("implement inverse LF-mapping");
     }
 }
