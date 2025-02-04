@@ -141,7 +141,6 @@ mod character;
 mod fm_index;
 mod iter;
 mod rlfmi;
-mod sais;
 mod seal;
 mod search;
 mod suffix_array;
