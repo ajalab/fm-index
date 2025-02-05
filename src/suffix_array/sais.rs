@@ -113,7 +113,8 @@ where
     }
 }
 
-pub fn sais<T, C, K>(text: K, converter: &C) -> Vec<u64>
+/// Build a suffix array from the given [`text`] using SA-IS algorithm.
+pub fn build_suffix_array<T, C, K>(text: K, converter: &C) -> Vec<u64>
 where
     T: Character,
     K: AsRef<[T]>,
@@ -368,13 +369,13 @@ mod tests {
     fn test_sais_no_trailing_zero() {
         let text = "nozero".to_string().into_bytes();
         let converter = RangeConverter::new(b'a', b'z');
-        sais(&text, &converter);
+        build_suffix_array(&text, &converter);
     }
 
     #[test]
     fn test_sais_1() {
         let text = &[0u8];
-        let sa = sais(text, &IdConverter::with_size(4));
+        let sa = build_suffix_array(text, &IdConverter::with_size(4));
         let expected = get_suffix_array(text);
         assert_eq!(sa, expected);
     }
@@ -382,7 +383,7 @@ mod tests {
     #[test]
     fn test_sais_2() {
         let text = &[3u8, 0];
-        let sa = sais(text, &IdConverter::with_size(4));
+        let sa = build_suffix_array(text, &IdConverter::with_size(4));
         let expected = get_suffix_array(text);
         assert_eq!(sa, expected);
     }
@@ -390,7 +391,7 @@ mod tests {
     #[test]
     fn test_sais_4() {
         let text = &[3u8, 2, 1, 0];
-        let sa = sais(text, &IdConverter::with_size(4));
+        let sa = build_suffix_array(text, &IdConverter::with_size(4));
         let expected = get_suffix_array(text);
         assert_eq!(sa, expected);
     }
@@ -398,7 +399,7 @@ mod tests {
     #[test]
     fn test_sais_with_nulls() {
         let text = b"mm\0ii\0s\0sii\0ssii\0ppii\0".to_vec();
-        let sa = sais(&text, &RangeConverter::new(b'a', b'z'));
+        let sa = build_suffix_array(&text, &RangeConverter::new(b'a', b'z'));
         let expected = get_suffix_array(text);
         assert_eq!(sa, expected);
     }
@@ -407,7 +408,7 @@ mod tests {
     #[ignore]
     fn test_sais_with_consecutive_nulls() {
         let text = b"mm\0\0ii\0s\0\0\0sii\0ssii\0ppii\0".to_vec();
-        let sa = sais(&text, &RangeConverter::new(b'a', b'z'));
+        let sa = build_suffix_array(&text, &RangeConverter::new(b'a', b'z'));
         let expected = get_suffix_array(text);
         assert_eq!(sa, expected);
     }
@@ -417,7 +418,7 @@ mod tests {
         let mut text = "mmiissiissiippii".to_string().into_bytes();
         text.push(0);
         let converter = RangeConverter::new(b'a', b'z');
-        let sa = sais(&text, &converter);
+        let sa = build_suffix_array(&text, &converter);
         let ans = get_suffix_array(text);
 
         assert_eq!(sa.len(), ans.len());
@@ -441,7 +442,7 @@ mod tests {
         text.push(0);
 
         let converter = RangeConverter::new(b'a', b'b');
-        let sa = sais(&text, &converter);
+        let sa = build_suffix_array(&text, &converter);
         let ans = get_suffix_array(&text);
         assert_eq!(sa.len(), ans.len());
         for (i, (actual, expected)) in sa.into_iter().zip(ans.into_iter()).enumerate() {

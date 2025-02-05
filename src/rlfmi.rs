@@ -56,7 +56,7 @@ where
 
         let n = text.len();
         let m = converter.len();
-        let sa = sais::sais(&text, &converter);
+        let sa = sais::build_suffix_array(&text, &converter);
 
         let mut c0 = T::zero();
         // sequence of run heads
