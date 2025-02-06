@@ -3,8 +3,9 @@ use crate::character::{prepare_text, Character};
 use crate::converter;
 use crate::converter::{Converter, IndexWithConverter};
 use crate::iter::{FMIndexBackend, HasPosition};
+use crate::suffix_array::sais;
 use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
-use crate::{sais, seal, HeapSize};
+use crate::{seal, HeapSize};
 use crate::{util, Search};
 
 use serde::{Deserialize, Serialize};
@@ -52,7 +53,7 @@ where
     fn create(text: Vec<T>, converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
         let text = prepare_text(text);
         let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
-        let sa = sais::sais(&text, &converter);
+        let sa = sais::build_suffix_array(&text, &converter);
         let bw = Self::wavelet_matrix(text, &sa, &converter);
 
         FMIndex {
