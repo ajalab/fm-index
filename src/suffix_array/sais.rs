@@ -439,7 +439,29 @@ mod tests {
     }
 
     #[test]
-    fn test_sais_rand() {
+    fn test_sais_rand_non_zeros() {
+        let len = 100_000;
+        let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
+        let mut text = (0..len)
+            .map(|_| rng.gen::<u8>() % (b'z' - b'a') + b'a')
+            .collect::<Vec<_>>();
+        text.push(0);
+
+        let converter = RangeConverter::new(b'a', b'z');
+        let sa = build_suffix_array(&text, &converter);
+        let ans = get_suffix_array(&text);
+        assert_eq!(sa.len(), ans.len());
+        for (i, (actual, expected)) in sa.into_iter().zip(ans.into_iter()).enumerate() {
+            assert_eq!(
+                actual, expected,
+                "wrong at {}-th pos: expected {}, but actual {}",
+                i, expected, actual
+            );
+        }
+    }
+
+    #[test]
+    fn test_sais_rand_binary() {
         let len = 100_000;
         let prob = 1.0 / 4.0;
         let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
