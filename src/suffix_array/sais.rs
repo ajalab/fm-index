@@ -51,7 +51,7 @@ where
 {
     let text = text.as_ref();
     let n = text.len();
-    // true => S-Type, false => L-Type
+    // 1 => S-Type, 0 => L-Type
     let mut types = BitVec::from_zeros(n);
     types.set(n - 1, 1).unwrap();
 
@@ -59,15 +59,19 @@ where
         return (types, vec![]);
     }
 
-    types.set(n - 2, 0).unwrap();
-
     let mut lms = vec![n - 1];
     let mut prev_is_s_type = false;
     for i in (0..(n - 1)).rev() {
+        // text[i] is S-type if either holds:
+        //     - text[i] <  text[i + 1]
+        //     - text[i] == text[i + 1] and text[i + 1] is S-type.
+        // Otherwise, text[i] is L-type.
+        // Notably, text[i] is S-type if text[i] is zero in a multi-text.
         let is_s_type = text[i] < text[i + 1] || (text[i] == text[i + 1] && prev_is_s_type);
         if is_s_type {
             types.set(i, 1).unwrap();
         } else if prev_is_s_type {
+            // text[i + 1] is LMS-type (leftmost-S) if text[i] is L-type and text[i + 1] is S-type.
             lms.push(i + 1);
         }
         prev_is_s_type = is_s_type;
@@ -111,6 +115,16 @@ where
             bucket_end_pos[c] -= 1;
         }
     }
+
+    // After the induced sort, positions of end markers were placed at the first bucket of `sa`.
+    // This rearranges them so that the end markers appear in the same order as the original text.
+    let mut k = 0;
+    for (i, &c) in text.iter().enumerate() {
+        if c.into() == 0 {
+            sa[k] = i as u64;
+            k += 1;
+        }
+    }
 }
 
 /// Build a suffix array from the given [`text`] using SA-IS algorithm.
@@ -125,9 +139,10 @@ where
         0 => vec![],
         1 => vec![0],
         _ => {
-            debug_assert!(
-                text.as_ref().last().map(|&c| c.into()) == Some(0u64),
-                "expected: the last char in text should be zero"
+            debug_assert_eq!(
+                text.as_ref().iter().rposition(|&c| c.into() != 0u64),
+                Some(text.as_ref().len() - 2),
+                "the given text must end with a single 0.",
             );
             let mut sa = vec![u64::MAX; n];
             sais_sub(&text, &mut sa, converter);
@@ -149,9 +164,9 @@ where
     let (types, lms) = get_types(text);
     let lms_len = lms.len();
     let occs = count_chars(text, converter);
-    let mut bucket_end_pos = get_bucket_end_pos(&occs);
 
     // Step 1.
+    let mut bucket_end_pos = get_bucket_end_pos(&occs);
     for &i in lms.iter().rev() {
         // TODO: refactor
         let c = converter.convert(text[i]).into();
@@ -187,7 +202,7 @@ where
         // sa |        |**n0**n1************|
         //    +--------+--------------------+
         //    <--------><------------------->
-        //     lms_len      names.len >= sa.len / 2 (Lemma 4.10)
+        //     lms_len      names.len <= sa.len / 2 (Lemma 4.10)
 
         let (sa_lms, names) = sa.split_at_mut(lms_len);
         for n in names.iter_mut() {
@@ -202,9 +217,15 @@ where
                 let p = sa_lms[i - 1] as usize;
                 let q = sa_lms[i] as usize;
                 let mut d = 1;
-                let mut same = text[p] == text[q] && types.is_bit_set(p) == types.is_bit_set(q);
+                // Zeros must be considered different characters.
+                let mut same = text[p].into() != 0
+                    && text[p].into() != 0
+                    && text[p] == text[q]
+                    && types.is_bit_set(p) == types.is_bit_set(q);
                 while same {
-                    if text[p + d] != text[q + d]
+                    if text[p + d].into() == 0
+                        || text[q + d].into() == 0
+                        || text[p + d] != text[q + d]
                         || types.is_bit_set(p + d) != types.is_bit_set(q + d)
                     {
                         same = false;
@@ -275,6 +296,7 @@ where
 mod tests {
     use super::*;
     use crate::converter::RangeConverter;
+    use num_traits::Zero;
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
 
@@ -365,7 +387,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "expected:")]
+    #[should_panic]
     fn test_sais_no_trailing_zero() {
         let text = "nozero".to_string().into_bytes();
         let converter = RangeConverter::new(b'a', b'z');
@@ -373,10 +395,18 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_sais_too_many_trailing_zero() {
+        let text = "toomanyzeros\0\0".to_string().into_bytes();
+        let converter = IdConverter::with_size(std::mem::size_of::<u8>() as u64);
+        build_suffix_array(&text, &converter);
+    }
+
+    #[test]
     fn test_sais_1() {
         let text = &[0u8];
         let sa = build_suffix_array(text, &IdConverter::with_size(4));
-        let expected = get_suffix_array(text);
+        let expected = build_expected_suffix_array(text);
         assert_eq!(sa, expected);
     }
 
@@ -384,7 +414,7 @@ mod tests {
     fn test_sais_2() {
         let text = &[3u8, 0];
         let sa = build_suffix_array(text, &IdConverter::with_size(4));
-        let expected = get_suffix_array(text);
+        let expected = build_expected_suffix_array(text);
         assert_eq!(sa, expected);
     }
 
@@ -392,7 +422,7 @@ mod tests {
     fn test_sais_4() {
         let text = &[3u8, 2, 1, 0];
         let sa = build_suffix_array(text, &IdConverter::with_size(4));
-        let expected = get_suffix_array(text);
+        let expected = build_expected_suffix_array(text);
         assert_eq!(sa, expected);
     }
 
@@ -400,26 +430,33 @@ mod tests {
     fn test_sais_with_nulls() {
         let text = b"mm\0ii\0s\0sii\0ssii\0ppii\0".to_vec();
         let sa = build_suffix_array(&text, &RangeConverter::new(b'a', b'z'));
-        let expected = get_suffix_array(text);
+        let expected = build_expected_suffix_array(text);
         assert_eq!(sa, expected);
     }
 
     #[test]
-    #[ignore]
     fn test_sais_with_consecutive_nulls() {
         let text = b"mm\0\0ii\0s\0\0\0sii\0ssii\0ppii\0".to_vec();
         let sa = build_suffix_array(&text, &RangeConverter::new(b'a', b'z'));
-        let expected = get_suffix_array(text);
+        let expected = build_expected_suffix_array(text);
         assert_eq!(sa, expected);
     }
 
     #[test]
-    fn test_small() {
+    fn test_sais_starting_with_zero() {
+        let text = b"\0\0mm\0\0ii\0s\0\0\0sii\0ssii\0ppii\0".to_vec();
+        let sa = build_suffix_array(&text, &RangeConverter::new(b'a', b'z'));
+        let expected = build_expected_suffix_array(text);
+        assert_eq!(sa, expected);
+    }
+
+    #[test]
+    fn test_sais_small() {
         let mut text = "mmiissiissiippii".to_string().into_bytes();
         text.push(0);
         let converter = RangeConverter::new(b'a', b'z');
         let sa = build_suffix_array(&text, &converter);
-        let ans = get_suffix_array(text);
+        let ans = build_expected_suffix_array(text);
 
         assert_eq!(sa.len(), ans.len());
         for (i, (actual, expected)) in sa.into_iter().zip(ans.into_iter()).enumerate() {
@@ -432,18 +469,14 @@ mod tests {
     }
 
     #[test]
-    fn test_sais_rand() {
-        let len = 100_000;
-        let prob = 1.0 / 4.0;
+    fn test_sais_rand_alphabets() {
+        let len = 10000;
         let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
-        let mut text = (0..len)
-            .map(|_| if rng.gen_bool(prob) { b'a' } else { b'b' })
-            .collect::<Vec<_>>();
-        text.push(0);
+        let text = build_text(|| rng.gen::<u8>() % (b'z' - b'a') + b'a', len);
 
-        let converter = RangeConverter::new(b'a', b'b');
+        let converter = RangeConverter::new(b'a', b'z');
         let sa = build_suffix_array(&text, &converter);
-        let ans = get_suffix_array(&text);
+        let ans = build_expected_suffix_array(&text);
         assert_eq!(sa.len(), ans.len());
         for (i, (actual, expected)) in sa.into_iter().zip(ans.into_iter()).enumerate() {
             assert_eq!(
@@ -454,12 +487,90 @@ mod tests {
         }
     }
 
-    fn get_suffix_array<K: AsRef<[T]>, T: Copy + Clone + Ord>(text: K) -> Vec<u64> {
+    #[test]
+    fn test_sais_rand_binary() {
+        let len = 10000;
+        let prob = 1.0 / 4.0;
+        let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
+        let text = build_text(|| if rng.gen_bool(prob) { b'a' } else { b'b' }, len);
+
+        let converter = RangeConverter::new(b'a', b'b');
+        let sa = build_suffix_array(&text, &converter);
+        let ans = build_expected_suffix_array(&text);
+        assert_eq!(sa.len(), ans.len());
+        for (i, (actual, expected)) in sa.into_iter().zip(ans.into_iter()).enumerate() {
+            assert_eq!(
+                actual, expected,
+                "wrong at {}-th pos: expected {}, but actual {}",
+                i, expected, actual
+            );
+        }
+    }
+
+    #[test]
+    fn test_sais_rand_nulls() {
+        let len = 20;
+        let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
+        let text = build_text(|| rng.gen::<u8>() % 2, len);
+
+        let converter = IdConverter::with_size(256);
+        let sa = build_suffix_array(&text, &converter);
+        let ans = build_expected_suffix_array(&text);
+        assert_eq!(sa, ans);
+        assert_eq!(sa.len(), ans.len());
+        for (i, (actual, expected)) in sa.into_iter().zip(ans.into_iter()).enumerate() {
+            assert_eq!(
+                actual, expected,
+                "wrong at {}-th pos: expected {}, but actual {}",
+                i, expected, actual
+            );
+        }
+    }
+
+    /// Build a text for tests using a generator function `gen`.
+    fn build_text<T: Zero, F: FnMut() -> T>(mut gen: F, len: usize) -> Vec<T> {
+        let mut text = (0..(len - 1)).map(|_| gen()).collect::<Vec<_>>();
+
+        // Truncate the trailing zeros, since SA-IS does not support trailing zero suffix longer than 1.
+        if let Some(pos) = text.iter().rposition(|x| !x.is_zero()) {
+            text.truncate(pos + 1);
+        } else {
+            text.clear();
+        }
+
+        // Add non-zero elements until the text length reaches len - 1.
+        while text.len() < len - 1 {
+            let c = gen();
+            if !c.is_zero() {
+                text.push(c);
+            }
+        }
+
+        // Add the last zero as a sentinel for SA-IS.
+        text.push(T::zero());
+        text
+    }
+
+    /// Compute the suffix array of the given text in naive way for testing purpose.
+    /// This algorithm is aware of the order of end markers (zeros).
+    fn build_expected_suffix_array<T, K>(text: K) -> Vec<u64>
+    where
+        T: Character,
+        K: AsRef<[T]>,
+    {
         let text = text.as_ref();
-        let n = text.len();
-        let suffixes = (0..n).map(|i| &text[i..n]).collect::<Vec<_>>();
-        let mut sa = (0..(suffixes.len() as u64)).collect::<Vec<_>>();
-        sa.sort_by_key(|i| suffixes[*i as usize]);
+        let suffixes = (0..text.len())
+            .map(|i| {
+                text[i..]
+                    .iter()
+                    .enumerate()
+                    .map(|(j, c)| if c.is_zero() { (c, i + j) } else { (c, 0) })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+
+        let mut sa = (0..text.len() as u64).collect::<Vec<_>>();
+        sa.sort_by(|i, j| suffixes[*i as usize].cmp(&suffixes[*j as usize]));
         sa
     }
 }
