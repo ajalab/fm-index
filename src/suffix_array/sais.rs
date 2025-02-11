@@ -217,6 +217,7 @@ where
                 let p = sa_lms[i - 1] as usize;
                 let q = sa_lms[i] as usize;
                 let mut d = 1;
+                // Zeros must be considered different characters.
                 let mut same = text[p].into() != 0
                     && text[p].into() != 0
                     && text[p] == text[q]
