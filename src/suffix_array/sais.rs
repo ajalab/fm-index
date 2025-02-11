@@ -51,7 +51,7 @@ where
 {
     let text = text.as_ref();
     let n = text.len();
-    // true => S-Type, false => L-Type
+    // 1 => S-Type, 0 => L-Type
     let mut types = BitVec::from_zeros(n);
     types.set(n - 1, 1).unwrap();
 
@@ -59,15 +59,22 @@ where
         return (types, vec![]);
     }
 
+    // TODO: Consider removing this - 0 is filled by default, so probably this is not required.
     types.set(n - 2, 0).unwrap();
 
     let mut lms = vec![n - 1];
     let mut prev_is_s_type = false;
     for i in (0..(n - 1)).rev() {
+        // text[i] is S-type if either holds:
+        //     - text[i] <  text[i + 1]
+        //     - text[i] == text[i + 1] and text[i + 1] is S-type.
+        // Otherwise, text[i] is L-type.
+        // Notably, text[i] is S-type if text[i] is zero in a multi-text.
         let is_s_type = text[i] < text[i + 1] || (text[i] == text[i + 1] && prev_is_s_type);
         if is_s_type {
             types.set(i, 1).unwrap();
         } else if prev_is_s_type {
+            // text[i + 1] is LMS-type (leftmost-S) if text[i] is L-type and text[i + 1] is S-type.
             lms.push(i + 1);
         }
         prev_is_s_type = is_s_type;
@@ -187,7 +194,7 @@ where
         // sa |        |**n0**n1************|
         //    +--------+--------------------+
         //    <--------><------------------->
-        //     lms_len      names.len >= sa.len / 2 (Lemma 4.10)
+        //     lms_len      names.len <= sa.len / 2 (Lemma 4.10)
 
         let (sa_lms, names) = sa.split_at_mut(lms_len);
         for n in names.iter_mut() {
