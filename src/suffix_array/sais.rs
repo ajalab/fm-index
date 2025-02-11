@@ -59,9 +59,6 @@ where
         return (types, vec![]);
     }
 
-    // TODO: Consider removing this - 0 is filled by default, so probably this is not required.
-    types.set(n - 2, 0).unwrap();
-
     let mut lms = vec![n - 1];
     let mut prev_is_s_type = false;
     for i in (0..(n - 1)).rev() {
