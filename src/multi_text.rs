@@ -205,6 +205,7 @@ impl<T, C> MultiTextFMIndex<T, C, SuffixOrderSampledArray> {
             + self.bw.heap_size()
             + self.cs.len() * std::mem::size_of::<Vec<u64>>()
             + self.suffix_array.size()
+            + self.doc.len() * std::mem::size_of::<usize>()
     }
 }
 
