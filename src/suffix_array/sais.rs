@@ -443,6 +443,14 @@ mod tests {
     }
 
     #[test]
+    fn test_sais_starting_with_zero() {
+        let text = b"\0\0mm\0\0ii\0s\0\0\0sii\0ssii\0ppii\0".to_vec();
+        let sa = build_suffix_array(&text, &RangeConverter::new(b'a', b'z'));
+        let expected = build_expected_suffix_array(text);
+        assert_eq!(sa, expected);
+    }
+
+    #[test]
     fn test_sais_small() {
         let mut text = "mmiissiissiippii".to_string().into_bytes();
         text.push(0);
