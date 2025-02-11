@@ -139,9 +139,10 @@ where
         0 => vec![],
         1 => vec![0],
         _ => {
-            debug_assert!(
-                text.as_ref().last().map(|&c| c.into()) == Some(0u64),
-                "expected: the last char in text should be zero"
+            debug_assert_eq!(
+                text.as_ref().iter().rposition(|&c| c.into() != 0u64),
+                Some(text.as_ref().len() - 2),
+                "the given text must end with a single 0.",
             );
             let mut sa = vec![u64::MAX; n];
             sais_sub(&text, &mut sa, converter);
@@ -385,10 +386,18 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "expected:")]
+    #[should_panic]
     fn test_sais_no_trailing_zero() {
         let text = "nozero".to_string().into_bytes();
         let converter = RangeConverter::new(b'a', b'z');
+        build_suffix_array(&text, &converter);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_sais_too_many_trailing_zero() {
+        let text = "toomanyzeros\0\0".to_string().into_bytes();
+        let converter = IdConverter::with_size(std::mem::size_of::<u8>() as u64);
         build_suffix_array(&text, &converter);
     }
 
