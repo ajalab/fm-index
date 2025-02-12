@@ -105,9 +105,7 @@ where
     ///
     /// No suffix array information is stored in this index.
     pub fn size(&self) -> usize {
-        std::mem::size_of::<Self>()
-            + self.bw.heap_size()
-            + self.cs.len() * std::mem::size_of::<Vec<u64>>()
+        self.bw.heap_size() + self.cs.capacity() * std::mem::size_of::<u64>()
     }
 }
 
@@ -120,9 +118,8 @@ where
     ///
     /// Sampled suffix array data is stored in this index.
     pub fn size(&self) -> usize {
-        std::mem::size_of::<Self>()
-            + self.bw.heap_size()
-            + self.cs.len() * std::mem::size_of::<Vec<u64>>()
+        self.bw.heap_size()
+            + self.cs.capacity() * std::mem::size_of::<u64>()
             + self.suffix_array.size()
     }
 }

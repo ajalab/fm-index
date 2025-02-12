@@ -30,7 +30,7 @@ impl SuffixOrderSampledArray {
     }
 
     pub(crate) fn size(&self) -> usize {
-        std::mem::size_of::<Self>() + self.sa.heap_size()
+        self.sa.heap_size()
     }
 }
 
