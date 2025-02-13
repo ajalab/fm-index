@@ -4,10 +4,6 @@ struct SearchIndexWrapper<B>(B)
 where
     B: FMIndexBackend;
 
-struct SearchIndexWithLocateWrapper<B>(B)
-where
-    B: FMIndexBackend + HasPosition;
-
 struct SearchWrapper<'a, B>
 where
     B: FMIndexBackend,
@@ -100,7 +96,7 @@ where
         debug_assert!(i < m, "{} is out of range", i);
 
         debug_assert!(i < self.backend.len());
-        BackwardIterator::new(self.backend, self.s + i)
+        BackwardIteratorWrapper::new(self.backend, self.s + i)
     }
 
     // Get an iterator that goes forwards through the text, producing
@@ -112,23 +108,37 @@ where
         debug_assert!(i < m, "{} is out of range", i);
         debug_assert!(i < self.backend.len());
 
-        ForwardIterator::new(self.backend, self.s + i)
+        ForwardIteratorWrapper::new(self.backend, self.s + i)
+    }
+}
+
+impl<B> SearchWrapper<'_, B>
+where
+    B: FMIndexBackend + HasPosition,
+{
+    /// List the position of all occurrences.
+    pub fn locate(&self) -> Vec<u64> {
+        let mut results: Vec<u64> = Vec::with_capacity((self.e - self.s) as usize);
+        for k in self.s..self.e {
+            results.push(self.backend.get_sa(k));
+        }
+        results
     }
 }
 
 /// An iterator that goes backwards through the text, producing [`Character`].
-pub struct BackwardIterator<'a, B: FMIndexBackend> {
+pub struct BackwardIteratorWrapper<'a, B: FMIndexBackend> {
     backend: &'a B,
     i: u64,
 }
 
-impl<'a, B: FMIndexBackend> BackwardIterator<'a, B> {
+impl<'a, B: FMIndexBackend> BackwardIteratorWrapper<'a, B> {
     pub(crate) fn new(backend: &'a B, i: u64) -> Self {
-        BackwardIterator { backend, i }
+        BackwardIteratorWrapper { backend, i }
     }
 }
 
-impl<'a, B: FMIndexBackend> Iterator for BackwardIterator<'a, B> {
+impl<B: FMIndexBackend> Iterator for BackwardIteratorWrapper<'_, B> {
     type Item = B::T;
     fn next(&mut self) -> Option<Self::Item> {
         let c = self.backend.get_l(self.i);
@@ -138,18 +148,18 @@ impl<'a, B: FMIndexBackend> Iterator for BackwardIterator<'a, B> {
 }
 
 /// An iterator that goes forwards through the text, producing [`Character`].
-pub struct ForwardIterator<'a, B: FMIndexBackend> {
+pub struct ForwardIteratorWrapper<'a, B: FMIndexBackend> {
     backend: &'a B,
     i: u64,
 }
 
-impl<'a, B: FMIndexBackend> ForwardIterator<'a, B> {
+impl<'a, B: FMIndexBackend> ForwardIteratorWrapper<'a, B> {
     pub(crate) fn new(backend: &'a B, i: u64) -> Self {
-        ForwardIterator { backend, i }
+        ForwardIteratorWrapper { backend, i }
     }
 }
 
-impl<'a, B: FMIndexBackend> Iterator for ForwardIterator<'a, B> {
+impl<B: FMIndexBackend> Iterator for ForwardIteratorWrapper<'_, B> {
     type Item = B::T;
 
     fn next(&mut self) -> Option<Self::Item> {
