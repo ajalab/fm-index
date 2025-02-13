@@ -113,17 +113,6 @@ where
         }
     }
 
-    /// Search for a pattern in the text.
-    ///
-    /// Return a [`Search`] object with information about the search
-    /// result.
-    pub fn search<K>(&self, pattern: K) -> Search<Self>
-    where
-        K: AsRef<[T]>,
-    {
-        Search::new(self).search(pattern)
-    }
-
     /// The amount of repeated runs in the text.
     pub fn runs(&self) -> u64 {
         self.s.len() as u64
@@ -132,11 +121,6 @@ where
     /// The length of the text.
     pub fn len(&self) -> u64 {
         self.len
-    }
-
-    /// True if the index is empty.
-    pub fn is_empty(&self) -> bool {
-        self.len == 0
     }
 }
 

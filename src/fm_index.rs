@@ -78,22 +78,6 @@ where
 
         WaveletMatrix::from_slice(&bw, (util::log2(converter.len() - 1) + 1) as u16)
     }
-
-    /// Search for a pattern in the text.
-    ///
-    /// Return a [`Search`] object with information about the search
-    /// result.
-    pub fn search<K>(&self, pattern: K) -> Search<Self>
-    where
-        K: AsRef<[T]>,
-    {
-        Search::new(self).search(pattern)
-    }
-
-    /// The length of the text.
-    pub fn len(&self) -> u64 {
-        self.bw.len() as u64
-    }
 }
 
 impl<T, C> FMIndex<T, C, ()>
