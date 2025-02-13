@@ -139,6 +139,7 @@ pub mod converter;
 mod builder;
 mod character;
 mod fm_index;
+mod frontend;
 mod iter;
 mod multi_text;
 mod rlfmi;

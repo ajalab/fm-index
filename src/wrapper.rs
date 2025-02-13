@@ -1,10 +1,10 @@
 use crate::{converter::Converter, FMIndexBackend, HasPosition};
 
-struct SearchIndexWrapper<B>(B)
+pub(crate) struct SearchIndexWrapper<B>(B)
 where
     B: FMIndexBackend;
 
-struct SearchWrapper<'a, B>
+pub(crate) struct SearchWrapper<'a, B>
 where
     B: FMIndexBackend,
 {
@@ -22,11 +22,15 @@ impl<B> SearchIndexWrapper<B>
 where
     B: FMIndexBackend,
 {
+    pub(crate) fn new(backend: B) -> Self {
+        SearchIndexWrapper(backend)
+    }
+
     /// Search for a pattern in the text.
     ///
     /// Return a [`Search`] object with information about the search
     /// result.
-    pub fn search<K>(&self, pattern: K) -> SearchWrapper<B>
+    pub(crate) fn search<K>(&self, pattern: K) -> SearchWrapper<B>
     where
         K: AsRef<[B::T]>,
     {
@@ -37,7 +41,7 @@ where
     ///
     /// Note that this includes an ending \0 (terminator) character
     /// so will be one more than the length of the text passed in.
-    pub fn len(&self) -> u64 {
+    pub(crate) fn len(&self) -> u64 {
         self.0.len()
     }
 }
@@ -46,7 +50,7 @@ impl<'a, B> SearchWrapper<'a, B>
 where
     B: FMIndexBackend,
 {
-    pub(crate) fn new(backend: &'a B) -> Self {
+    fn new(backend: &'a B) -> Self {
         let e = backend.len();
         SearchWrapper {
             backend,
@@ -60,7 +64,7 @@ where
     ///
     /// This adds a prefix `pattern` to the existing pattern, and
     /// looks for those expanded patterns in the text.
-    pub fn search<K: AsRef<[B::T]>>(&self, pattern: K) -> Self {
+    pub(crate) fn search<K: AsRef<[B::T]>>(&self, pattern: K) -> Self {
         // TODO: move this loop into backend to avoid dispatch overhead
         let mut s = self.s;
         let mut e = self.e;
@@ -83,13 +87,13 @@ where
     }
 
     /// Count the number of occurrences.
-    pub fn count(&self) -> u64 {
+    pub(crate) fn count(&self) -> u64 {
         self.e - self.s
     }
 
     /// Get an iterator that goes backwards through the text, producing
     /// [`Character`].
-    pub fn iter_backward(&self, i: u64) -> impl Iterator<Item = B::T> + use<'a, B> {
+    pub(crate) fn iter_backward(&self, i: u64) -> impl Iterator<Item = B::T> + use<'a, B> {
         let m = self.count();
 
         debug_assert!(m > 0, "cannot iterate from empty search result");
@@ -101,7 +105,7 @@ where
 
     // Get an iterator that goes forwards through the text, producing
     /// [`Character`].
-    pub fn iter_forward(&self, i: u64) -> impl Iterator<Item = B::T> + use<'a, B> {
+    pub(crate) fn iter_forward(&self, i: u64) -> impl Iterator<Item = B::T> + use<'a, B> {
         let m = self.count();
 
         debug_assert!(m > 0, "cannot iterate from empty search result");
@@ -117,7 +121,7 @@ where
     B: FMIndexBackend + HasPosition,
 {
     /// List the position of all occurrences.
-    pub fn locate(&self) -> Vec<u64> {
+    pub(crate) fn locate(&self) -> Vec<u64> {
         let mut results: Vec<u64> = Vec::with_capacity((self.e - self.s) as usize);
         for k in self.s..self.e {
             results.push(self.backend.get_sa(k));
@@ -168,14 +172,3 @@ impl<B: FMIndexBackend> Iterator for ForwardIteratorWrapper<'_, B> {
         Some(self.backend.get_converter().convert_inv(c))
     }
 }
-
-// pub struct FMIndex<T: Character, C: Converter<T>>(FMIndexBackendImpl<T, C, ()>);
-
-// pub struct FMIndexWithLocate<T: Character, C: Converter<T>>(
-//     FMIndexBackendImpl<T, C, SuffixOrderSampledArray>,
-// );
-
-// // traits:
-// // search index
-// // search
-// // search with locate
