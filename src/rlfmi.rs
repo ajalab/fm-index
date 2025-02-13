@@ -2,11 +2,11 @@ use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::Converter;
-use crate::iter::{FMIndexBackend, HasPosition};
+use crate::iter::{FMIndexBackend, HasPosition, HeapSize};
+use crate::search::Search;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
-use crate::{seal, util};
-use crate::{HeapSize, Search};
+use crate::util;
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::{BitVec, RsVec, WaveletMatrix};
@@ -192,8 +192,6 @@ where
         RLFMIndex::<T, C, ()>::size(self)
     }
 }
-
-impl<T, C, S> seal::Sealed for RLFMIndex<T, C, S> {}
 
 impl<T, C, S> FMIndexBackend for RLFMIndex<T, C, S>
 where

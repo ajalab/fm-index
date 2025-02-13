@@ -1,4 +1,6 @@
-use crate::{converter::Converter, FMIndexBackend, HasPosition};
+use crate::converter::Converter;
+use crate::iter::{FMIndexBackend, HasPosition};
+use crate::HeapSize;
 
 pub(crate) struct SearchIndexWrapper<B>(B)
 where
@@ -20,7 +22,7 @@ where
 
 impl<B> SearchIndexWrapper<B>
 where
-    B: FMIndexBackend,
+    B: FMIndexBackend + HeapSize,
 {
     pub(crate) fn new(backend: B) -> Self {
         SearchIndexWrapper(backend)
@@ -43,6 +45,10 @@ where
     /// so will be one more than the length of the text passed in.
     pub(crate) fn len(&self) -> u64 {
         self.0.len()
+    }
+
+    pub(crate) fn size(&self) -> usize {
+        B::size(&self.0)
     }
 }
 

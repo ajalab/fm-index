@@ -6,9 +6,10 @@ use crate::converter;
 use crate::converter::Converter;
 use crate::iter::{FMIndexBackend, HasPosition};
 use crate::seal;
+use crate::search::Search;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
-use crate::{util, Search};
+use crate::util;
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::{BitVec, RsVec, WaveletMatrix};
@@ -315,7 +316,7 @@ mod tests {
     use rand::{rngs::StdRng, Rng, SeedableRng};
 
     use super::*;
-    use crate::{converter::IdConverter, seal::Local};
+    use crate::converter::IdConverter;
 
     #[test]
     fn test_lf_map() {

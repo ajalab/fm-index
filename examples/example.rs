@@ -1,5 +1,5 @@
 use fm_index::converter::RangeConverter;
-use fm_index::SearchIndexBuilder;
+use fm_index::FMIndexWithLocate;
 
 fn main() {
     // Prepare a text string to search for patterns.
@@ -14,15 +14,12 @@ fn main() {
     // `' '` ~ `'~'` represents a range of ASCII printable characters.
     let converter = RangeConverter::new(b' ', b'~');
 
-    // To perform locate queries, we need to use some storage.
-    let index = SearchIndexBuilder::with_converter(converter)
-        // the sampling level determines how much is retained in order to support `locate`
-        // queries. `0` retains the full information, but we don't need the whole array
-        // since we can interpolate missing elements in a suffix array from others. A sampler
-        // will _sieve_ a suffix array for this purpose. If you don't need `locate` queries
-        // you can save the memory by not setting a sampling level.
-        .sampling_level(2)
-        .build(text);
+    // The sampling level determines how much is retained in order to support `locate`
+    // queries. `0` retains the full information, but we don't need the whole array
+    // since we can interpolate missing elements in a suffix array from others. A sampler
+    // will _sieve_ a suffix array for this purpose. If you don't need `locate` queries
+    // you can save the memory by not setting a sampling level.
+    let index = FMIndexWithLocate::new(text, converter, 2);
 
     // Search for a pattern string.
     let pattern = "dolor";

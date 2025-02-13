@@ -136,7 +136,6 @@
 
 pub mod converter;
 
-mod builder;
 mod character;
 mod fm_index;
 mod frontend;
@@ -149,11 +148,17 @@ mod suffix_array;
 mod util;
 mod wrapper;
 
-pub use crate::fm_index::FMIndex;
-pub use crate::rlfmi::RLFMIndex;
+// pub use crate::fm_index::FMIndex;
+// pub use crate::rlfmi::RLFMIndex;
 
-pub use builder::SearchIndexBuilder;
+// pub use builder::SearchIndexBuilder;
 pub use character::Character;
-pub use iter::{BackwardIterator, FMIndexBackend, ForwardIterator, HasPosition, HeapSize};
-pub use multi_text::MultiTextFMIndex;
-pub use search::Search;
+pub use frontend::{
+    FMIndex, FMIndexWithLocate, RLFMIndex, RLFMIndexWithLocate, Search, SearchIndex,
+    SearchIndexWithLocate, SearchWithLocate,
+};
+pub use iter::HeapSize;
+
+// pub use iter::{BackwardIterator, FMIndexBackend, ForwardIterator, HasPosition, HeapSize};
+// pub use multi_text::MultiTextFMIndex;
+// pub use search::Search;

@@ -1,4 +1,5 @@
 use crate::fm_index::FMIndex as FMIndexBackend;
+use crate::iter::HeapSize;
 use crate::rlfmi::RLFMIndex as RLFMIndexBackend;
 use crate::suffix_array::sample::SuffixOrderSampledArray;
 use crate::wrapper::SearchWrapper;
@@ -12,6 +13,12 @@ pub trait SearchIndex<T> {
     fn len(&self) -> u64;
 }
 
+pub trait SearchIndexWithLocate<T>: SearchIndex<T> {
+    fn search<K>(&self, pattern: K) -> impl SearchWithLocate<T>
+    where
+        K: AsRef<[T]>;
+}
+
 pub trait Search<'a, T> {
     fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self;
     fn count(&self) -> u64;
@@ -19,12 +26,12 @@ pub trait Search<'a, T> {
     fn iter_forward(&'a self, i: u64) -> impl Iterator<Item = T> + 'a;
 }
 
-trait SearchWithLocate<'a, T>: Search<'a, T> {
+pub trait SearchWithLocate<'a, T>: Search<'a, T> {
     fn locate(&self) -> Vec<u64>;
 }
 
-struct FMIndex<T: Character, C: Converter<T>>(SearchIndexWrapper<FMIndexBackend<T, C, ()>>);
-struct FMIndexSearch<'a, T: Character, C: Converter<T>>(
+pub struct FMIndex<T: Character, C: Converter<T>>(SearchIndexWrapper<FMIndexBackend<T, C, ()>>);
+pub struct FMIndexSearch<'a, T: Character, C: Converter<T>>(
     SearchWrapper<'a, FMIndexBackend<T, C, ()>>,
 );
 
@@ -80,7 +87,7 @@ impl<T: Character, C: Converter<T>> RLFMIndexWithLocate<T, C> {
 }
 
 macro_rules! impl_search_index {
-    ($t:ty, $s:ident) => {
+    ($t:ty, $s:ident, $st:ty) => {
         impl<T: Character, C: Converter<T>> SearchIndex<T> for $t {
             fn search<K>(&self, pattern: K) -> impl Search<T>
             where
@@ -93,13 +100,60 @@ macro_rules! impl_search_index {
                 self.0.len()
             }
         }
+        impl<T: Character, C: Converter<T>> HeapSize for $t {
+            fn size(&self) -> usize {
+                self.0.size()
+            }
+        }
         // inherent
         impl<T: Character, C: Converter<T>> $t {
-            pub fn search<K>(&self, pattern: K) -> impl Search<T>
+            pub fn search<K>(&self, pattern: K) -> $st
             where
                 K: AsRef<[T]>,
             {
-                SearchIndex::search(self, pattern)
+                $s(self.0.search(pattern))
+            }
+            pub fn len(&self) -> u64 {
+                SearchIndex::len(self)
+            }
+        }
+    };
+}
+
+macro_rules! impl_search_index_with_locate {
+    ($t:ty, $s:ident, $st:ty) => {
+        impl<T: Character, C: Converter<T>> SearchIndex<T> for $t {
+            fn search<K>(&self, pattern: K) -> impl Search<T>
+            where
+                K: AsRef<[T]>,
+            {
+                $s(self.0.search(pattern))
+            }
+
+            fn len(&self) -> u64 {
+                self.0.len()
+            }
+        }
+        impl<T: Character, C: Converter<T>> SearchIndexWithLocate<T> for $t {
+            fn search<K>(&self, pattern: K) -> impl SearchWithLocate<T>
+            where
+                K: AsRef<[T]>,
+            {
+                $s(self.0.search(pattern))
+            }
+        }
+        impl<T: Character, C: Converter<T>> HeapSize for $t {
+            fn size(&self) -> usize {
+                self.0.size()
+            }
+        }
+        // inherent
+        impl<T: Character, C: Converter<T>> $t {
+            pub fn search<K>(&self, pattern: K) -> $st
+            where
+                K: AsRef<[T]>,
+            {
+                $s(self.0.search(pattern))
             }
             pub fn len(&self) -> u64 {
                 SearchIndex::len(self)
@@ -170,13 +224,13 @@ macro_rules! impl_search_locate {
     };
 }
 
-impl_search_index!(FMIndex<T, C>, FMIndexSearch);
+impl_search_index!(FMIndex<T, C>, FMIndexSearch, FMIndexSearch<T, C>);
 impl_search!(FMIndexSearch<'a, T, C>);
-impl_search_index!(FMIndexWithLocate<T, C>, FMIndexSearchWithLocate);
+impl_search_index_with_locate!(FMIndexWithLocate<T, C>, FMIndexSearchWithLocate, FMIndexSearchWithLocate<T, C>);
 impl_search!(FMIndexSearchWithLocate<'a, T, C>);
 impl_search_locate!(FMIndexSearchWithLocate<'a, T, C>);
-impl_search_index!(RLFMIndex<T, C>, RLFMIndexSearch);
+impl_search_index!(RLFMIndex<T, C>, RLFMIndexSearch, RLFMIndexSearch<T, C>);
 impl_search!(RLFMIndexSearch<'a, T, C>);
-impl_search_index!(RLFMIndexWithLocate<T, C>, RLFMIndexSearchWithLocate);
+impl_search_index_with_locate!(RLFMIndexWithLocate<T, C>, RLFMIndexSearchWithLocate, RLFMIndexSearchWithLocate<T, C>);
 impl_search!(RLFMIndexSearchWithLocate<'a, T, C>);
 impl_search_locate!(RLFMIndexSearchWithLocate<'a, T, C>);
