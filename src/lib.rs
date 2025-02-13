@@ -146,6 +146,7 @@ mod seal;
 mod search;
 mod suffix_array;
 mod util;
+mod wrapper;
 
 pub use crate::fm_index::FMIndex;
 pub use crate::rlfmi::RLFMIndex;

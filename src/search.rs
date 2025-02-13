@@ -3,9 +3,7 @@ use crate::character::Character;
 #[cfg(doc)]
 use crate::converter;
 
-use crate::converter::IndexWithConverter;
 use crate::iter::{FMIndexBackend, HasPosition};
-use crate::seal;
 
 /// An object containing the result of a search.
 ///
@@ -40,8 +38,8 @@ where
         let mut e = self.e;
         let mut pattern = pattern.as_ref().to_vec();
         for &c in pattern.iter().rev() {
-            s = self.index.lf_map2::<seal::Local>(c, s);
-            e = self.index.lf_map2::<seal::Local>(c, e);
+            s = self.index.lf_map2(c, s);
+            e = self.index.lf_map2(c, e);
             if s == e {
                 break;
             }
@@ -69,7 +67,7 @@ where
 
 impl<I> Search<'_, I>
 where
-    I: FMIndexBackend + IndexWithConverter<I::T>,
+    I: FMIndexBackend,
 {
     /// Get an iterator that goes backwards through the text, producing
     /// [`Character`].
@@ -79,13 +77,13 @@ where
         debug_assert!(m > 0, "cannot iterate from empty search result");
         debug_assert!(i < m, "{} is out of range", i);
 
-        self.index.iter_backward::<seal::Local>(self.s + i)
+        self.index.iter_backward(self.s + i)
     }
 }
 
 impl<I> Search<'_, I>
 where
-    I: FMIndexBackend + IndexWithConverter<I::T>,
+    I: FMIndexBackend,
 {
     /// Get an iterator that goes forwards through the text, producing
     /// [`Character`].
@@ -95,7 +93,7 @@ where
         debug_assert!(m > 0, "cannot iterate from empty search result");
         debug_assert!(i < m, "{} is out of range", i);
 
-        self.index.iter_forward::<seal::Local>(self.s + i)
+        self.index.iter_forward(self.s + i)
     }
 }
 
@@ -107,7 +105,7 @@ where
     pub fn locate(&self) -> Vec<u64> {
         let mut results: Vec<u64> = Vec::with_capacity((self.e - self.s) as usize);
         for k in self.s..self.e {
-            results.push(self.index.get_sa::<seal::Local>(k));
+            results.push(self.index.get_sa(k));
         }
         results
     }

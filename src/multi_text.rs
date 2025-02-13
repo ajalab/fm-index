@@ -3,7 +3,7 @@ use std::ops::Sub;
 use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
-use crate::converter::{Converter, IndexWithConverter};
+use crate::converter::Converter;
 use crate::iter::{FMIndexBackend, HasPosition};
 use crate::seal;
 use crate::suffix_array::sais;
@@ -214,17 +214,18 @@ where
     C: Converter<T>,
 {
     type T = T;
+    type C = C;
 
     fn len(&self) -> u64 {
         self.bw.len() as u64
     }
 
-    fn get_l<L: seal::IsLocal>(&self, i: u64) -> Self::T {
+    fn get_l(&self, i: u64) -> Self::T {
         Self::T::from_u64(self.bw.get_u64_unchecked(i as usize))
     }
 
-    fn lf_map<L: seal::IsLocal>(&self, i: u64) -> u64 {
-        let c = self.get_l::<L>(i);
+    fn lf_map(&self, i: u64) -> u64 {
+        let c = self.get_l(i);
         let rank = self.bw.rank_u64_unchecked(i as usize, c.into());
 
         if c.is_zero() {
@@ -235,7 +236,7 @@ where
         }
     }
 
-    fn lf_map2<L: seal::IsLocal>(&self, c: T, i: u64) -> u64 {
+    fn lf_map2(&self, c: T, i: u64) -> u64 {
         let c = self.converter.convert(c);
         let rank = self.bw.rank_u64_unchecked(i as usize, c.into());
 
@@ -247,7 +248,7 @@ where
         }
     }
 
-    fn get_f<L: seal::IsLocal>(&self, i: u64) -> Self::T {
+    fn get_f(&self, i: u64) -> Self::T {
         // binary search to find c s.t. cs[c] <= i < cs[c+1]
         // <=> c is the greatest index s.t. cs[c] <= i
         // invariant: c exists in [s, e)
@@ -264,12 +265,16 @@ where
         T::from_u64(s as u64)
     }
 
-    fn fl_map<L: seal::IsLocal>(&self, _i: u64) -> u64 {
+    fn fl_map(&self, _i: u64) -> u64 {
         todo!("implement inverse LF-mapping");
     }
 
-    fn fl_map2<L: seal::IsLocal>(&self, _c: Self::T, _i: u64) -> u64 {
+    fn fl_map2(&self, _c: Self::T, _i: u64) -> u64 {
         todo!("implement inverse LF-mapping");
+    }
+
+    fn get_converter(&self) -> &Self::C {
+        &self.converter
     }
 }
 
@@ -278,7 +283,7 @@ where
     T: Character,
     C: Converter<T>,
 {
-    fn get_sa<L: seal::IsLocal>(&self, mut i: u64) -> u64 {
+    fn get_sa(&self, mut i: u64) -> u64 {
         let mut steps = 0;
         loop {
             match self.suffix_array.get(i) {
@@ -286,23 +291,11 @@ where
                     return (sa + steps) % self.bw.len() as u64;
                 }
                 None => {
-                    i = self.lf_map::<seal::Local>(i);
+                    i = self.lf_map(i);
                     steps += 1;
                 }
             }
         }
-    }
-}
-
-impl<T, C, S> IndexWithConverter<T> for MultiTextFMIndex<T, C, S>
-where
-    C: Converter<T>,
-    T: Character,
-{
-    type C = C;
-
-    fn get_converter(&self) -> &Self::C {
-        &self.converter
     }
 }
 
@@ -339,7 +332,7 @@ mod tests {
         for i in 0..text_size {
             lf_map_expected[i] =
                 inv_suffix_array[modular_sub(suffix_array[i] as usize, 1, text_size)];
-            lf_map_actual[i] = fm_index.lf_map::<Local>(i as u64);
+            lf_map_actual[i] = fm_index.lf_map(i as u64);
         }
 
         assert_eq!(lf_map_expected, lf_map_actual);

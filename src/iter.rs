@@ -1,40 +1,37 @@
 use crate::character::Character;
-use crate::converter::{Converter, IndexWithConverter};
-use crate::seal;
+use crate::converter::Converter;
 use crate::search::Search;
 
-/// Trait for an FM-Index implementation.
+/// Trait for an FM-Index implementation
 ///
 /// You can use this to implement against a FM-Index generically.
 ///
 /// You cannot implement this trait yourself.
-pub trait FMIndexBackend: Sized + seal::Sealed {
+pub trait FMIndexBackend: Sized {
     /// A [`Character`] type.
     type T: Character;
+    type C: Converter<Self::T>;
 
     // We hide all the methods involved in implementation.
 
-    #[doc(hidden)]
-    fn get_l<L: seal::IsLocal>(&self, i: u64) -> Self::T;
-    #[doc(hidden)]
-    fn lf_map<L: seal::IsLocal>(&self, i: u64) -> u64;
-    #[doc(hidden)]
-    fn lf_map2<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64;
-    #[doc(hidden)]
-    fn get_f<L: seal::IsLocal>(&self, i: u64) -> Self::T;
-    #[doc(hidden)]
-    fn fl_map<L: seal::IsLocal>(&self, i: u64) -> u64;
-    #[doc(hidden)]
-    fn fl_map2<L: seal::IsLocal>(&self, c: Self::T, i: u64) -> u64;
+    fn get_l(&self, i: u64) -> Self::T;
 
-    #[doc(hidden)]
-    fn iter_forward<L: seal::IsLocal>(&self, i: u64) -> ForwardIterator<Self> {
+    fn lf_map(&self, i: u64) -> u64;
+
+    fn lf_map2(&self, c: Self::T, i: u64) -> u64;
+
+    fn get_f(&self, i: u64) -> Self::T;
+
+    fn fl_map(&self, i: u64) -> u64;
+
+    fn fl_map2(&self, c: Self::T, i: u64) -> u64;
+
+    fn iter_forward(&self, i: u64) -> ForwardIterator<Self> {
         debug_assert!(i < self.len());
         ForwardIterator { index: self, i }
     }
 
-    #[doc(hidden)]
-    fn iter_backward<L: seal::IsLocal>(&self, i: u64) -> BackwardIterator<Self> {
+    fn iter_backward(&self, i: u64) -> BackwardIterator<Self> {
         debug_assert!(i < self.len());
         BackwardIterator { index: self, i }
     }
@@ -57,6 +54,9 @@ pub trait FMIndexBackend: Sized + seal::Sealed {
     /// Note that this includes an ending \0 (terminator) character
     /// so will be one more than the length of the text.
     fn len(&self) -> u64;
+
+    /// Get the converter for this index.
+    fn get_converter(&self) -> &Self::C;
 }
 
 /// Access the heap size of the structure.
@@ -70,8 +70,7 @@ pub trait HeapSize {
 
 /// A trait for an index that supports locate queries.
 pub trait HasPosition {
-    #[doc(hidden)]
-    fn get_sa<L: seal::IsLocal>(&self, i: u64) -> u64;
+    fn get_sa(&self, i: u64) -> u64;
 }
 
 /// An iterator that goes backwards through the text, producing [`Character`].
@@ -86,12 +85,12 @@ where
 impl<T, I> Iterator for BackwardIterator<'_, I>
 where
     T: Character,
-    I: FMIndexBackend<T = T> + IndexWithConverter<T>,
+    I: FMIndexBackend<T = T>,
 {
     type Item = <I as FMIndexBackend>::T;
     fn next(&mut self) -> Option<Self::Item> {
-        let c = self.index.get_l::<seal::Local>(self.i);
-        self.i = self.index.lf_map::<seal::Local>(self.i);
+        let c = self.index.get_l(self.i);
+        self.i = self.index.lf_map(self.i);
         Some(self.index.get_converter().convert_inv(c))
     }
 }
@@ -108,12 +107,12 @@ where
 impl<T, I> Iterator for ForwardIterator<'_, I>
 where
     T: Character,
-    I: FMIndexBackend<T = T> + IndexWithConverter<T>,
+    I: FMIndexBackend<T = T>,
 {
     type Item = <I as FMIndexBackend>::T;
     fn next(&mut self) -> Option<Self::Item> {
-        let c = self.index.get_f::<seal::Local>(self.i);
-        self.i = self.index.fl_map::<seal::Local>(self.i);
+        let c = self.index.get_f(self.i);
+        self.i = self.index.fl_map(self.i);
         Some(self.index.get_converter().convert_inv(c))
     }
 }
