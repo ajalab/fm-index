@@ -152,8 +152,9 @@ mod wrapper;
 // pub use builder::SearchIndexBuilder;
 pub use character::Character;
 pub use frontend::{
-    FMIndex, FMIndexWithLocate, RLFMIndex, RLFMIndexWithLocate, Search, SearchIndex,
-    SearchIndexWithLocate, SearchWithLocate,
+    FMIndex, FMIndexSearch, FMIndexSearchWithLocate, FMIndexWithLocate, RLFMIndex, RLFMIndexSearch,
+    RLFMIndexSearchWithLocate, RLFMIndexWithLocate, Search, SearchIndex, SearchIndexWithLocate,
+    SearchWithLocate,
 };
 pub use iter::HeapSize;
 
