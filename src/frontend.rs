@@ -1,5 +1,6 @@
 use crate::fm_index::FMIndex as FMIndexBackend;
 use crate::iter::HeapSize;
+use crate::multi_text::MultiTextFMIndex as MultiTextFMIndexBackend;
 use crate::rlfmi::RLFMIndex as RLFMIndexBackend;
 use crate::suffix_array::sample::SuffixOrderSampledArray;
 use crate::wrapper::SearchWrapper;
@@ -97,10 +98,29 @@ pub struct RLFMIndexSearch<'a, T: Character, C: Converter<T>>(
 pub struct RLFMIndexWithLocate<T: Character, C: Converter<T>>(
     SearchIndexWrapper<RLFMIndexBackend<T, C, SuffixOrderSampledArray>>,
 );
-
 /// Search result for RLFMIndex with locate support.
 pub struct RLFMIndexSearchWithLocate<'a, T: Character, C: Converter<T>>(
     SearchWrapper<'a, RLFMIndexBackend<T, C, SuffixOrderSampledArray>>,
+);
+
+/// MultiText index without locate support.
+///
+/// This is a multi-text version of the FM-Index.
+pub struct MultiTextFMIndex<T: Character, C: Converter<T>>(
+    SearchIndexWrapper<MultiTextFMIndexBackend<T, C, ()>>,
+);
+/// Search result for MultiText index without locate support.
+pub struct MultiTextFMIndexSearch<'a, T: Character, C: Converter<T>>(
+    SearchWrapper<'a, MultiTextFMIndexBackend<T, C, ()>>,
+);
+
+/// MultiText index with locate support.
+pub struct MultiTextFMIndexWithLocate<T: Character, C: Converter<T>>(
+    SearchIndexWrapper<MultiTextFMIndexBackend<T, C, SuffixOrderSampledArray>>,
+);
+/// Search result for MultiText index with locate support.
+pub struct MultiTextFMIndexSearchWithLocate<'a, T: Character, C: Converter<T>>(
+    SearchWrapper<'a, MultiTextFMIndexBackend<T, C, SuffixOrderSampledArray>>,
 );
 
 impl<T: Character, C: Converter<T>> FMIndex<T, C> {

@@ -5,11 +5,11 @@ use crate::character::{prepare_text, Character};
 use crate::converter;
 use crate::converter::Converter;
 use crate::iter::{FMIndexBackend, HasPosition};
-use crate::seal;
 use crate::search::Search;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
 use crate::util;
+use crate::{seal, HeapSize};
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::{BitVec, RsVec, WaveletMatrix};
@@ -208,6 +208,26 @@ impl<T, C> MultiTextFMIndex<T, C, SuffixOrderSampledArray> {
 }
 
 impl<T, C, S> seal::Sealed for MultiTextFMIndex<T, C, S> {}
+
+impl<T, C> HeapSize for MultiTextFMIndex<T, C, ()>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    fn size(&self) -> usize {
+        MultiTextFMIndex::<T, C, ()>::size(self)
+    }
+}
+
+impl<T, C> HeapSize for MultiTextFMIndex<T, C, SuffixOrderSampledArray>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    fn size(&self) -> usize {
+        MultiTextFMIndex::<T, C, SuffixOrderSampledArray>::size(self)
+    }
+}
 
 impl<T, C, S> FMIndexBackend for MultiTextFMIndex<T, C, S>
 where
