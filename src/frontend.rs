@@ -36,7 +36,7 @@ pub trait SearchIndex<T> {
     fn len(&self) -> u64;
 }
 
-/// Trait for searching in an index that supports locate queries.
+/// Trait for searching in an index that also supports locate queries.
 ///
 /// You can use this to search in an index generically.
 pub trait SearchIndexWithLocate<T>: SearchIndex<T> {
@@ -66,18 +66,18 @@ pub trait Search<'a, T> {
     fn iter_forward(&'a self, i: u64) -> impl Iterator<Item = T> + 'a;
 }
 
-/// The result of a search with locate support.
+/// The result of a search that also has locate support.
 pub trait SearchWithLocate<'a, T>: Search<'a, T> {
     /// List the position of all occurrences.
     fn locate(&self) -> Vec<u64>;
 }
 
-/// FMIndex without locate support.
+/// FMIndex, count only.
 ///
 /// The FM-Index is both a search index as well as compact representation of
 /// the text.
 pub struct FMIndex<T: Character, C: Converter<T>>(SearchIndexWrapper<FMIndexBackend<T, C, ()>>);
-/// Search result for FMIndex without locate support.
+/// Search result for FMIndex, count only.
 pub struct FMIndexSearch<'a, T: Character, C: Converter<T>>(
     SearchWrapper<'a, FMIndexBackend<T, C, ()>>,
 );
@@ -93,19 +93,19 @@ pub struct FMIndexSearchWithLocate<'a, T: Character, C: Converter<T>>(
     SearchWrapper<'a, FMIndexBackend<T, C, SuffixOrderSampledArray>>,
 );
 
-/// RLFMIndex without locate support.
+/// RLFMIndex, count only.
 ///
-/// This is a reduced space version of the FM-Index, but it's less efficient.
+/// This is a version of the FM-Index that uses less space, but is also less efficient.
 pub struct RLFMIndex<T: Character, C: Converter<T>>(SearchIndexWrapper<RLFMIndexBackend<T, C, ()>>);
-/// Search result for RLFMIndex without locate support.
+/// Search result for RLFMIndex, count only.
 pub struct RLFMIndexSearch<'a, T: Character, C: Converter<T>>(
     SearchWrapper<'a, RLFMIndexBackend<T, C, ()>>,
 );
 
 /// RLFMIndex with locate support.
 ///
-/// This is a reduced space version of the FM-Index, but it's less efficient. It
-/// uses additional storage to support locate queries.
+/// This is a version of the FM-Index that uses less space, but is also less efficient.
+/// It uses additional storage to support locate queries.
 pub struct RLFMIndexWithLocate<T: Character, C: Converter<T>>(
     SearchIndexWrapper<RLFMIndexBackend<T, C, SuffixOrderSampledArray>>,
 );
@@ -114,18 +114,21 @@ pub struct RLFMIndexSearchWithLocate<'a, T: Character, C: Converter<T>>(
     SearchWrapper<'a, RLFMIndexBackend<T, C, SuffixOrderSampledArray>>,
 );
 
-/// MultiText index without locate support.
+/// MultiText index, count only.
 ///
-/// This is a multi-text version of the FM-Index.
+/// This is a multi-text version of the FM-Index. It allows \0 separated strings.
 pub struct MultiTextFMIndex<T: Character, C: Converter<T>>(
     SearchIndexWrapper<MultiTextFMIndexBackend<T, C, ()>>,
 );
-/// Search result for MultiText index without locate support.
+/// Search result for MultiText index, count only.
 pub struct MultiTextFMIndexSearch<'a, T: Character, C: Converter<T>>(
     SearchWrapper<'a, MultiTextFMIndexBackend<T, C, ()>>,
 );
 
 /// MultiText index with locate support.
+///
+/// This is a multi-text version of the FM-Index. It allows \0 separated strings.
+/// It uses additional storage to support locate queries.
 pub struct MultiTextFMIndexWithLocate<T: Character, C: Converter<T>>(
     SearchIndexWrapper<MultiTextFMIndexBackend<T, C, SuffixOrderSampledArray>>,
 );
