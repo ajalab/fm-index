@@ -91,48 +91,18 @@ where
             _t: std::marker::PhantomData::<T>,
         }
     }
-
-    /// The amount of repeated runs in the text.
-    pub fn runs(&self) -> u64 {
-        self.s.len() as u64
-    }
-
-    /// The length of the text.
-    pub fn len(&self) -> u64 {
-        self.len
-    }
 }
 
-impl<T, C> RLFMIndexBackend<T, C, ()>
+impl<T, C> HeapSize for RLFMIndexBackend<T, C, ()>
 where
     T: Character,
     C: Converter<T>,
 {
-    /// Heap size of the index.
-    ///
-    /// No suffix array information is stored in this index.
-    pub fn size(&self) -> usize {
+    fn heap_size(&self) -> usize {
         self.s.heap_size()
             + self.b.heap_size()
             + self.bp.heap_size()
             + self.cs.capacity() * std::mem::size_of::<u64>()
-    }
-}
-
-impl<T, C> RLFMIndexBackend<T, C, SuffixOrderSampledArray>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    /// The size on the heap of the FM-Index.
-    ///
-    /// Sampled suffix array data is stored in this index.
-    pub fn size(&self) -> usize {
-        self.s.heap_size()
-            + self.b.heap_size()
-            + self.bp.heap_size()
-            + self.cs.capacity() * std::mem::size_of::<u64>()
-            + self.suffix_array.size()
     }
 }
 
@@ -142,17 +112,11 @@ where
     C: Converter<T>,
 {
     fn heap_size(&self) -> usize {
-        RLFMIndexBackend::<T, C, SuffixOrderSampledArray>::size(self)
-    }
-}
-
-impl<T, C> HeapSize for RLFMIndexBackend<T, C, ()>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    fn heap_size(&self) -> usize {
-        RLFMIndexBackend::<T, C, ()>::size(self)
+        self.s.heap_size()
+            + self.b.heap_size()
+            + self.bp.heap_size()
+            + self.cs.capacity() * std::mem::size_of::<u64>()
+            + self.suffix_array.size()
     }
 }
 

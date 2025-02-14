@@ -117,32 +117,6 @@ where
 
         WaveletMatrix::from_slice(&bw, (util::log2(converter.len() - 1) + 1) as u16)
     }
-
-    /// The length of the text.
-    pub fn len(&self) -> u64 {
-        self.bw.len() as u64
-    }
-}
-
-impl<T, C> MultiTextFMIndexBackend<T, C, ()> {
-    /// The size on the heap of the FM-Index.
-    ///
-    /// No suffix array information is stored in this index.
-    pub fn size(&self) -> usize {
-        self.bw.heap_size() + self.cs.capacity() * std::mem::size_of::<u64>()
-    }
-}
-
-impl<T, C> MultiTextFMIndexBackend<T, C, SuffixOrderSampledArray> {
-    /// The size on the heap of the FM-Index.
-    ///
-    /// Sampled suffix array data is stored in this index.
-    pub fn size(&self) -> usize {
-        self.bw.heap_size()
-            + self.cs.capacity() * std::mem::size_of::<u64>()
-            + self.suffix_array.size()
-            + self.doc.capacity() * std::mem::size_of::<usize>()
-    }
 }
 
 impl<T, C> HeapSize for MultiTextFMIndexBackend<T, C, ()>
@@ -151,7 +125,7 @@ where
     C: Converter<T>,
 {
     fn heap_size(&self) -> usize {
-        MultiTextFMIndexBackend::<T, C, ()>::size(self)
+        self.bw.heap_size() + self.cs.capacity() * std::mem::size_of::<u64>()
     }
 }
 
@@ -161,7 +135,10 @@ where
     C: Converter<T>,
 {
     fn heap_size(&self) -> usize {
-        MultiTextFMIndexBackend::<T, C, SuffixOrderSampledArray>::size(self)
+        self.bw.heap_size()
+            + self.cs.capacity() * std::mem::size_of::<u64>()
+            + self.suffix_array.size()
+            + self.doc.capacity() * std::mem::size_of::<usize>()
     }
 }
 
