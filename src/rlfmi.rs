@@ -1,4 +1,4 @@
-use crate::backend::{FMIndexBackend, HasPosition, HeapSize};
+use crate::backend::{HasPosition, HeapSize, SearchIndexBackend};
 use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
@@ -176,7 +176,7 @@ where
     }
 }
 
-impl<T, C, S> FMIndexBackend for RLFMIndex<T, C, S>
+impl<T, C, S> SearchIndexBackend for RLFMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,

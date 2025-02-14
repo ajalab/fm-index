@@ -1,6 +1,6 @@
 use std::ops::Sub;
 
-use crate::backend::{FMIndexBackend, HasPosition};
+use crate::backend::{SearchIndexBackend, HasPosition};
 use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
@@ -215,7 +215,7 @@ where
     }
 }
 
-impl<T, C, S> FMIndexBackend for MultiTextFMIndex<T, C, S>
+impl<T, C, S> SearchIndexBackend for MultiTextFMIndex<T, C, S>
 where
     T: Character,
     C: Converter<T>,

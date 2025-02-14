@@ -1,14 +1,14 @@
-use crate::backend::{FMIndexBackend, HasPosition};
+use crate::backend::{SearchIndexBackend, HasPosition};
 use crate::converter::Converter;
 use crate::HeapSize;
 
 pub(crate) struct SearchIndexWrapper<B>(B)
 where
-    B: FMIndexBackend;
+    B: SearchIndexBackend;
 
 pub(crate) struct SearchWrapper<'a, B>
 where
-    B: FMIndexBackend,
+    B: SearchIndexBackend,
 {
     backend: &'a B,
     s: u64,
@@ -22,7 +22,7 @@ where
 
 impl<B> SearchIndexWrapper<B>
 where
-    B: FMIndexBackend + HeapSize,
+    B: SearchIndexBackend + HeapSize,
 {
     pub(crate) fn new(backend: B) -> Self {
         SearchIndexWrapper(backend)
@@ -54,7 +54,7 @@ where
 
 impl<'a, B> SearchWrapper<'a, B>
 where
-    B: FMIndexBackend,
+    B: SearchIndexBackend,
 {
     fn new(backend: &'a B) -> Self {
         let e = backend.len();
@@ -129,7 +129,7 @@ where
 
 impl<B> SearchWrapper<'_, B>
 where
-    B: FMIndexBackend + HasPosition,
+    B: SearchIndexBackend + HasPosition,
 {
     /// List the position of all occurrences.
     pub(crate) fn locate(&self) -> Vec<u64> {
@@ -142,18 +142,18 @@ where
 }
 
 /// An iterator that goes backwards through the text, producing [`Character`].
-pub(crate) struct BackwardIteratorWrapper<'a, B: FMIndexBackend> {
+pub(crate) struct BackwardIteratorWrapper<'a, B: SearchIndexBackend> {
     backend: &'a B,
     i: u64,
 }
 
-impl<'a, B: FMIndexBackend> BackwardIteratorWrapper<'a, B> {
+impl<'a, B: SearchIndexBackend> BackwardIteratorWrapper<'a, B> {
     pub(crate) fn new(backend: &'a B, i: u64) -> Self {
         BackwardIteratorWrapper { backend, i }
     }
 }
 
-impl<B: FMIndexBackend> Iterator for BackwardIteratorWrapper<'_, B> {
+impl<B: SearchIndexBackend> Iterator for BackwardIteratorWrapper<'_, B> {
     type Item = B::T;
     fn next(&mut self) -> Option<Self::Item> {
         let c = self.backend.get_l(self.i);
@@ -163,18 +163,18 @@ impl<B: FMIndexBackend> Iterator for BackwardIteratorWrapper<'_, B> {
 }
 
 /// An iterator that goes forwards through the text, producing [`Character`].
-pub(crate) struct ForwardIteratorWrapper<'a, B: FMIndexBackend> {
+pub(crate) struct ForwardIteratorWrapper<'a, B: SearchIndexBackend> {
     backend: &'a B,
     i: u64,
 }
 
-impl<'a, B: FMIndexBackend> ForwardIteratorWrapper<'a, B> {
+impl<'a, B: SearchIndexBackend> ForwardIteratorWrapper<'a, B> {
     pub(crate) fn new(backend: &'a B, i: u64) -> Self {
         ForwardIteratorWrapper { backend, i }
     }
 }
 
-impl<B: FMIndexBackend> Iterator for ForwardIteratorWrapper<'_, B> {
+impl<B: SearchIndexBackend> Iterator for ForwardIteratorWrapper<'_, B> {
     type Item = B::T;
 
     fn next(&mut self) -> Option<Self::Item> {

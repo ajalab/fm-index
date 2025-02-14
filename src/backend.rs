@@ -2,7 +2,7 @@ use crate::character::Character;
 use crate::converter::Converter;
 
 /// Trait for an FM-Index backend implementation
-pub(crate) trait FMIndexBackend: Sized {
+pub(crate) trait SearchIndexBackend: Sized {
     /// A [`Character`] type.
     type T: Character;
     type C: Converter<Self::T>;
