@@ -1,7 +1,7 @@
 use crate::backend::HeapSize;
-use crate::fm_index::FMIndex as FMIndexBackend;
-use crate::multi_text::MultiTextFMIndex as MultiTextFMIndexBackend;
-use crate::rlfmi::RLFMIndex as RLFMIndexBackend;
+use crate::fm_index::FMIndexBackend;
+use crate::multi_text::MultiTextFMIndexBackend;
+use crate::rlfmi::RLFMIndexBackend;
 use crate::suffix_array::sample::SuffixOrderSampledArray;
 use crate::wrapper::SearchWrapper;
 use crate::{converter::Converter, wrapper::SearchIndexWrapper, Character};

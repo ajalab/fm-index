@@ -16,7 +16,7 @@ use vers_vecs::WaveletMatrix;
 /// representation of the text, all within less space than the
 /// original text.
 #[derive(Serialize, Deserialize)]
-pub struct FMIndex<T, C, S> {
+pub struct FMIndexBackend<T, C, S> {
     bw: WaveletMatrix,
     cs: Vec<u64>,
     converter: C,
@@ -24,7 +24,7 @@ pub struct FMIndex<T, C, S> {
     _t: std::marker::PhantomData<T>,
 }
 
-impl<T, C> FMIndex<T, C, ()>
+impl<T, C> FMIndexBackend<T, C, ()>
 where
     T: Character,
     C: Converter<T>,
@@ -33,7 +33,7 @@ where
         Self::create(text, converter, |_| ())
     }
 }
-impl<T, C> FMIndex<T, C, SuffixOrderSampledArray>
+impl<T, C> FMIndexBackend<T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,
@@ -44,7 +44,7 @@ where
 }
 
 // TODO: Refactor types (Converter converts T -> u64)
-impl<T, C, S> FMIndex<T, C, S>
+impl<T, C, S> FMIndexBackend<T, C, S>
 where
     T: Character,
     C: Converter<T>,
@@ -55,7 +55,7 @@ where
         let sa = sais::build_suffix_array(&text, &converter);
         let bw = Self::wavelet_matrix(text, &sa, &converter);
 
-        FMIndex {
+        FMIndexBackend {
             cs,
             bw,
             converter,
@@ -79,7 +79,7 @@ where
     }
 }
 
-impl<T, C> FMIndex<T, C, ()>
+impl<T, C> FMIndexBackend<T, C, ()>
 where
     T: Character,
     C: Converter<T>,
@@ -92,7 +92,7 @@ where
     }
 }
 
-impl<T, C> FMIndex<T, C, SuffixOrderSampledArray>
+impl<T, C> FMIndexBackend<T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,
@@ -107,27 +107,27 @@ where
     }
 }
 
-impl<T, C> HeapSize for FMIndex<T, C, SuffixOrderSampledArray>
+impl<T, C> HeapSize for FMIndexBackend<T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,
 {
     fn size(&self) -> usize {
-        FMIndex::<T, C, SuffixOrderSampledArray>::size(self)
+        FMIndexBackend::<T, C, SuffixOrderSampledArray>::size(self)
     }
 }
 
-impl<T, C> HeapSize for FMIndex<T, C, ()>
+impl<T, C> HeapSize for FMIndexBackend<T, C, ()>
 where
     T: Character,
     C: Converter<T>,
 {
     fn size(&self) -> usize {
-        FMIndex::<T, C, ()>::size(self)
+        FMIndexBackend::<T, C, ()>::size(self)
     }
 }
 
-impl<T, C, S> SearchIndexBackend for FMIndex<T, C, S>
+impl<T, C, S> SearchIndexBackend for FMIndexBackend<T, C, S>
 where
     T: Character,
     C: Converter<T>,
@@ -191,7 +191,7 @@ where
     }
 }
 
-impl<T, C> HasPosition for FMIndex<T, C, SuffixOrderSampledArray>
+impl<T, C> HasPosition for FMIndexBackend<T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,
@@ -221,7 +221,7 @@ mod tests {
     fn test_lf_map() {
         let text = "mississippi".to_string().into_bytes();
         let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
-        let fm_index = FMIndex::new(text, RangeConverter::new(b'a', b'z'), 2);
+        let fm_index = FMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), 2);
         let mut i = 0;
         for a in ans {
             i = fm_index.lf_map(i);
@@ -232,7 +232,7 @@ mod tests {
     #[test]
     fn test_fl_map() {
         let text = "mississippi".to_string().into_bytes();
-        let fm_index = FMIndex::new(text, RangeConverter::new(b'a', b'z'), 2);
+        let fm_index = FMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), 2);
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
             let actual = fm_index.fl_map(i as u64);

@@ -1,6 +1,6 @@
 use std::ops::Sub;
 
-use crate::backend::{SearchIndexBackend, HasPosition};
+use crate::backend::{HasPosition, SearchIndexBackend};
 use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
@@ -19,7 +19,7 @@ use vers_vecs::{BitVec, RsVec, WaveletMatrix};
 /// representation of the text, all within less space than the
 /// original text.
 #[derive(Serialize, Deserialize)]
-pub struct MultiTextFMIndex<T, C, S> {
+pub struct MultiTextFMIndexBackend<T, C, S> {
     bw: WaveletMatrix,
     cs: Vec<u64>,
     converter: C,
@@ -28,7 +28,7 @@ pub struct MultiTextFMIndex<T, C, S> {
     _t: std::marker::PhantomData<T>,
 }
 
-impl<T, C> MultiTextFMIndex<T, C, ()>
+impl<T, C> MultiTextFMIndexBackend<T, C, ()>
 where
     T: Character,
     C: Converter<T>,
@@ -47,7 +47,7 @@ where
         Self::create(text, converter, |_| ())
     }
 }
-impl<T, C> MultiTextFMIndex<T, C, SuffixOrderSampledArray>
+impl<T, C> MultiTextFMIndexBackend<T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,
@@ -75,7 +75,7 @@ where
 }
 
 // TODO: Refactor types (Converter converts T -> u64)
-impl<T, C, S> MultiTextFMIndex<T, C, S>
+impl<T, C, S> MultiTextFMIndexBackend<T, C, S>
 where
     T: Character,
     C: Converter<T>,
@@ -87,7 +87,7 @@ where
         let bw = Self::wavelet_matrix(&text, &sa, &converter);
         let doc = Self::doc(&text, &bw, &sa);
 
-        MultiTextFMIndex {
+        MultiTextFMIndexBackend {
             cs,
             bw,
             converter,
@@ -174,7 +174,7 @@ where
     }
 }
 
-impl<T, C> MultiTextFMIndex<T, C, ()> {
+impl<T, C> MultiTextFMIndexBackend<T, C, ()> {
     /// The size on the heap of the FM-Index.
     ///
     /// No suffix array information is stored in this index.
@@ -183,7 +183,7 @@ impl<T, C> MultiTextFMIndex<T, C, ()> {
     }
 }
 
-impl<T, C> MultiTextFMIndex<T, C, SuffixOrderSampledArray> {
+impl<T, C> MultiTextFMIndexBackend<T, C, SuffixOrderSampledArray> {
     /// The size on the heap of the FM-Index.
     ///
     /// Sampled suffix array data is stored in this index.
@@ -195,27 +195,27 @@ impl<T, C> MultiTextFMIndex<T, C, SuffixOrderSampledArray> {
     }
 }
 
-impl<T, C> HeapSize for MultiTextFMIndex<T, C, ()>
+impl<T, C> HeapSize for MultiTextFMIndexBackend<T, C, ()>
 where
     T: Character,
     C: Converter<T>,
 {
     fn size(&self) -> usize {
-        MultiTextFMIndex::<T, C, ()>::size(self)
+        MultiTextFMIndexBackend::<T, C, ()>::size(self)
     }
 }
 
-impl<T, C> HeapSize for MultiTextFMIndex<T, C, SuffixOrderSampledArray>
+impl<T, C> HeapSize for MultiTextFMIndexBackend<T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,
 {
     fn size(&self) -> usize {
-        MultiTextFMIndex::<T, C, SuffixOrderSampledArray>::size(self)
+        MultiTextFMIndexBackend::<T, C, SuffixOrderSampledArray>::size(self)
     }
 }
 
-impl<T, C, S> SearchIndexBackend for MultiTextFMIndex<T, C, S>
+impl<T, C, S> SearchIndexBackend for MultiTextFMIndexBackend<T, C, S>
 where
     T: Character,
     C: Converter<T>,
@@ -285,7 +285,7 @@ where
     }
 }
 
-impl<T, C> HasPosition for MultiTextFMIndex<T, C, SuffixOrderSampledArray>
+impl<T, C> HasPosition for MultiTextFMIndexBackend<T, C, SuffixOrderSampledArray>
 where
     T: Character,
     C: Converter<T>,
@@ -330,9 +330,9 @@ mod tests {
         let text = generate_text_random(text_size, 8);
 
         let converter = IdConverter::new::<u8>();
-        let suffix_array = MultiTextFMIndex::<_, _, ()>::suffix_array(&text, &converter);
+        let suffix_array = MultiTextFMIndexBackend::<_, _, ()>::suffix_array(&text, &converter);
         let inv_suffix_array = inv_suffix_array(&suffix_array);
-        let fm_index = MultiTextFMIndex::new(text, converter, 0);
+        let fm_index = MultiTextFMIndexBackend::new(text, converter, 0);
 
         let mut lf_map_expected = vec![0; text_size];
         let mut lf_map_actual = vec![0; text_size];
