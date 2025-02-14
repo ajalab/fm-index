@@ -1,12 +1,8 @@
 use crate::character::Character;
 use crate::converter::Converter;
 
-/// Trait for an FM-Index implementation
-///
-/// You can use this to implement against a FM-Index generically.
-///
-/// You cannot implement this trait yourself.
-pub trait FMIndexBackend: Sized {
+/// Trait for an FM-Index backend implementation
+pub(crate) trait FMIndexBackend: Sized {
     /// A [`Character`] type.
     type T: Character;
     type C: Converter<Self::T>;
@@ -45,6 +41,6 @@ pub trait HeapSize {
 }
 
 /// A trait for an index that supports locate queries.
-pub trait HasPosition {
+pub(crate) trait HasPosition {
     fn get_sa(&self, i: u64) -> u64;
 }

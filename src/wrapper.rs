@@ -142,7 +142,7 @@ where
 }
 
 /// An iterator that goes backwards through the text, producing [`Character`].
-pub struct BackwardIteratorWrapper<'a, B: FMIndexBackend> {
+pub(crate) struct BackwardIteratorWrapper<'a, B: FMIndexBackend> {
     backend: &'a B,
     i: u64,
 }
@@ -163,7 +163,7 @@ impl<B: FMIndexBackend> Iterator for BackwardIteratorWrapper<'_, B> {
 }
 
 /// An iterator that goes forwards through the text, producing [`Character`].
-pub struct ForwardIteratorWrapper<'a, B: FMIndexBackend> {
+pub(crate) struct ForwardIteratorWrapper<'a, B: FMIndexBackend> {
     backend: &'a B,
     i: u64,
 }
