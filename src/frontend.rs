@@ -126,7 +126,7 @@ pub struct MultiTextFMIndexSearchWithLocate<'a, T: Character, C: Converter<T>>(
 impl<T: Character, C: Converter<T>> FMIndex<T, C> {
     /// Create a new FMIndex without locate support.
     pub fn new(text: Vec<T>, converter: C) -> Self {
-        FMIndex(SearchIndexWrapper::new(FMIndexBackend::create(
+        FMIndex(SearchIndexWrapper::new(FMIndexBackend::new(
             text,
             converter,
             |_| (),
@@ -143,7 +143,7 @@ impl<T: Character, C: Converter<T>> FMIndexWithLocate<T, C> {
     /// sampled, a level of 2 means a quarter of the suffix array is sampled,
     /// and so on.
     pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
-        FMIndexWithLocate(SearchIndexWrapper::new(FMIndexBackend::create(
+        FMIndexWithLocate(SearchIndexWrapper::new(FMIndexBackend::new(
             text,
             converter,
             |sa| sample::sample(sa, level),
