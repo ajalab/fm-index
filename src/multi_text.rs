@@ -8,7 +8,7 @@ use crate::iter::{FMIndexBackend, HasPosition};
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
 use crate::util;
-use crate::{seal, HeapSize};
+use crate::HeapSize;
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::{BitVec, RsVec, WaveletMatrix};
@@ -194,8 +194,6 @@ impl<T, C> MultiTextFMIndex<T, C, SuffixOrderSampledArray> {
             + self.doc.capacity() * std::mem::size_of::<usize>()
     }
 }
-
-impl<T, C, S> seal::Sealed for MultiTextFMIndex<T, C, S> {}
 
 impl<T, C> HeapSize for MultiTextFMIndex<T, C, ()>
 where

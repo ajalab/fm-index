@@ -140,7 +140,6 @@ mod frontend;
 mod iter;
 mod multi_text;
 mod rlfmi;
-mod seal;
 mod suffix_array;
 mod util;
 mod wrapper;
