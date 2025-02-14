@@ -4,7 +4,7 @@ use crate::character::{prepare_text, Character};
 use crate::converter;
 use crate::converter::Converter;
 use crate::suffix_array::sais;
-use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
+use crate::suffix_array::sample::SuffixOrderSampledArray;
 use crate::util;
 
 use serde::{Deserialize, Serialize};
@@ -24,32 +24,13 @@ pub struct FMIndexBackend<T, C, S> {
     _t: std::marker::PhantomData<T>,
 }
 
-impl<T, C> FMIndexBackend<T, C, ()>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    pub(crate) fn count_only(text: Vec<T>, converter: C) -> Self {
-        Self::create(text, converter, |_| ())
-    }
-}
-impl<T, C> FMIndexBackend<T, C, SuffixOrderSampledArray>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    pub(crate) fn new(text: Vec<T>, converter: C, level: usize) -> Self {
-        Self::create(text, converter, |sa| sample::sample(sa, level))
-    }
-}
-
 // TODO: Refactor types (Converter converts T -> u64)
 impl<T, C, S> FMIndexBackend<T, C, S>
 where
     T: Character,
     C: Converter<T>,
 {
-    fn create(text: Vec<T>, converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
+    pub(crate) fn create(text: Vec<T>, converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
         let text = prepare_text(text);
         let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
         let sa = sais::build_suffix_array(&text, &converter);
@@ -215,13 +196,15 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::converter::RangeConverter;
+    use crate::{converter::RangeConverter, suffix_array::sample};
 
     #[test]
     fn test_lf_map() {
         let text = "mississippi".to_string().into_bytes();
         let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
-        let fm_index = FMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), 2);
+        let fm_index = FMIndexBackend::create(text, RangeConverter::new(b'a', b'z'), |sa| {
+            sample::sample(sa, 2)
+        });
         let mut i = 0;
         for a in ans {
             i = fm_index.lf_map(i);
@@ -232,7 +215,9 @@ mod tests {
     #[test]
     fn test_fl_map() {
         let text = "mississippi".to_string().into_bytes();
-        let fm_index = FMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), 2);
+        let fm_index = FMIndexBackend::create(text, RangeConverter::new(b'a', b'z'), |sa| {
+            sample::sample(sa, 2)
+        });
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
             let actual = fm_index.fl_map(i as u64);

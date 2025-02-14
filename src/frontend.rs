@@ -2,7 +2,7 @@ use crate::backend::HeapSize;
 use crate::fm_index::FMIndexBackend;
 use crate::multi_text::MultiTextFMIndexBackend;
 use crate::rlfmi::RLFMIndexBackend;
-use crate::suffix_array::sample::SuffixOrderSampledArray;
+use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
 use crate::wrapper::SearchWrapper;
 use crate::{converter::Converter, wrapper::SearchIndexWrapper, Character};
 
@@ -126,8 +126,10 @@ pub struct MultiTextFMIndexSearchWithLocate<'a, T: Character, C: Converter<T>>(
 impl<T: Character, C: Converter<T>> FMIndex<T, C> {
     /// Create a new FMIndex without locate support.
     pub fn new(text: Vec<T>, converter: C) -> Self {
-        FMIndex(SearchIndexWrapper::new(FMIndexBackend::count_only(
-            text, converter,
+        FMIndex(SearchIndexWrapper::new(FMIndexBackend::create(
+            text,
+            converter,
+            |_| (),
         )))
     }
 }
@@ -141,8 +143,10 @@ impl<T: Character, C: Converter<T>> FMIndexWithLocate<T, C> {
     /// sampled, a level of 2 means a quarter of the suffix array is sampled,
     /// and so on.
     pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
-        FMIndexWithLocate(SearchIndexWrapper::new(FMIndexBackend::new(
-            text, converter, level,
+        FMIndexWithLocate(SearchIndexWrapper::new(FMIndexBackend::create(
+            text,
+            converter,
+            |sa| sample::sample(sa, level),
         )))
     }
 }
