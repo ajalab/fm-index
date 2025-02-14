@@ -171,6 +171,30 @@ impl<T: Character, C: Converter<T>> RLFMIndexWithLocate<T, C> {
     }
 }
 
+impl<T: Character, C: Converter<T>> MultiTextFMIndex<T, C> {
+    /// Create a new MultiTextFMIndex without locate support.
+    pub fn new(text: Vec<T>, converter: C) -> Self {
+        MultiTextFMIndex(SearchIndexWrapper::new(
+            MultiTextFMIndexBackend::count_only(text, converter),
+        ))
+    }
+}
+
+impl<T: Character, C: Converter<T>> MultiTextFMIndexWithLocate<T, C> {
+    /// Create a new MultiTextFMIndex with locate support.
+    ///
+    /// The level argument controls the sampling rate used. Higher levels use
+    /// less storage, at the cost of performance of locate queries. A level of
+    /// 0 means no sampling, and a level of 1 means half of the suffix array is
+    /// sampled, a level of 2 means a quarter of the suffix array is sampled,
+    /// and so on.
+    pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
+        MultiTextFMIndexWithLocate(SearchIndexWrapper::new(MultiTextFMIndexBackend::new(
+            text, converter, level,
+        )))
+    }
+}
+
 macro_rules! impl_search_index {
     ($t:ty, $s:ident, $st:ty) => {
         impl<T: Character, C: Converter<T>> SearchIndex<T> for $t {
@@ -325,11 +349,21 @@ macro_rules! impl_search_locate {
 
 impl_search_index!(FMIndex<T, C>, FMIndexSearch, FMIndexSearch<T, C>);
 impl_search!(FMIndexSearch<'a, T, C>);
+
 impl_search_index_with_locate!(FMIndexWithLocate<T, C>, FMIndexSearchWithLocate, FMIndexSearchWithLocate<T, C>);
 impl_search!(FMIndexSearchWithLocate<'a, T, C>);
 impl_search_locate!(FMIndexSearchWithLocate<'a, T, C>);
+
 impl_search_index!(RLFMIndex<T, C>, RLFMIndexSearch, RLFMIndexSearch<T, C>);
 impl_search!(RLFMIndexSearch<'a, T, C>);
+
 impl_search_index_with_locate!(RLFMIndexWithLocate<T, C>, RLFMIndexSearchWithLocate, RLFMIndexSearchWithLocate<T, C>);
 impl_search!(RLFMIndexSearchWithLocate<'a, T, C>);
 impl_search_locate!(RLFMIndexSearchWithLocate<'a, T, C>);
+
+impl_search_index!(MultiTextFMIndex<T, C>, MultiTextFMIndexSearch, MultiTextFMIndexSearch<T, C>);
+impl_search!(MultiTextFMIndexSearch<'a, T, C>);
+
+impl_search_index_with_locate!(MultiTextFMIndexWithLocate<T, C>, MultiTextFMIndexSearchWithLocate, MultiTextFMIndexSearchWithLocate<T, C>);
+impl_search!(MultiTextFMIndexSearchWithLocate<'a, T, C>);
+impl_search_locate!(MultiTextFMIndexSearchWithLocate<'a, T, C>);
