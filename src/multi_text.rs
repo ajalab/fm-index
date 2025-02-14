@@ -1,10 +1,10 @@
 use std::ops::Sub;
 
+use crate::backend::{FMIndexBackend, HasPosition};
 use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::Converter;
-use crate::iter::{FMIndexBackend, HasPosition};
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
 use crate::util;

@@ -134,16 +134,17 @@
 
 pub mod converter;
 
+mod backend;
 mod character;
 mod fm_index;
 mod frontend;
-mod iter;
 mod multi_text;
 mod rlfmi;
 mod suffix_array;
 mod util;
 mod wrapper;
 
+pub use backend::HeapSize;
 pub use character::Character;
 pub use frontend::{
     FMIndex, FMIndexSearch, FMIndexSearchWithLocate, FMIndexWithLocate, MultiTextFMIndex,
@@ -151,4 +152,3 @@ pub use frontend::{
     RLFMIndex, RLFMIndexSearch, RLFMIndexSearchWithLocate, RLFMIndexWithLocate, Search,
     SearchIndex, SearchIndexWithLocate, SearchWithLocate,
 };
-pub use iter::HeapSize;

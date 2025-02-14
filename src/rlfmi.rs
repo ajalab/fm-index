@@ -1,8 +1,8 @@
+use crate::backend::{FMIndexBackend, HasPosition, HeapSize};
 use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::Converter;
-use crate::iter::{FMIndexBackend, HasPosition, HeapSize};
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
 use crate::util;

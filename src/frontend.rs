@@ -1,5 +1,5 @@
+use crate::backend::HeapSize;
 use crate::fm_index::FMIndex as FMIndexBackend;
-use crate::iter::HeapSize;
 use crate::multi_text::MultiTextFMIndex as MultiTextFMIndexBackend;
 use crate::rlfmi::RLFMIndex as RLFMIndexBackend;
 use crate::suffix_array::sample::SuffixOrderSampledArray;

@@ -1,5 +1,5 @@
+use crate::backend::{FMIndexBackend, HasPosition};
 use crate::converter::Converter;
-use crate::iter::{FMIndexBackend, HasPosition};
 use crate::HeapSize;
 
 pub(crate) struct SearchIndexWrapper<B>(B)
