@@ -1,3 +1,14 @@
+// This module contains the API exposed to the frontend.
+//
+// It consists of concrete implementations of the search index and search
+// traits; one for count-only and the other supporting locate queries.
+//
+// This wrapper code is very verbose, so written using macros to avoid repetition.
+//
+// It's written around the wrapper module which provides the implementation of
+// the behavior. This module only exists so we can avoid exposing implementation
+// traits.
+
 use crate::backend::HeapSize;
 use crate::fm_index::FMIndexBackend;
 use crate::multi_text::MultiTextFMIndexBackend;

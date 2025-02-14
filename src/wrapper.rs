@@ -1,3 +1,7 @@
+// This module provides wrappers around SearchIndexBackend providing
+// the functionality used by the frontend.
+// This makes the implementation of the frontend more regular.
+
 use crate::backend::{HasPosition, SearchIndexBackend};
 use crate::converter::Converter;
 use crate::HeapSize;
