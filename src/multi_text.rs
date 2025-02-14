@@ -203,10 +203,6 @@ where
         todo!("implement inverse LF-mapping");
     }
 
-    fn fl_map2(&self, _c: Self::T, _i: u64) -> u64 {
-        todo!("implement inverse LF-mapping");
-    }
-
     fn get_converter(&self) -> &Self::C {
         &self.converter
     }

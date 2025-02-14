@@ -130,13 +130,6 @@ where
             as u64
     }
 
-    fn fl_map2(&self, c: Self::T, i: u64) -> u64 {
-        let c = self.converter.convert(c);
-        self.bw
-            .select_u64_unchecked((i - self.cs[c.into() as usize]) as usize, c.into())
-            as u64
-    }
-
     fn get_converter(&self) -> &Self::C {
         &self.converter
     }

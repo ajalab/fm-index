@@ -19,8 +19,6 @@ pub(crate) trait SearchIndexBackend: Sized {
 
     fn fl_map(&self, i: u64) -> u64;
 
-    fn fl_map2(&self, c: Self::T, i: u64) -> u64;
-
     /// The size of the text in the index
     ///
     /// Note that this includes an ending \0 (terminator) character
