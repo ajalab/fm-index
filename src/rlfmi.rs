@@ -3,7 +3,6 @@ use crate::character::{prepare_text, Character};
 use crate::converter;
 use crate::converter::Converter;
 use crate::iter::{FMIndexBackend, HasPosition, HeapSize};
-use crate::search::Search;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
 use crate::util;
@@ -280,7 +279,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::converter::RangeConverter;
+    use crate::{converter::RangeConverter, wrapper::SearchIndexWrapper};
 
     #[test]
     fn test_s() {
@@ -408,8 +407,10 @@ mod tests {
         ];
         let rlfmi = RLFMIndex::count_only(text, RangeConverter::new(b'a', b'z'));
 
+        let wrapper = SearchIndexWrapper::new(rlfmi);
+
         for (s, r) in ans {
-            let search = rlfmi.search(s);
+            let search = wrapper.search(s);
             assert_eq!(search.get_range(), r);
         }
     }

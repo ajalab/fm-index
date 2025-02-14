@@ -1,6 +1,5 @@
 use crate::character::Character;
 use crate::converter::Converter;
-use crate::search::Search;
 
 /// Trait for an FM-Index implementation
 ///
@@ -25,29 +24,6 @@ pub trait FMIndexBackend: Sized {
     fn fl_map(&self, i: u64) -> u64;
 
     fn fl_map2(&self, c: Self::T, i: u64) -> u64;
-
-    fn iter_forward(&self, i: u64) -> ForwardIterator<Self> {
-        debug_assert!(i < self.len());
-        ForwardIterator { index: self, i }
-    }
-
-    fn iter_backward(&self, i: u64) -> BackwardIterator<Self> {
-        debug_assert!(i < self.len());
-        BackwardIterator { index: self, i }
-    }
-
-    // The following methods are public.
-
-    /// Search for a pattern in the text.
-    ///
-    /// Return a [`Search`] object with information about the search
-    /// result.
-    fn search<K>(&self, pattern: K) -> Search<Self>
-    where
-        K: AsRef<[Self::T]>,
-    {
-        Search::new(self).search(pattern)
-    }
 
     /// The size of the text in the index
     ///

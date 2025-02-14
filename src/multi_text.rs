@@ -5,7 +5,6 @@ use crate::character::{prepare_text, Character};
 use crate::converter;
 use crate::converter::Converter;
 use crate::iter::{FMIndexBackend, HasPosition};
-use crate::search::Search;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
 use crate::util;
@@ -167,17 +166,6 @@ where
         let bw = bw.into_iter().map(|c| c.into()).collect::<Vec<u64>>();
 
         WaveletMatrix::from_slice(&bw, (util::log2(converter.len() - 1) + 1) as u16)
-    }
-
-    /// Search for a pattern in the text.
-    ///
-    /// Return a [`Search`] object with information about the search
-    /// result.
-    pub fn search<K>(&self, pattern: K) -> Search<Self>
-    where
-        K: AsRef<[T]>,
-    {
-        Search::new(self).search(pattern)
     }
 
     /// The length of the text.
