@@ -10,7 +10,7 @@ fn len<T: SearchIndex<u8>>(index: &T) -> u64 {
 }
 
 fn size<T: HeapSize>(t: &T) -> usize {
-    t.size()
+    t.heap_size()
 }
 
 #[test]

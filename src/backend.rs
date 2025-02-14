@@ -37,7 +37,7 @@ pub(crate) trait SearchIndexBackend: Sized {
 /// application.
 pub trait HeapSize {
     /// The size on the heap of this structure, in bytes.
-    fn size(&self) -> usize;
+    fn heap_size(&self) -> usize;
 }
 
 /// A trait for an index that supports locate queries.

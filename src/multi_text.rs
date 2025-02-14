@@ -6,18 +6,14 @@ use crate::character::{prepare_text, Character};
 use crate::converter;
 use crate::converter::Converter;
 use crate::suffix_array::sais;
-use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
+use crate::suffix_array::sample::SuffixOrderSampledArray;
 use crate::util;
 use crate::HeapSize;
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::{BitVec, RsVec, WaveletMatrix};
 
-/// An FM-Index, a succinct full-text index.
-///
-/// The FM-Index is both a search index as well as compact
-/// representation of the text, all within less space than the
-/// original text.
+// An FM-Index supporting multiple \0 separated texts
 #[derive(Serialize, Deserialize)]
 pub struct MultiTextFMIndexBackend<T, C, S> {
     bw: WaveletMatrix,
@@ -28,59 +24,13 @@ pub struct MultiTextFMIndexBackend<T, C, S> {
     _t: std::marker::PhantomData<T>,
 }
 
-impl<T, C> MultiTextFMIndexBackend<T, C, ()>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    /// Create a new FM-Index from a text. The index only supports the count
-    /// operation.
-    ///
-    /// - `text` is a vector of [`Character`]s.
-    ///
-    /// - `converter` is a [`Converter`] is used to convert the characters to a
-    ///   smaller alphabet. Use [`converter::IdConverter`] if you don't need to
-    ///   restrict the alphabet. Use [`converter::RangeConverter`] if you can
-    ///   contrain characters to a particular range. See [`converter`] for more
-    ///   details.
-    pub fn count_only(text: Vec<T>, converter: C) -> Self {
-        Self::create(text, converter, |_| ())
-    }
-}
-impl<T, C> MultiTextFMIndexBackend<T, C, SuffixOrderSampledArray>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    /// Create a new FM-Index from a text. The index supports both the count
-    /// and locate operations.
-    ///
-    /// - `text` is a vector of [`Character`]s.
-    ///
-    /// - `converter` is a [`Converter`] is used to convert the characters to a
-    ///   smaller alphabet. Use [`converter::IdConverter`] if you don't need to
-    ///   restrict the alphabet. Use [`converter::RangeConverter`] if you can
-    ///   contrain characters to a particular range. See [`converter`] for more
-    ///   details.
-    ///
-    /// - `level` is the sampling level to use for position lookup. A sampling
-    ///   level of 0 means the most memory is used (a full suffix-array is
-    ///   retained), while looking up positions is faster. A sampling level of
-    ///   1 means half the memory is used, but looking up positions is slower.
-    ///   Each increase in level halves the memory usage but slows down
-    ///   position lookup.
-    pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
-        Self::create(text, converter, |sa| sample::sample(sa, level))
-    }
-}
-
 // TODO: Refactor types (Converter converts T -> u64)
 impl<T, C, S> MultiTextFMIndexBackend<T, C, S>
 where
     T: Character,
     C: Converter<T>,
 {
-    fn create(text: Vec<T>, converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
+    pub(crate) fn new(text: Vec<T>, converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
         let text = prepare_text(text);
         let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
         let sa = Self::suffix_array(&text, &converter);
@@ -200,7 +150,7 @@ where
     T: Character,
     C: Converter<T>,
 {
-    fn size(&self) -> usize {
+    fn heap_size(&self) -> usize {
         MultiTextFMIndexBackend::<T, C, ()>::size(self)
     }
 }
@@ -210,7 +160,7 @@ where
     T: Character,
     C: Converter<T>,
 {
-    fn size(&self) -> usize {
+    fn heap_size(&self) -> usize {
         MultiTextFMIndexBackend::<T, C, SuffixOrderSampledArray>::size(self)
     }
 }
@@ -322,7 +272,7 @@ mod tests {
     use rand::{rngs::StdRng, Rng, SeedableRng};
 
     use super::*;
-    use crate::converter::IdConverter;
+    use crate::{converter::IdConverter, suffix_array::sample};
 
     #[test]
     fn test_lf_map() {
@@ -332,7 +282,7 @@ mod tests {
         let converter = IdConverter::new::<u8>();
         let suffix_array = MultiTextFMIndexBackend::<_, _, ()>::suffix_array(&text, &converter);
         let inv_suffix_array = inv_suffix_array(&suffix_array);
-        let fm_index = MultiTextFMIndexBackend::new(text, converter, 0);
+        let fm_index = MultiTextFMIndexBackend::new(text, converter, |sa| sample::sample(sa, 0));
 
         let mut lf_map_expected = vec![0; text_size];
         let mut lf_map_actual = vec![0; text_size];

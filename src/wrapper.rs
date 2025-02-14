@@ -1,4 +1,4 @@
-use crate::backend::{SearchIndexBackend, HasPosition};
+use crate::backend::{HasPosition, SearchIndexBackend};
 use crate::converter::Converter;
 use crate::HeapSize;
 
@@ -47,8 +47,8 @@ where
         self.0.len()
     }
 
-    pub(crate) fn size(&self) -> usize {
-        B::size(&self.0)
+    pub(crate) fn heap_size(&self) -> usize {
+        B::heap_size(&self.0)
     }
 }
 

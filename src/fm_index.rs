@@ -11,10 +11,6 @@ use serde::{Deserialize, Serialize};
 use vers_vecs::WaveletMatrix;
 
 /// An FM-Index, a succinct full-text index.
-///
-/// The FM-Index is both a search index as well as compact
-/// representation of the text, all within less space than the
-/// original text.
 #[derive(Serialize, Deserialize)]
 pub struct FMIndexBackend<T, C, S> {
     bw: WaveletMatrix,
@@ -60,31 +56,13 @@ where
     }
 }
 
-impl<T, C> FMIndexBackend<T, C, ()>
+impl<T, C> HeapSize for FMIndexBackend<T, C, ()>
 where
     T: Character,
     C: Converter<T>,
 {
-    /// The size on the heap of the FM-Index.
-    ///
-    /// No suffix array information is stored in this index.
-    pub fn size(&self) -> usize {
+    fn heap_size(&self) -> usize {
         self.bw.heap_size() + self.cs.capacity() * std::mem::size_of::<u64>()
-    }
-}
-
-impl<T, C> FMIndexBackend<T, C, SuffixOrderSampledArray>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    /// The size on the heap of the FM-Index.
-    ///
-    /// Sampled suffix array data is stored in this index.
-    pub fn size(&self) -> usize {
-        self.bw.heap_size()
-            + self.cs.capacity() * std::mem::size_of::<u64>()
-            + self.suffix_array.size()
     }
 }
 
@@ -93,18 +71,10 @@ where
     T: Character,
     C: Converter<T>,
 {
-    fn size(&self) -> usize {
-        FMIndexBackend::<T, C, SuffixOrderSampledArray>::size(self)
-    }
-}
-
-impl<T, C> HeapSize for FMIndexBackend<T, C, ()>
-where
-    T: Character,
-    C: Converter<T>,
-{
-    fn size(&self) -> usize {
-        FMIndexBackend::<T, C, ()>::size(self)
+    fn heap_size(&self) -> usize {
+        self.bw.heap_size()
+            + self.cs.capacity() * std::mem::size_of::<u64>()
+            + self.suffix_array.size()
     }
 }
 

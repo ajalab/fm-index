@@ -154,8 +154,10 @@ impl<T: Character, C: Converter<T>> FMIndexWithLocate<T, C> {
 impl<T: Character, C: Converter<T>> RLFMIndex<T, C> {
     /// Create a new RLFMIndex without locate support.
     pub fn new(text: Vec<T>, converter: C) -> Self {
-        RLFMIndex(SearchIndexWrapper::new(RLFMIndexBackend::count_only(
-            text, converter,
+        RLFMIndex(SearchIndexWrapper::new(RLFMIndexBackend::new(
+            text,
+            converter,
+            |_| (),
         )))
     }
 }
@@ -170,7 +172,9 @@ impl<T: Character, C: Converter<T>> RLFMIndexWithLocate<T, C> {
     /// and so on.
     pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
         RLFMIndexWithLocate(SearchIndexWrapper::new(RLFMIndexBackend::new(
-            text, converter, level,
+            text,
+            converter,
+            |sa| sample::sample(sa, level),
         )))
     }
 }
@@ -178,9 +182,11 @@ impl<T: Character, C: Converter<T>> RLFMIndexWithLocate<T, C> {
 impl<T: Character, C: Converter<T>> MultiTextFMIndex<T, C> {
     /// Create a new MultiTextFMIndex without locate support.
     pub fn new(text: Vec<T>, converter: C) -> Self {
-        MultiTextFMIndex(SearchIndexWrapper::new(
-            MultiTextFMIndexBackend::count_only(text, converter),
-        ))
+        MultiTextFMIndex(SearchIndexWrapper::new(MultiTextFMIndexBackend::new(
+            text,
+            converter,
+            |_| (),
+        )))
     }
 }
 
@@ -194,7 +200,9 @@ impl<T: Character, C: Converter<T>> MultiTextFMIndexWithLocate<T, C> {
     /// and so on.
     pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
         MultiTextFMIndexWithLocate(SearchIndexWrapper::new(MultiTextFMIndexBackend::new(
-            text, converter, level,
+            text,
+            converter,
+            |sa| sample::sample(sa, level),
         )))
     }
 }
@@ -214,8 +222,8 @@ macro_rules! impl_search_index {
             }
         }
         impl<T: Character, C: Converter<T>> HeapSize for $t {
-            fn size(&self) -> usize {
-                self.0.size()
+            fn heap_size(&self) -> usize {
+                self.0.heap_size()
             }
         }
         // inherent
@@ -258,8 +266,8 @@ macro_rules! impl_search_index_with_locate {
             }
         }
         impl<T: Character, C: Converter<T>> HeapSize for $t {
-            fn size(&self) -> usize {
-                self.0.size()
+            fn heap_size(&self) -> usize {
+                self.0.heap_size()
             }
         }
         // inherent
