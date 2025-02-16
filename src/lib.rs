@@ -23,8 +23,8 @@
 //!
 //! # Example
 //! ```
+//! use fm_index::FMIndexWithLocate;
 //! use fm_index::converter::RangeConverter;
-//! use fm_index::SearchIndexBuilder;
 //!
 //! // Prepare a text string to search for patterns.
 //! let text = concat!(
@@ -38,15 +38,13 @@
 //! // `' '` ~ `'~'` represents a range of ASCII printable characters.
 //! let converter = RangeConverter::new(b' ', b'~');
 //!
-//!  // To perform locate queries, we need to use some storage.
-//! let index = SearchIndexBuilder::with_converter(converter)
-//!     // the sampling level determines how much is retained in order to support `locate`
-//!     // queries. `0` retains the full information, but we don't need the whole array
-//!     // since we can interpolate missing elements in a suffix array from others. A sampler
-//!     // will _sieve_ a suffix array for this purpose. If you don't need `locate` queries
-//!     // you can save the memory by not setting a sampling level.
-//!     .sampling_level(2)
-//!     .build(text);
+//! // To perform locate queries, we need to use some storage.
+//! // the sampling level determines how much is retained in order to support `locate`
+//! // queries. `0` retains the full information, but we don't need the whole array
+//! // since we can interpolate missing elements in a suffix array from others. A sampler
+//! // will _sieve_ a suffix array for this purpose. If you don't need `locate` queries
+//! // you can save the memory by not setting a sampling level.
+//! let index = FMIndexWithLocate::new(text, converter, 2);
 //!
 //! // Search for a pattern string.
 //! let pattern = "dolor";
@@ -136,22 +134,21 @@
 
 pub mod converter;
 
-mod builder;
+mod backend;
 mod character;
 mod fm_index;
-mod iter;
+mod frontend;
 mod multi_text;
 mod rlfmi;
-mod seal;
-mod search;
 mod suffix_array;
 mod util;
+mod wrapper;
 
-pub use crate::fm_index::FMIndex;
-pub use crate::rlfmi::RLFMIndex;
-
-pub use builder::SearchIndexBuilder;
+pub use backend::HeapSize;
 pub use character::Character;
-pub use iter::{BackwardIterator, FMIndexBackend, ForwardIterator, HasPosition, HeapSize};
-pub use multi_text::MultiTextFMIndex;
-pub use search::Search;
+pub use frontend::{
+    FMIndex, FMIndexSearch, FMIndexSearchWithLocate, FMIndexWithLocate, MultiTextFMIndex,
+    MultiTextFMIndexSearch, MultiTextFMIndexSearchWithLocate, MultiTextFMIndexWithLocate,
+    RLFMIndex, RLFMIndexSearch, RLFMIndexSearchWithLocate, RLFMIndexWithLocate, Search,
+    SearchIndex, SearchIndexWithLocate, SearchWithLocate,
+};

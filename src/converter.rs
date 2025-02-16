@@ -120,15 +120,3 @@ where
         self.size
     }
 }
-
-/// A way to obtain the converter for a given index.
-pub trait IndexWithConverter<T>
-where
-    T: Character,
-{
-    /// The converter type.
-    type C: Converter<T>;
-
-    /// Get the converter for this index.
-    fn get_converter(&self) -> &Self::C;
-}
