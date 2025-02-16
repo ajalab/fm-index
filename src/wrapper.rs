@@ -20,10 +20,6 @@ where
     pattern: Vec<B::T>,
 }
 
-// struct SearchWithLocateWrapper<'a, B>(&'a B)
-// where
-//     B: FMIndexBackend + HasPosition;
-
 impl<B> SearchIndexWrapper<B>
 where
     B: SearchIndexBackend + HeapSize,
