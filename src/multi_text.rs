@@ -1,12 +1,13 @@
 use std::ops::Sub;
 
-use crate::backend::{HasPosition, SearchIndexBackend};
+use crate::backend::{HasMultiTexts, HasPosition, SearchIndexBackend};
 use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::Converter;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::SuffixOrderSampledArray;
+use crate::text::TextId;
 use crate::util;
 use crate::HeapSize;
 
@@ -226,6 +227,21 @@ where
                 }
             }
         }
+    }
+}
+
+impl<T, C, S> HasMultiTexts for MultiTextFMIndexBackend<T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    fn get_text_id(&self, i: u64) -> TextId {
+        todo!("return the text ID by iterating through texts using lf_map. See FMIndex#EnumerateDocuments in sxsi-git");
+        // let r = self
+        //     .bw
+        //     .rank_u64(i as usize, 0)
+        //     .expect("the index i must be smaller than the size of the text");
+        // TextId::from(self.doc[r] as u64)
     }
 }
 
