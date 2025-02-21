@@ -125,6 +125,11 @@ where
 
         ForwardIteratorWrapper::new(self.backend, self.s + i)
     }
+
+    // Iterate all occurrences of the found patterns.
+    pub(crate) fn iter_locations(&self) -> impl Iterator<Item = LocationWrapper<'a, B>> {
+        LocationIteratorWrapper::new(self.backend, self.s, self.e)
+    }
 }
 
 impl<B> SearchWrapper<'_, B>
@@ -181,5 +186,49 @@ impl<B: SearchIndexBackend> Iterator for ForwardIteratorWrapper<'_, B> {
         let c = self.backend.get_f(self.i);
         self.i = self.backend.fl_map(self.i);
         Some(self.backend.get_converter().convert_inv(c))
+    }
+}
+
+pub(crate) struct LocationIteratorWrapper<'a, B: SearchIndexBackend> {
+    backend: &'a B,
+    i: u64,
+    e: u64,
+}
+
+impl<'a, B: SearchIndexBackend> LocationIteratorWrapper<'a, B> {
+    pub(crate) fn new(backend: &'a B, i: u64, e: u64) -> Self {
+        LocationIteratorWrapper { backend, i, e }
+    }
+}
+
+impl<'a, B: SearchIndexBackend> Iterator for LocationIteratorWrapper<'a, B> {
+    type Item = LocationWrapper<'a, B>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i < self.e {
+            let location = LocationWrapper::new(self.backend, self.i);
+            self.i += 1;
+            return Some(location);
+        }
+        None
+    }
+}
+
+pub(crate) struct LocationWrapper<'a, B: SearchIndexBackend> {
+    backend: &'a B,
+    i: u64,
+}
+
+impl<'a, B: SearchIndexBackend> LocationWrapper<'a, B> {
+    pub(crate) fn new(backend: &'a B, i: u64) -> Self {
+        LocationWrapper { backend, i }
+    }
+
+    pub(crate) fn iter_chars_forward(&self) -> impl Iterator<Item = B::T> + use<'a, B> {
+        ForwardIteratorWrapper::new(self.backend, self.i)
+    }
+
+    pub(crate) fn iter_chars_backward(&self) -> impl Iterator<Item = B::T> + use<'a, B> {
+        BackwardIteratorWrapper::new(self.backend, self.i)
     }
 }
