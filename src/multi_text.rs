@@ -284,6 +284,31 @@ mod tests {
         assert_eq!(lf_map_expected, lf_map_actual);
     }
 
+    #[test]
+    #[ignore]
+    fn test_get_text_id() {
+        let text = "foo\0bar\0baz\0".as_bytes();
+        let converter = IdConverter::new::<u8>();
+        let suffix_array = MultiTextFMIndexBackend::<_, _, ()>::suffix_array(&text, &converter);
+        let fm_index =
+            MultiTextFMIndexBackend::new(text.to_vec(), converter, |sa| sample::sample(sa, 0));
+
+        for (i, &char_pos) in suffix_array.iter().enumerate() {
+            let text_id_expected = TextId::from(
+                text[..(char_pos as usize)]
+                    .iter()
+                    .filter(|&&c| c == 0)
+                    .count() as u64,
+            );
+            let text_id_actual = fm_index.get_text_id(i as u64);
+            assert_eq!(
+                text_id_expected, text_id_actual,
+                "the text ID of a character at position {} ({} in suffix array) must be {:?}",
+                char_pos, i, text_id_expected
+            );
+        }
+    }
+
     fn generate_text_random(text_size: usize, alphabet_size: u8) -> Vec<u8> {
         let mut rng = StdRng::seed_from_u64(0);
 
