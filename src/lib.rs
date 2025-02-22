@@ -141,6 +141,8 @@ mod frontend;
 mod multi_text;
 mod rlfmi;
 mod suffix_array;
+#[cfg(test)]
+mod testutil;
 mod text;
 mod util;
 mod wrapper;
