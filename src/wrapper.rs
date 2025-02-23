@@ -241,7 +241,7 @@ impl<'a, B: SearchIndexBackend + HasPosition> MatchWrapper<'a, B> {
 }
 
 impl<'a, B: SearchIndexBackend + HasMultiTexts> MatchWrapper<'a, B> {
-    pub(crate) fn get_text_id(&self) -> TextId {
-        self.backend.get_text_id(self.i)
+    pub(crate) fn text_id(&self) -> TextId {
+        self.backend.text_id(self.i)
     }
 }

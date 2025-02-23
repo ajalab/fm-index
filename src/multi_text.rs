@@ -235,7 +235,7 @@ where
     T: Character,
     C: Converter<T>,
 {
-    fn get_text_id(&self, mut i: u64) -> TextId {
+    fn text_id(&self, mut i: u64) -> TextId {
         loop {
             let c = self.get_l(i);
             if c.is_zero() {
@@ -316,7 +316,7 @@ mod tests {
                     .filter(|&&c| c == 0)
                     .count() as u64,
             );
-            let text_id_actual = fm_index.get_text_id(i as u64);
+            let text_id_actual = fm_index.text_id(i as u64);
             assert_eq!(
                 text_id_expected, text_id_actual,
                 "the text ID of a character at position {} ({} in suffix array) must be {:?}",
@@ -346,7 +346,7 @@ mod tests {
                         .filter(|&&c| c == 0)
                         .count() as u64,
                 );
-                let text_id_actual = fm_index.get_text_id(i as u64);
+                let text_id_actual = fm_index.text_id(i as u64);
                 assert_eq!(
                     text_id_expected, text_id_actual,
                     "the text ID of a character at position {} ({} in suffix array) must be {:?}. text={:?}, suffix_array={:?}",
