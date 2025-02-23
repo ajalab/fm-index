@@ -8,8 +8,8 @@ impl From<u64> for TextId {
     }
 }
 
-impl Into<u64> for TextId {
-    fn into(self) -> u64 {
-        self.0
+impl From<TextId> for u64 {
+    fn from(value: TextId) -> u64 {
+        value.0
     }
 }

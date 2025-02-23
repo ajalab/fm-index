@@ -234,13 +234,13 @@ impl<'a, B: SearchIndexBackend> MatchWrapper<'a, B> {
     }
 }
 
-impl<'a, B: SearchIndexBackend + HasPosition> MatchWrapper<'a, B> {
+impl<B: SearchIndexBackend + HasPosition> MatchWrapper<'_, B> {
     pub(crate) fn locate(&self) -> u64 {
         self.backend.get_sa(self.i)
     }
 }
 
-impl<'a, B: SearchIndexBackend + HasMultiTexts> MatchWrapper<'a, B> {
+impl<B: SearchIndexBackend + HasMultiTexts> MatchWrapper<'_, B> {
     pub(crate) fn text_id(&self) -> TextId {
         self.backend.text_id(self.i)
     }
