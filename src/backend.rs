@@ -1,5 +1,6 @@
 use crate::character::Character;
 use crate::converter::Converter;
+use crate::text::TextId;
 
 /// Trait for an FM-Index backend implementation
 pub(crate) trait SearchIndexBackend: Sized {
@@ -41,4 +42,10 @@ pub trait HeapSize {
 /// A trait for an index that supports locate queries.
 pub(crate) trait HasPosition {
     fn get_sa(&self, i: u64) -> u64;
+}
+
+/// A trait for an index that contains multiple texts.
+pub(crate) trait HasMultiTexts {
+    /// Returns the ID of the text that the character at the given position on the suffix array belongs to.
+    fn text_id(&self, i: u64) -> TextId;
 }

@@ -141,14 +141,20 @@ mod frontend;
 mod multi_text;
 mod rlfmi;
 mod suffix_array;
+#[cfg(test)]
+mod testutil;
+mod text;
 mod util;
 mod wrapper;
 
 pub use backend::HeapSize;
 pub use character::Character;
 pub use frontend::{
-    FMIndex, FMIndexSearch, FMIndexSearchWithLocate, FMIndexWithLocate, MultiTextFMIndex,
-    MultiTextFMIndexSearch, MultiTextFMIndexSearchWithLocate, MultiTextFMIndexWithLocate,
-    RLFMIndex, RLFMIndexSearch, RLFMIndexSearchWithLocate, RLFMIndexWithLocate, Search,
-    SearchIndex, SearchIndexWithLocate, SearchWithLocate,
+    FMIndex, FMIndexMatch, FMIndexMatchWithLocate, FMIndexSearch, FMIndexSearchWithLocate,
+    FMIndexWithLocate, Match, MatchWithLocate, MatchWithTextId, MultiTextFMIndex,
+    MultiTextFMIndexMatch, MultiTextFMIndexMatchWithLocate, MultiTextFMIndexSearch,
+    MultiTextFMIndexSearchWithLocate, MultiTextFMIndexWithLocate, RLFMIndex, RLFMIndexMatch,
+    RLFMIndexMatchWithLocate, RLFMIndexSearch, RLFMIndexSearchWithLocate, RLFMIndexWithLocate,
+    Search, SearchIndex, SearchIndexWithLocate, SearchWithLocate,
 };
+pub use text::TextId;

@@ -14,7 +14,8 @@ use crate::fm_index::FMIndexBackend;
 use crate::multi_text::MultiTextFMIndexBackend;
 use crate::rlfmi::RLFMIndexBackend;
 use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
-use crate::wrapper::SearchWrapper;
+use crate::text::TextId;
+use crate::wrapper::{MatchWrapper, SearchWrapper};
 use crate::{converter::Converter, wrapper::SearchIndexWrapper, Character};
 
 /// Trait for searching in an index.
@@ -50,7 +51,14 @@ pub trait SearchIndexWithLocate<T>: SearchIndex<T> {
 }
 
 /// The result of a search.
+///
+/// A search result can be refined by adding more characters to the
+/// search pattern.
+/// A search result contains matches, which can be iterated over.
 pub trait Search<'a, T> {
+    /// Associated type for matches.
+    type Match: Match<'a, T>;
+
     /// Search in the current search result, refining it.
     ///
     /// This adds a prefix `pattern` to the existing pattern, and
@@ -64,12 +72,35 @@ pub trait Search<'a, T> {
     /// Get an iterator that goes forwards through the text, producing
     /// [`Character`].
     fn iter_forward(&'a self, i: u64) -> impl Iterator<Item = T> + 'a;
+    /// Get an iterator over all matches.
+    fn iter_matches(&'a self) -> impl Iterator<Item = Self::Match> + 'a;
 }
 
 /// The result of a search that also has locate support.
 pub trait SearchWithLocate<'a, T>: Search<'a, T> {
     /// List the position of all occurrences.
     fn locate(&self) -> Vec<u64>;
+}
+
+/// A match in the text.
+pub trait Match<'a, T> {
+    /// Iterate over the characters of the match.
+    fn iter_chars_forward(&self) -> impl Iterator<Item = T> + 'a;
+
+    /// Iterate over the characters of the match in reverse.
+    fn iter_chars_backward(&self) -> impl Iterator<Item = T> + 'a;
+}
+
+/// A match in the text that contains its location on the text.
+pub trait MatchWithLocate<'a, T>: Match<'a, T> {
+    /// Get the location of the match in the text.
+    fn locate(&self) -> u64;
+}
+
+/// A match in the text that contains its text ID on the text.
+pub trait MatchWithTextId<'a, T>: Match<'a, T> {
+    /// Get the ID of the text that the character at the matched position belongs to.
+    fn text_id(&self) -> TextId;
 }
 
 /// FMIndex, count only.
@@ -80,6 +111,10 @@ pub struct FMIndex<T: Character, C: Converter<T>>(SearchIndexWrapper<FMIndexBack
 /// Search result for FMIndex, count only.
 pub struct FMIndexSearch<'a, T: Character, C: Converter<T>>(
     SearchWrapper<'a, FMIndexBackend<T, C, ()>>,
+);
+/// Match in the text for FMIndex.
+pub struct FMIndexMatch<'a, T: Character, C: Converter<T>>(
+    MatchWrapper<'a, FMIndexBackend<T, C, ()>>,
 );
 
 /// FMIndex with locate support.
@@ -92,6 +127,10 @@ pub struct FMIndexWithLocate<T: Character, C: Converter<T>>(
 pub struct FMIndexSearchWithLocate<'a, T: Character, C: Converter<T>>(
     SearchWrapper<'a, FMIndexBackend<T, C, SuffixOrderSampledArray>>,
 );
+/// Match in the text for FMIndex with locate support.
+pub struct FMIndexMatchWithLocate<'a, T: Character, C: Converter<T>>(
+    MatchWrapper<'a, FMIndexBackend<T, C, SuffixOrderSampledArray>>,
+);
 
 /// RLFMIndex, count only.
 ///
@@ -100,6 +139,10 @@ pub struct RLFMIndex<T: Character, C: Converter<T>>(SearchIndexWrapper<RLFMIndex
 /// Search result for RLFMIndex, count only.
 pub struct RLFMIndexSearch<'a, T: Character, C: Converter<T>>(
     SearchWrapper<'a, RLFMIndexBackend<T, C, ()>>,
+);
+/// Match in the text for RLFMIndex.
+pub struct RLFMIndexMatch<'a, T: Character, C: Converter<T>>(
+    MatchWrapper<'a, RLFMIndexBackend<T, C, ()>>,
 );
 
 /// RLFMIndex with locate support.
@@ -113,6 +156,10 @@ pub struct RLFMIndexWithLocate<T: Character, C: Converter<T>>(
 pub struct RLFMIndexSearchWithLocate<'a, T: Character, C: Converter<T>>(
     SearchWrapper<'a, RLFMIndexBackend<T, C, SuffixOrderSampledArray>>,
 );
+/// Match in the text for RLFMIndex with locate support.
+pub struct RLFMIndexMatchWithLocate<'a, T: Character, C: Converter<T>>(
+    MatchWrapper<'a, RLFMIndexBackend<T, C, SuffixOrderSampledArray>>,
+);
 
 /// MultiText index, count only.
 ///
@@ -123,6 +170,10 @@ pub struct MultiTextFMIndex<T: Character, C: Converter<T>>(
 /// Search result for MultiText index, count only.
 pub struct MultiTextFMIndexSearch<'a, T: Character, C: Converter<T>>(
     SearchWrapper<'a, MultiTextFMIndexBackend<T, C, ()>>,
+);
+/// Match in the text for MultiText index.
+pub struct MultiTextFMIndexMatch<'a, T: Character, C: Converter<T>>(
+    MatchWrapper<'a, MultiTextFMIndexBackend<T, C, ()>>,
 );
 
 /// MultiText index with locate support.
@@ -135,6 +186,10 @@ pub struct MultiTextFMIndexWithLocate<T: Character, C: Converter<T>>(
 /// Search result for MultiText index with locate support.
 pub struct MultiTextFMIndexSearchWithLocate<'a, T: Character, C: Converter<T>>(
     SearchWrapper<'a, MultiTextFMIndexBackend<T, C, SuffixOrderSampledArray>>,
+);
+/// Match in the text for MultiText index with locate support.
+pub struct MultiTextFMIndexMatchWithLocate<'a, T: Character, C: Converter<T>>(
+    MatchWrapper<'a, MultiTextFMIndexBackend<T, C, SuffixOrderSampledArray>>,
 );
 
 impl<T: Character, C: Converter<T>> FMIndex<T, C> {
@@ -302,8 +357,10 @@ macro_rules! impl_search_index_with_locate {
 }
 
 macro_rules! impl_search {
-    ($t:ty) => {
+    ($t:ty, $m:ident, $mt:ty) => {
         impl<'a, T: Character, C: Converter<T>> Search<'a, T> for $t {
+            type Match = $mt;
+
             fn search<K>(&self, pattern: K) -> Self
             where
                 K: AsRef<[T]>,
@@ -321,6 +378,10 @@ macro_rules! impl_search {
 
             fn iter_forward(&'a self, i: u64) -> impl Iterator<Item = T> + 'a {
                 self.0.iter_forward(i)
+            }
+
+            fn iter_matches(&'a self) -> impl Iterator<Item = Self::Match> + 'a {
+                self.0.iter_matches().map(|m| $m(m))
             }
         }
         // inherent
@@ -373,23 +434,91 @@ macro_rules! impl_search_locate {
     };
 }
 
+macro_rules! impl_match {
+    ($t:ty) => {
+        impl<'a, T: Character, C: Converter<T>> Match<'a, T> for $t {
+            fn iter_chars_forward(&self) -> impl Iterator<Item = T> + 'a {
+                self.0.iter_chars_forward()
+            }
+
+            fn iter_chars_backward(&self) -> impl Iterator<Item = T> + 'a {
+                self.0.iter_chars_backward()
+            }
+        }
+    };
+}
+
+macro_rules! impl_match_locate {
+    ($t:ty) => {
+        impl<'a, T: Character, C: Converter<T>> MatchWithLocate<'a, T> for $t {
+            fn locate(&self) -> u64 {
+                self.0.locate()
+            }
+        }
+    };
+}
+
+macro_rules! impl_match_text_id {
+    ($t:ty) => {
+        impl<'a, T: Character, C: Converter<T>> MatchWithTextId<'a, T> for $t {
+            fn text_id(&self) -> TextId {
+                self.0.text_id()
+            }
+        }
+    };
+}
+
 impl_search_index!(FMIndex<T, C>, FMIndexSearch, FMIndexSearch<T, C>);
-impl_search!(FMIndexSearch<'a, T, C>);
+impl_search!(
+    FMIndexSearch<'a, T, C>,
+    FMIndexMatch,
+    FMIndexMatch<'a, T, C>
+);
+impl_match!(FMIndexMatch<'a, T, C>);
 
 impl_search_index_with_locate!(FMIndexWithLocate<T, C>, FMIndexSearchWithLocate, FMIndexSearchWithLocate<T, C>);
-impl_search!(FMIndexSearchWithLocate<'a, T, C>);
+impl_search!(
+    FMIndexSearchWithLocate<'a, T, C>,
+    FMIndexMatchWithLocate,
+    FMIndexMatchWithLocate<'a, T, C>
+);
 impl_search_locate!(FMIndexSearchWithLocate<'a, T, C>);
+impl_match!(FMIndexMatchWithLocate<'a, T, C>);
+impl_match_locate!(FMIndexMatchWithLocate<'a, T, C>);
 
 impl_search_index!(RLFMIndex<T, C>, RLFMIndexSearch, RLFMIndexSearch<T, C>);
-impl_search!(RLFMIndexSearch<'a, T, C>);
+impl_search!(
+    RLFMIndexSearch<'a, T, C>,
+    RLFMIndexMatch,
+    RLFMIndexMatch<'a, T, C>
+);
+impl_match!(RLFMIndexMatch<'a, T, C>);
 
 impl_search_index_with_locate!(RLFMIndexWithLocate<T, C>, RLFMIndexSearchWithLocate, RLFMIndexSearchWithLocate<T, C>);
-impl_search!(RLFMIndexSearchWithLocate<'a, T, C>);
+impl_search!(
+    RLFMIndexSearchWithLocate<'a, T, C>,
+    RLFMIndexMatchWithLocate,
+    RLFMIndexMatchWithLocate<'a, T, C>
+);
 impl_search_locate!(RLFMIndexSearchWithLocate<'a, T, C>);
+impl_match!(RLFMIndexMatchWithLocate<'a, T, C>);
+impl_match_locate!(RLFMIndexMatchWithLocate<'a, T, C>);
 
 impl_search_index!(MultiTextFMIndex<T, C>, MultiTextFMIndexSearch, MultiTextFMIndexSearch<T, C>);
-impl_search!(MultiTextFMIndexSearch<'a, T, C>);
+impl_search!(
+    MultiTextFMIndexSearch<'a, T, C>,
+    MultiTextFMIndexMatch,
+    MultiTextFMIndexMatch<'a, T, C>
+);
+impl_match!(MultiTextFMIndexMatch<'a, T, C>);
 
 impl_search_index_with_locate!(MultiTextFMIndexWithLocate<T, C>, MultiTextFMIndexSearchWithLocate, MultiTextFMIndexSearchWithLocate<T, C>);
-impl_search!(MultiTextFMIndexSearchWithLocate<'a, T, C>);
+impl_search!(
+    MultiTextFMIndexSearchWithLocate<'a, T, C>,
+    MultiTextFMIndexMatchWithLocate,
+    MultiTextFMIndexMatchWithLocate<'a, T, C>
+);
 impl_search_locate!(MultiTextFMIndexSearchWithLocate<'a, T, C>);
+impl_match!(MultiTextFMIndexMatchWithLocate<'a, T, C>);
+impl_match_locate!(MultiTextFMIndexMatchWithLocate<'a, T, C>);
+impl_match_text_id!(MultiTextFMIndexMatchWithLocate<'a, T, C>);
