@@ -2,8 +2,9 @@
 // the functionality used by the frontend.
 // This makes the implementation of the frontend more regular.
 
-use crate::backend::{HasPosition, SearchIndexBackend};
+use crate::backend::{HasMultiTexts, HasPosition, SearchIndexBackend};
 use crate::converter::Converter;
+use crate::text::TextId;
 use crate::HeapSize;
 
 pub(crate) struct SearchIndexWrapper<B>(B)
@@ -127,8 +128,8 @@ where
     }
 
     // Iterate all occurrences of the found patterns.
-    pub(crate) fn iter_locations(&self) -> impl Iterator<Item = LocationWrapper<'a, B>> {
-        LocationIteratorWrapper::new(self.backend, self.s, self.e)
+    pub(crate) fn iter_matches(&self) -> impl Iterator<Item = MatchWrapper<'a, B>> {
+        MatchIteratorWrapper::new(self.backend, self.s, self.e)
     }
 }
 
@@ -189,24 +190,24 @@ impl<B: SearchIndexBackend> Iterator for ForwardIteratorWrapper<'_, B> {
     }
 }
 
-pub(crate) struct LocationIteratorWrapper<'a, B: SearchIndexBackend> {
+pub(crate) struct MatchIteratorWrapper<'a, B: SearchIndexBackend> {
     backend: &'a B,
     i: u64,
     e: u64,
 }
 
-impl<'a, B: SearchIndexBackend> LocationIteratorWrapper<'a, B> {
+impl<'a, B: SearchIndexBackend> MatchIteratorWrapper<'a, B> {
     pub(crate) fn new(backend: &'a B, i: u64, e: u64) -> Self {
-        LocationIteratorWrapper { backend, i, e }
+        MatchIteratorWrapper { backend, i, e }
     }
 }
 
-impl<'a, B: SearchIndexBackend> Iterator for LocationIteratorWrapper<'a, B> {
-    type Item = LocationWrapper<'a, B>;
+impl<'a, B: SearchIndexBackend> Iterator for MatchIteratorWrapper<'a, B> {
+    type Item = MatchWrapper<'a, B>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.i < self.e {
-            let location = LocationWrapper::new(self.backend, self.i);
+            let location = MatchWrapper::new(self.backend, self.i);
             self.i += 1;
             return Some(location);
         }
@@ -214,14 +215,14 @@ impl<'a, B: SearchIndexBackend> Iterator for LocationIteratorWrapper<'a, B> {
     }
 }
 
-pub(crate) struct LocationWrapper<'a, B: SearchIndexBackend> {
+pub(crate) struct MatchWrapper<'a, B: SearchIndexBackend> {
     backend: &'a B,
     i: u64,
 }
 
-impl<'a, B: SearchIndexBackend> LocationWrapper<'a, B> {
+impl<'a, B: SearchIndexBackend> MatchWrapper<'a, B> {
     pub(crate) fn new(backend: &'a B, i: u64) -> Self {
-        LocationWrapper { backend, i }
+        MatchWrapper { backend, i }
     }
 
     pub(crate) fn iter_chars_forward(&self) -> impl Iterator<Item = B::T> + use<'a, B> {
@@ -230,5 +231,17 @@ impl<'a, B: SearchIndexBackend> LocationWrapper<'a, B> {
 
     pub(crate) fn iter_chars_backward(&self) -> impl Iterator<Item = B::T> + use<'a, B> {
         BackwardIteratorWrapper::new(self.backend, self.i)
+    }
+}
+
+impl<'a, B: SearchIndexBackend + HasPosition> MatchWrapper<'a, B> {
+    pub(crate) fn locate(&self) -> u64 {
+        self.backend.get_sa(self.i)
+    }
+}
+
+impl<'a, B: SearchIndexBackend + HasMultiTexts> MatchWrapper<'a, B> {
+    pub(crate) fn get_text_id(&self) -> TextId {
+        self.backend.get_text_id(self.i)
     }
 }
