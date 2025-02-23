@@ -7,3 +7,9 @@ impl From<u64> for TextId {
         TextId(value)
     }
 }
+
+impl Into<u64> for TextId {
+    fn into(self) -> u64 {
+        self.0
+    }
+}
