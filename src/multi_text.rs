@@ -164,7 +164,7 @@ where
         let rank = self.bw.rank_u64_unchecked(i as usize, c.into());
 
         if c.is_zero() {
-            self.doc[rank] as u64
+            self.doc[rank]
         } else {
             let c_count = self.cs[c.into() as usize];
             rank as u64 + c_count
@@ -176,7 +176,7 @@ where
         let rank = self.bw.rank_u64_unchecked(i as usize, c.into());
 
         if c.is_zero() {
-            self.doc[rank] as u64
+            self.doc[rank]
         } else {
             let c_count = self.cs[c.into() as usize];
             rank as u64 + c_count
@@ -305,7 +305,7 @@ mod tests {
     fn test_get_text_id() {
         let text = "foo\0bar\0baz\0".as_bytes();
         let converter = IdConverter::new::<u8>();
-        let suffix_array = MultiTextFMIndexBackend::<_, _, ()>::suffix_array(&text, &converter);
+        let suffix_array = MultiTextFMIndexBackend::<_, _, ()>::suffix_array(text, &converter);
         let fm_index =
             MultiTextFMIndexBackend::new(text.to_vec(), converter, |sa| sample::sample(sa, 0));
 
