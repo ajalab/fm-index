@@ -4,21 +4,21 @@ use fm_index::{Match, MatchWithTextId, MultiTextFMIndexWithLocate, Search};
 fn main() {
     // When using MultiTextFMIndex, the text is concatenated with an end marker \0.
     let text = concat!(
-        // 1
+        // 0
         "Twinkle, twinkle, little star,\n",
         "How I wonder what you are!\n",
         "Up above the world so high,\n",
         "Like a diamond in the sky.\n",
         "Twinkle, twinkle, little star,\n",
         "How I wonder what you are!\n\0",
-        // 2
+        // 1
         "When the blazing sun is gone,\n",
         "When he nothing shines upon,\n",
         "Then you show your little light,\n",
         "Twinkle, twinkle, all the night.\n",
         "Twinkle, twinkle, little star,\n",
         "How I wonder what you are!\n\0",
-        // 3
+        // 2
         "Then the traveller in the dark,\n",
         "Thanks you for your tiny spark;\n",
         "He could not see which way to go,\n",
