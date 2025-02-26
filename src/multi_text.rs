@@ -239,8 +239,8 @@ where
         loop {
             let c = self.get_l(i);
             if c.is_zero() {
-                let text_id_next = self.doc[self.bw.rank_u64_unchecked(i as usize, 0)];
-                let text_id = modular_add(text_id_next, 1, self.doc.len() as u64);
+                let text_id_prev = self.doc[self.bw.rank_u64_unchecked(i as usize, 0)];
+                let text_id = modular_add(text_id_prev, 1, self.doc.len() as u64);
                 return TextId::from(text_id);
             }
 
