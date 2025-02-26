@@ -1,12 +1,13 @@
-use std::ops::Sub;
+use std::ops::{Rem, Sub};
 
-use crate::backend::{HasPosition, SearchIndexBackend};
+use crate::backend::{HasMultiTexts, HasPosition, SearchIndexBackend};
 use crate::character::{prepare_text, Character};
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::Converter;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::SuffixOrderSampledArray;
+use crate::text::TextId;
 use crate::util;
 use crate::HeapSize;
 
@@ -20,7 +21,7 @@ pub struct MultiTextFMIndexBackend<T, C, S> {
     cs: Vec<u64>,
     converter: C,
     suffix_array: S,
-    doc: Vec<usize>,
+    doc: Vec<u64>,
     _t: std::marker::PhantomData<T>,
 }
 
@@ -80,7 +81,7 @@ where
         sa
     }
 
-    fn doc(text: &[T], bw: &WaveletMatrix, sa: &[u64]) -> Vec<usize> {
+    fn doc(text: &[T], bw: &WaveletMatrix, sa: &[u64]) -> Vec<u64> {
         let mut end_marker_bits = BitVec::from_zeros(text.len());
         let mut end_marker_count = 0;
         for (i, c) in text.iter().enumerate() {
@@ -95,7 +96,7 @@ where
         let mut doc = vec![0; end_marker_count];
         while let Some(p) = bw.select_u64(end_marker_rank_l, 0) {
             let end_marker_idx = modular_sub(sa[p] as usize, 1, sa.len());
-            let text_id = end_marker_flags.rank1(end_marker_idx);
+            let text_id = end_marker_flags.rank1(end_marker_idx) as u64;
             doc[end_marker_rank_l] = text_id;
 
             end_marker_rank_l += 1;
@@ -163,7 +164,7 @@ where
         let rank = self.bw.rank_u64_unchecked(i as usize, c.into());
 
         if c.is_zero() {
-            self.doc[rank] as u64
+            self.doc[rank]
         } else {
             let c_count = self.cs[c.into() as usize];
             rank as u64 + c_count
@@ -175,7 +176,7 @@ where
         let rank = self.bw.rank_u64_unchecked(i as usize, c.into());
 
         if c.is_zero() {
-            self.doc[rank] as u64
+            self.doc[rank]
         } else {
             let c_count = self.cs[c.into() as usize];
             rank as u64 + c_count
@@ -229,6 +230,32 @@ where
     }
 }
 
+impl<T, C, S> HasMultiTexts for MultiTextFMIndexBackend<T, C, S>
+where
+    T: Character,
+    C: Converter<T>,
+{
+    fn text_id(&self, mut i: u64) -> TextId {
+        loop {
+            let c = self.get_l(i);
+            if c.is_zero() {
+                let text_id_prev = self.doc[self.bw.rank_u64_unchecked(i as usize, 0)];
+                let text_id = modular_add(text_id_prev, 1, self.doc.len() as u64);
+                return TextId::from(text_id);
+            }
+
+            i = self.lf_map2(c, i);
+        }
+    }
+}
+
+fn modular_add<T: Rem<Output = T> + Ord + num_traits::Zero>(a: T, b: T, m: T) -> T {
+    debug_assert!(T::zero() <= a && a <= m);
+    debug_assert!(T::zero() <= b && b <= m);
+
+    (a + b) % m
+}
+
 fn modular_sub<T: Sub<Output = T> + Ord + num_traits::Zero>(a: T, b: T, m: T) -> T {
     debug_assert!(T::zero() <= a && a <= m);
     debug_assert!(T::zero() <= b && b <= m);
@@ -242,15 +269,16 @@ fn modular_sub<T: Sub<Output = T> + Ord + num_traits::Zero>(a: T, b: T, m: T) ->
 
 #[cfg(test)]
 mod tests {
-    use rand::{rngs::StdRng, Rng, SeedableRng};
-
     use super::*;
+    use crate::testutil;
     use crate::{converter::IdConverter, suffix_array::sample};
+    use rand::{rngs::StdRng, Rng, SeedableRng};
 
     #[test]
     fn test_lf_map() {
         let text_size = 4096;
-        let text = generate_text_random(text_size, 8);
+        let mut rng = StdRng::seed_from_u64(0);
+        let text = generate_text_random(&mut rng, text_size, 8);
 
         let converter = IdConverter::new::<u8>();
         let suffix_array = MultiTextFMIndexBackend::<_, _, ()>::suffix_array(&text, &converter);
@@ -268,9 +296,62 @@ mod tests {
         assert_eq!(lf_map_expected, lf_map_actual);
     }
 
-    fn generate_text_random(text_size: usize, alphabet_size: u8) -> Vec<u8> {
+    #[test]
+    fn test_get_text_id() {
+        let text = "foo\0bar\0baz\0".as_bytes();
+        let converter = IdConverter::new::<u8>();
+        let suffix_array = MultiTextFMIndexBackend::<_, _, ()>::suffix_array(text, &converter);
+        let fm_index =
+            MultiTextFMIndexBackend::new(text.to_vec(), converter, |sa| sample::sample(sa, 0));
+
+        for (i, &char_pos) in suffix_array.iter().enumerate() {
+            let text_id_expected = TextId::from(
+                text[..(char_pos as usize)]
+                    .iter()
+                    .filter(|&&c| c == 0)
+                    .count() as u64,
+            );
+            let text_id_actual = fm_index.text_id(i as u64);
+            assert_eq!(
+                text_id_expected, text_id_actual,
+                "the text ID of a character at position {} ({} in suffix array) must be {:?}",
+                char_pos, i, text_id_expected
+            );
+        }
+    }
+
+    #[test]
+    fn test_get_text_id_random() {
+        let text_size = 512;
+        let attempts = 100;
+        let alphabet_size = 8;
         let mut rng = StdRng::seed_from_u64(0);
 
+        for _ in 0..attempts {
+            let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
+            let converter = IdConverter::new::<u8>();
+            let suffix_array = MultiTextFMIndexBackend::<_, _, ()>::suffix_array(&text, &converter);
+            let fm_index =
+                MultiTextFMIndexBackend::new(text.clone(), converter, |sa| sample::sample(sa, 0));
+
+            for (i, &char_pos) in suffix_array.iter().enumerate() {
+                let text_id_expected = TextId::from(
+                    text[..(char_pos as usize)]
+                        .iter()
+                        .filter(|&&c| c == 0)
+                        .count() as u64,
+                );
+                let text_id_actual = fm_index.text_id(i as u64);
+                assert_eq!(
+                    text_id_expected, text_id_actual,
+                    "the text ID of a character at position {} ({} in suffix array) must be {:?}. text={:?}, suffix_array={:?}",
+                    char_pos, i, text_id_expected, text, suffix_array,
+                );
+            }
+        }
+    }
+
+    fn generate_text_random(rng: &mut StdRng, text_size: usize, alphabet_size: u8) -> Vec<u8> {
         (0..text_size)
             .map(|_| rng.gen::<u8>() % alphabet_size)
             .collect::<Vec<_>>()
