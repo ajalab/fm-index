@@ -1,4 +1,4 @@
-use std::ops::Sub;
+use std::ops::{Rem, Sub};
 
 use crate::backend::{HasMultiTexts, HasPosition, SearchIndexBackend};
 use crate::character::{prepare_text, Character};
@@ -249,16 +249,11 @@ where
     }
 }
 
-fn modular_add<T: Sub<Output = T> + Ord + num_traits::Zero>(a: T, b: T, m: T) -> T {
+fn modular_add<T: Rem<Output = T> + Ord + num_traits::Zero>(a: T, b: T, m: T) -> T {
     debug_assert!(T::zero() <= a && a <= m);
     debug_assert!(T::zero() <= b && b <= m);
 
-    let sum = a + b;
-    if sum >= m {
-        sum - m
-    } else {
-        sum
-    }
+    (a + b) % m
 }
 
 fn modular_sub<T: Sub<Output = T> + Ord + num_traits::Zero>(a: T, b: T, m: T) -> T {
