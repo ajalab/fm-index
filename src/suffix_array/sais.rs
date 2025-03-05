@@ -309,6 +309,7 @@ where
 mod tests {
     use super::*;
     use crate::converter::RangeConverter;
+    use num_traits::Zero;
     use rand::rngs::StdRng;
     use rand::{Rng, SeedableRng};
 
@@ -400,7 +401,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_sais_no_trailing_zero() {
+    fn test_panic_no_trailing_zero() {
         let text = "nozero".to_string().into_bytes();
         let converter = RangeConverter::new(b'a', b'z');
         build_suffix_array(&text, &converter);
@@ -408,50 +409,59 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_sais_too_many_trailing_zero() {
+    fn test_panic_too_many_trailing_zero() {
         let text = "toomanyzeros\0\0".to_string().into_bytes();
         let converter = IdConverter::with_size(std::mem::size_of::<u8>() as u64);
         build_suffix_array(&text, &converter);
     }
 
     #[test]
-    fn test_sais_1() {
+    fn test_length_1() {
         let text = &[0u8];
         let sa = build_suffix_array(text, &IdConverter::with_size(4));
-        let expected = get_suffix_array(text);
+        let expected = build_expected_suffix_array(text);
         assert_eq!(sa, expected);
     }
 
     #[test]
-    fn test_sais_2() {
+    fn test_length_2() {
         let text = &[3u8, 0];
         let sa = build_suffix_array(text, &IdConverter::with_size(4));
-        let expected = get_suffix_array(text);
+        let expected = build_expected_suffix_array(text);
         assert_eq!(sa, expected);
     }
 
     #[test]
-    fn test_sais_4() {
+    fn test_length_4() {
         let text = &[3u8, 2, 1, 0];
         let sa = build_suffix_array(text, &IdConverter::with_size(4));
-        let expected = get_suffix_array(text);
+        let expected = build_expected_suffix_array(text);
         assert_eq!(sa, expected);
     }
 
     #[test]
-    fn test_sais_with_nulls() {
+    fn test_nulls() {
         let text = b"mm\0ii\0s\0sii\0ssii\0ppii\0".to_vec();
         let sa = build_suffix_array(&text, &RangeConverter::new(b'a', b'z'));
-        let expected = get_suffix_array(text);
+        let expected = build_expected_suffix_array(text);
         assert_eq!(sa, expected);
     }
 
     #[test]
     #[ignore]
-    fn test_sais_with_consecutive_nulls() {
+    fn test_consecutive_nulls() {
         let text = b"mm\0\0ii\0s\0\0\0sii\0ssii\0ppii\0".to_vec();
         let sa = build_suffix_array(&text, &RangeConverter::new(b'a', b'z'));
-        let expected = get_suffix_array(text);
+        let expected = build_expected_suffix_array(text);
+        assert_eq!(sa, expected);
+    }
+
+    #[test]
+    #[ignore]
+    fn test_starting_with_zero() {
+        let text = b"\0\0mm\0\0ii\0s\0\0\0sii\0ssii\0ppii\0".to_vec();
+        let sa = build_suffix_array(&text, &RangeConverter::new(b'a', b'z'));
+        let expected = build_expected_suffix_array(text);
         assert_eq!(sa, expected);
     }
 
@@ -461,42 +471,81 @@ mod tests {
         text.push(0);
         let converter = RangeConverter::new(b'a', b'z');
         let sa = build_suffix_array(&text, &converter);
-        let ans = get_suffix_array(text);
+        let ans = build_expected_suffix_array(&text);
+        assert_eq!(sa, ans, "text: {:?}", text);
+    }
 
-        assert_eq!(sa.len(), ans.len());
-        for (i, (actual, expected)) in sa.into_iter().zip(ans.into_iter()).enumerate() {
-            assert_eq!(
-                actual, expected,
-                "wrong at {}-th pos: expected {}, but actual {}",
-                i, expected, actual
-            );
+    #[test]
+    fn test_rand_alphabets() {
+        let len = 1000;
+        let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
+        let converter = RangeConverter::new(b'a', b'z');
+
+        for _ in 0..1000 {
+            let text = build_text(|| rng.gen::<u8>() % (b'z' - b'a') + b'a', len);
+            let sa = build_suffix_array(&text, &converter);
+            let ans = build_expected_suffix_array(&text);
+            assert_eq!(sa, ans);
         }
     }
 
     #[test]
-    fn test_sais_rand() {
-        let len = 100_000;
+    fn test_rand_binary() {
+        let len = 10000;
         let prob = 1.0 / 4.0;
         let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
-        let mut text = (0..len)
-            .map(|_| if rng.gen_bool(prob) { b'a' } else { b'b' })
-            .collect::<Vec<_>>();
-        text.push(0);
-
         let converter = RangeConverter::new(b'a', b'b');
+
+        let text = build_text(|| if rng.gen_bool(prob) { b'a' } else { b'b' }, len);
+
         let sa = build_suffix_array(&text, &converter);
-        let ans = get_suffix_array(&text);
-        assert_eq!(sa.len(), ans.len());
-        for (i, (actual, expected)) in sa.into_iter().zip(ans.into_iter()).enumerate() {
-            assert_eq!(
-                actual, expected,
-                "wrong at {}-th pos: expected {}, but actual {}",
-                i, expected, actual
-            );
-        }
+        let ans = build_expected_suffix_array(&text);
+        assert_eq!(sa, ans);
     }
 
-    fn get_suffix_array<K: AsRef<[T]>, T: Copy + Clone + Ord>(text: K) -> Vec<u64> {
+    #[test]
+    fn test_rand_nulls() {
+        let len = 10;
+        let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
+        let converter = IdConverter::with_size(256);
+
+        let text = build_text(|| rng.gen::<u8>() % 2, len);
+
+        let sa = build_suffix_array(&text, &converter);
+        let ans = build_expected_suffix_array(&text);
+        assert_eq!(sa, ans, "text: {:?}", text);
+    }
+
+    /// Build a text for tests using a generator function `gen`.
+    fn build_text<T: Zero + Clone, F: FnMut() -> T>(mut gen: F, len: usize) -> Vec<T> {
+        let mut text = vec![T::zero(); len];
+
+        let mut prev_zero = true;
+        for i in 0..len - 1 {
+            let mut c = gen();
+            if prev_zero {
+                while c.is_zero() {
+                    c = gen();
+                }
+            }
+            prev_zero = c.is_zero();
+            text[i] = c;
+        }
+
+        while text[len - 2].is_zero() {
+            text[len - 2] = gen();
+        }
+
+        text
+    }
+
+    /// Compute the suffix array of the given text in naive way for testing purpose.
+    /// This algorithm is aware of the order of end markers (zeros).
+    fn build_expected_suffix_array<T, K>(text: K) -> Vec<u64>
+    where
+        T: Character,
+        K: AsRef<[T]>,
+    {
         let text = text.as_ref();
         let n = text.len();
         let suffixes = (0..n).map(|i| &text[i..n]).collect::<Vec<_>>();
