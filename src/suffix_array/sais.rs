@@ -371,8 +371,8 @@ mod tests {
         let converter = RangeConverter::new(b'a', b'z');
         let occs = count_chars(text, &converter);
         let bucket_start_pos = get_bucket_start_pos(&occs);
-        let ans = vec![(b'\0', 0), (b'i', 1), (b'm', 9), (b'p', 11), (b's', 13)];
-        for (c, expected) in ans {
+        let sa_expected = vec![(b'\0', 0), (b'i', 1), (b'm', 9), (b'p', 11), (b's', 13)];
+        for (c, expected) in sa_expected {
             let actual = bucket_start_pos[converter.convert(c) as usize];
             assert_eq!(
                 actual, expected,
@@ -385,11 +385,11 @@ mod tests {
     #[test]
     fn test_get_bucket_end_pos() {
         let text = "mmiissiissiippii\0";
-        let ans = vec![(b'\0', 1), (b'i', 9), (b'm', 11), (b'p', 13), (b's', 17)];
+        let sa_expected = vec![(b'\0', 1), (b'i', 9), (b'm', 11), (b'p', 13), (b's', 17)];
         let converter = RangeConverter::new(b'a', b'z');
         let occs = count_chars(text, &converter);
         let bucket_end_pos = get_bucket_end_pos(&occs);
-        for (c, expected) in ans {
+        for (c, expected) in sa_expected {
             let actual = bucket_end_pos[converter.convert(c) as usize];
             assert_eq!(
                 actual, expected,
@@ -416,53 +416,52 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_panic_consecutive_nulls() {
+        let text = b"mm\0\0ii\0s\0\0\0sii\0ssii\0ppii\0".to_vec();
+        let converter = RangeConverter::new(b'a', b'z');
+        build_suffix_array(&text, &converter);
+    }
+
+    #[test]
     fn test_length_1() {
         let text = &[0u8];
-        let sa = build_suffix_array(text, &IdConverter::with_size(4));
-        let expected = build_expected_suffix_array(text);
-        assert_eq!(sa, expected);
+        let sa_actual = build_suffix_array(text, &IdConverter::with_size(4));
+        let sa_expected = build_expected_suffix_array(text);
+        assert_eq!(sa_actual, sa_expected);
     }
 
     #[test]
     fn test_length_2() {
         let text = &[3u8, 0];
-        let sa = build_suffix_array(text, &IdConverter::with_size(4));
-        let expected = build_expected_suffix_array(text);
-        assert_eq!(sa, expected);
+        let sa_actual = build_suffix_array(text, &IdConverter::with_size(4));
+        let sa_expected = build_expected_suffix_array(text);
+        assert_eq!(sa_actual, sa_expected);
     }
 
     #[test]
     fn test_length_4() {
         let text = &[3u8, 2, 1, 0];
-        let sa = build_suffix_array(text, &IdConverter::with_size(4));
-        let expected = build_expected_suffix_array(text);
-        assert_eq!(sa, expected);
+        let sa_actual = build_suffix_array(text, &IdConverter::with_size(4));
+        let sa_expected = build_expected_suffix_array(text);
+        assert_eq!(sa_actual, sa_expected);
     }
 
     #[test]
     fn test_nulls() {
         let text = b"mm\0ii\0s\0sii\0ssii\0ppii\0".to_vec();
-        let sa = build_suffix_array(&text, &RangeConverter::new(b'a', b'z'));
-        let expected = build_expected_suffix_array(text);
-        assert_eq!(sa, expected);
-    }
-
-    #[test]
-    #[ignore]
-    fn test_consecutive_nulls() {
-        let text = b"mm\0\0ii\0s\0\0\0sii\0ssii\0ppii\0".to_vec();
-        let sa = build_suffix_array(&text, &RangeConverter::new(b'a', b'z'));
-        let expected = build_expected_suffix_array(text);
-        assert_eq!(sa, expected);
+        let sa_actual = build_suffix_array(&text, &RangeConverter::new(b'a', b'z'));
+        let sa_expected = build_expected_suffix_array(text);
+        assert_eq!(sa_actual, sa_expected);
     }
 
     #[test]
     #[ignore]
     fn test_starting_with_zero() {
         let text = b"\0\0mm\0\0ii\0s\0\0\0sii\0ssii\0ppii\0".to_vec();
-        let sa = build_suffix_array(&text, &RangeConverter::new(b'a', b'z'));
-        let expected = build_expected_suffix_array(text);
-        assert_eq!(sa, expected);
+        let sa_actual = build_suffix_array(&text, &RangeConverter::new(b'a', b'z'));
+        let sa_expected = build_expected_suffix_array(text);
+        assert_eq!(sa_actual, sa_expected);
     }
 
     #[test]
@@ -470,9 +469,9 @@ mod tests {
         let mut text = "mmiissiissiippii".to_string().into_bytes();
         text.push(0);
         let converter = RangeConverter::new(b'a', b'z');
-        let sa = build_suffix_array(&text, &converter);
-        let ans = build_expected_suffix_array(&text);
-        assert_eq!(sa, ans, "text: {:?}", text);
+        let sa_actual = build_suffix_array(&text, &converter);
+        let sa_expected = build_expected_suffix_array(&text);
+        assert_eq!(sa_actual, sa_expected, "text: {:?}", text);
     }
 
     #[test]
@@ -483,37 +482,53 @@ mod tests {
 
         for _ in 0..1000 {
             let text = build_text(|| rng.gen::<u8>() % (b'z' - b'a') + b'a', len);
-            let sa = build_suffix_array(&text, &converter);
-            let ans = build_expected_suffix_array(&text);
-            assert_eq!(sa, ans);
+            let sa_actual = build_suffix_array(&text, &converter);
+            let sa_expected = build_expected_suffix_array(&text);
+            assert_eq!(sa_actual, sa_expected, "text: {:?}", text);
         }
     }
 
     #[test]
-    fn test_rand_binary() {
-        let len = 10000;
+    fn test_rand_binary_alphabets() {
+        let len = 1000;
         let prob = 1.0 / 4.0;
         let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
         let converter = RangeConverter::new(b'a', b'b');
 
-        let text = build_text(|| if rng.gen_bool(prob) { b'a' } else { b'b' }, len);
-
-        let sa = build_suffix_array(&text, &converter);
-        let ans = build_expected_suffix_array(&text);
-        assert_eq!(sa, ans);
+        for _ in 0..1000 {
+            let text = build_text(|| if rng.gen_bool(prob) { b'a' } else { b'b' }, len);
+            let sa_actual = build_suffix_array(&text, &converter);
+            let sa_expected = build_expected_suffix_array(&text);
+            assert_eq!(sa_actual, sa_expected, "text: {:?}", text);
+        }
     }
 
     #[test]
-    fn test_rand_nulls() {
-        let len = 10;
+    fn test_rand_binary_zero_one() {
+        let len = 1000;
         let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
         let converter = IdConverter::with_size(256);
 
-        let text = build_text(|| rng.gen::<u8>() % 2, len);
+        for _ in 0..1000 {
+            let text = build_text(|| rng.gen::<u8>() % 2, len);
+            let sa_actual = build_suffix_array(&text, &converter);
+            let sa_expected = build_expected_suffix_array(&text);
+            assert_eq!(sa_actual, sa_expected, "text: {:?}", text);
+        }
+    }
 
-        let sa = build_suffix_array(&text, &converter);
-        let ans = build_expected_suffix_array(&text);
-        assert_eq!(sa, ans, "text: {:?}", text);
+    #[test]
+    fn test_rand_bytes() {
+        let len = 1000;
+        let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
+        let converter = IdConverter::new::<u8>();
+
+        for _ in 0..1000 {
+            let text = build_text(|| rng.gen::<u8>(), len);
+            let sa_actual = build_suffix_array(&text, &converter);
+            let sa_expected = build_expected_suffix_array(&text);
+            assert_eq!(sa_actual, sa_expected, "text: {:?}", text);
+        }
     }
 
     /// Build a text for tests using a generator function `gen`.
@@ -521,7 +536,7 @@ mod tests {
         let mut text = vec![T::zero(); len];
 
         let mut prev_zero = true;
-        for i in 0..len - 1 {
+        for t in text.iter_mut().take(len - 1) {
             let mut c = gen();
             if prev_zero {
                 while c.is_zero() {
@@ -529,7 +544,7 @@ mod tests {
                 }
             }
             prev_zero = c.is_zero();
-            text[i] = c;
+            *t = c;
         }
 
         while text[len - 2].is_zero() {
