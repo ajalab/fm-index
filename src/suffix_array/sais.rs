@@ -106,7 +106,6 @@ where
     }
 
     let mut bucket_end_pos = get_bucket_end_pos(occs);
-    let zeros = bucket_end_pos[0] as usize;
     for i in (0..n).rev() {
         let j = sa[i];
         if j != 0 && j != u64::MAX && types.is_bit_set(j as usize - 1).unwrap() {
@@ -116,10 +115,6 @@ where
             bucket_end_pos[c] -= 1;
         }
     }
-
-    // After the induced sort, positions of end markers were placed at the first bucket of `sa`.
-    // This rearranges them so that the end markers appear in the reversed order in the original text.
-    sa[0..zeros].sort_by(|i, j| j.cmp(i));
 }
 
 /// Build a suffix array from the given [`text`] using SA-IS algorithm.
@@ -568,21 +563,7 @@ mod tests {
     {
         let text = text.as_ref();
         let n = text.len();
-        let suffixes = (0..n)
-            .map(|i| {
-                text[i..n]
-                    .iter()
-                    .enumerate()
-                    .map(|(j, c)| {
-                        if c.is_zero() {
-                            (*c, -((i + j) as isize))
-                        } else {
-                            (*c, 0)
-                        }
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .collect::<Vec<_>>();
+        let suffixes = (0..n).map(|i| &text[i..n]).collect::<Vec<_>>();
         let mut sa = (0..(suffixes.len() as u64)).collect::<Vec<_>>();
         sa.sort_by_key(|i| &suffixes[*i as usize]);
         sa
