@@ -20,7 +20,7 @@ fn prepare_rlfmindex(len: usize, prob: f64, m: usize) -> (impl SearchIndex<u8>, 
 pub fn bench(c: &mut Criterion) {
     let plot_config = PlotConfiguration::default().summary_scale(AxisScale::Logarithmic);
     let mut group = c.benchmark_group("count");
-    let n = 50000;
+    let n = 1_000_000;
     let m = 8;
     group.plot_config(plot_config);
     group.throughput(Throughput::Elements(1 << m as u32));
