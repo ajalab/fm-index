@@ -77,8 +77,14 @@ where
         let mut e = self.e;
         let mut pattern = pattern.as_ref().to_vec();
         for &c in pattern.iter().rev() {
-            s = self.backend.lf_map2(c, s);
-            e = self.backend.lf_map2(c, e);
+            let s_mapped = self.backend.lf_map2(c, s);
+            let e_mapped = self.backend.lf_map2(c, e);
+            if let (Some(s_mapped), Some(e_mapped)) = (s_mapped, e_mapped) {
+                s = s_mapped;
+                e = e_mapped;
+            } else {
+                todo!("return a Result instead of panicking");
+            }
             if s == e {
                 break;
             }
@@ -163,7 +169,7 @@ impl<B: SearchIndexBackend> Iterator for BackwardIteratorWrapper<'_, B> {
     type Item = B::T;
     fn next(&mut self) -> Option<Self::Item> {
         let c = self.backend.get_l(self.i);
-        self.i = self.backend.lf_map(self.i);
+        self.i = self.backend.lf_map(self.i)?;
         Some(self.backend.get_converter().convert_inv(c))
     }
 }
@@ -185,7 +191,7 @@ impl<B: SearchIndexBackend> Iterator for ForwardIteratorWrapper<'_, B> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let c = self.backend.get_f(self.i);
-        self.i = self.backend.fl_map(self.i);
+        self.i = self.backend.fl_map(self.i)?;
         Some(self.backend.get_converter().convert_inv(c))
     }
 }

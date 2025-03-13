@@ -94,16 +94,16 @@ where
         Self::T::from_u64(self.bw.get_u64_unchecked(i as usize))
     }
 
-    fn lf_map(&self, i: u64) -> u64 {
+    fn lf_map(&self, i: u64) -> Option<u64> {
         let c = self.get_l(i);
         let c_count = self.cs[c.into() as usize];
         let rank = self.bw.rank_u64_unchecked(i as usize, c.into()) as u64;
-        c_count + rank
+        Some(c_count + rank)
     }
 
-    fn lf_map2(&self, c: T, i: u64) -> u64 {
+    fn lf_map2(&self, c: T, i: u64) -> Option<u64> {
         let c = self.converter.convert(c);
-        self.cs[c.into() as usize] + self.bw.rank_u64_unchecked(i as usize, c.into()) as u64
+        Some(self.cs[c.into() as usize] + self.bw.rank_u64_unchecked(i as usize, c.into()) as u64)
     }
 
     fn get_f(&self, i: u64) -> Self::T {
@@ -123,11 +123,13 @@ where
         T::from_u64(s as u64)
     }
 
-    fn fl_map(&self, i: u64) -> u64 {
+    fn fl_map(&self, i: u64) -> Option<u64> {
         let c = self.get_f(i);
-        self.bw
-            .select_u64_unchecked(i as usize - self.cs[c.into() as usize] as usize, c.into())
-            as u64
+        Some(
+            self.bw
+                .select_u64_unchecked(i as usize - self.cs[c.into() as usize] as usize, c.into())
+                as u64,
+        )
     }
 
     fn get_converter(&self) -> &Self::C {
@@ -148,7 +150,8 @@ where
                     return (sa + steps) % self.bw.len() as u64;
                 }
                 None => {
-                    i = self.lf_map(i);
+                    // safety: lf_map is always Some
+                    i = self.lf_map(i).unwrap();
                     steps += 1;
                 }
             }
@@ -170,7 +173,7 @@ mod tests {
         });
         let mut i = 0;
         for a in ans {
-            i = fm_index.lf_map(i);
+            i = fm_index.lf_map(i).unwrap();
             assert_eq!(i, a);
         }
     }
@@ -183,7 +186,7 @@ mod tests {
         });
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
-            let actual = fm_index.fl_map(i as u64);
+            let actual = fm_index.fl_map(i as u64).unwrap();
             assert_eq!(actual, expected);
         }
     }

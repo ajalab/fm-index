@@ -34,7 +34,7 @@ where
     pub(crate) fn new(text: Vec<T>, converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
         let text = prepare_text(text);
         let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
-        let sa = Self::suffix_array(&text, &converter);
+        let sa = sais::build_suffix_array(&text, &converter);
         let bw = Self::wavelet_matrix(&text, &sa, &converter);
         let doc = Self::doc(&text, &bw, &sa);
 
@@ -46,39 +46,6 @@ where
             doc,
             _t: std::marker::PhantomData::<T>,
         }
-    }
-
-    /**
-     * Compute the suffix array of the given text.
-     * This algorithm is aware of the order of end markers (zeros).
-     *
-     * TODO: Integrate it to SA-IS algorithm.
-     */
-    fn suffix_array<K>(text: K, converter: &C) -> Vec<u64>
-    where
-        K: AsRef<[T]>,
-    {
-        let text = text.as_ref();
-        let suffixes = (0..text.len())
-            .map(|i| {
-                text[i..]
-                    .iter()
-                    .enumerate()
-                    .map(|(j, c)| {
-                        let c = converter.convert(*c);
-                        if c.is_zero() {
-                            (c, i + j)
-                        } else {
-                            (c, 0)
-                        }
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .collect::<Vec<_>>();
-
-        let mut sa = (0..text.len() as u64).collect::<Vec<_>>();
-        sa.sort_by(|i, j| suffixes[*i as usize].cmp(&suffixes[*j as usize]));
-        sa
     }
 
     fn doc(text: &[T], bw: &WaveletMatrix, sa: &[u64]) -> Vec<u64> {
@@ -159,27 +126,25 @@ where
         Self::T::from_u64(self.bw.get_u64_unchecked(i as usize))
     }
 
-    fn lf_map(&self, i: u64) -> u64 {
+    fn lf_map(&self, i: u64) -> Option<u64> {
         let c = self.get_l(i);
-        let rank = self.bw.rank_u64_unchecked(i as usize, c.into());
-
         if c.is_zero() {
-            self.doc[rank]
+            None
         } else {
+            let rank = self.bw.rank_u64_unchecked(i as usize, c.into());
             let c_count = self.cs[c.into() as usize];
-            rank as u64 + c_count
+            Some(rank as u64 + c_count)
         }
     }
 
-    fn lf_map2(&self, c: T, i: u64) -> u64 {
+    fn lf_map2(&self, c: T, i: u64) -> Option<u64> {
         let c = self.converter.convert(c);
-        let rank = self.bw.rank_u64_unchecked(i as usize, c.into());
-
         if c.is_zero() {
-            self.doc[rank]
+            None
         } else {
+            let rank = self.bw.rank_u64_unchecked(i as usize, c.into());
             let c_count = self.cs[c.into() as usize];
-            rank as u64 + c_count
+            Some(rank as u64 + c_count)
         }
     }
 
@@ -200,8 +165,18 @@ where
         T::from_u64(s as u64)
     }
 
-    fn fl_map(&self, _i: u64) -> u64 {
-        todo!("implement inverse LF-mapping");
+    fn fl_map(&self, i: u64) -> Option<u64> {
+        let c = self.get_f(i);
+        if c.is_zero() {
+            None
+        } else {
+            Some(
+                self.bw.select_u64_unchecked(
+                    i as usize - self.cs[c.into() as usize] as usize,
+                    c.into(),
+                ) as u64,
+            )
+        }
     }
 
     fn get_converter(&self) -> &Self::C {
@@ -222,7 +197,8 @@ where
                     return (sa + steps) % self.bw.len() as u64;
                 }
                 None => {
-                    i = self.lf_map(i);
+                    // TODO: Fix
+                    i = self.lf_map(i).unwrap();
                     steps += 1;
                 }
             }
@@ -237,14 +213,13 @@ where
 {
     fn text_id(&self, mut i: u64) -> TextId {
         loop {
-            let c = self.get_l(i);
-            if c.is_zero() {
+            if let Some(j) = self.lf_map(i) {
+                i = j;
+            } else {
                 let text_id_prev = self.doc[self.bw.rank_u64_unchecked(i as usize, 0)];
                 let text_id = modular_add(text_id_prev, 1, self.doc.len() as u64);
                 return TextId::from(text_id);
             }
-
-            i = self.lf_map2(c, i);
         }
     }
 }
@@ -275,32 +250,41 @@ mod tests {
     use rand::{rngs::StdRng, Rng, SeedableRng};
 
     #[test]
-    fn test_lf_map() {
-        let text_size = 4096;
+    fn test_lf_map_random() {
+        let text_size = 512;
+        let attempts = 100;
+        let alphabet_size = 8;
         let mut rng = StdRng::seed_from_u64(0);
-        let text = generate_text_random(&mut rng, text_size, 8);
 
-        let converter = IdConverter::new::<u8>();
-        let suffix_array = MultiTextFMIndexBackend::<_, _, ()>::suffix_array(&text, &converter);
-        let inv_suffix_array = inv_suffix_array(&suffix_array);
-        let fm_index = MultiTextFMIndexBackend::new(text, converter, |sa| sample::sample(sa, 0));
+        for _ in 0..attempts {
+            let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
+            let converter = IdConverter::new::<u8>();
+            let suffix_array = testutil::build_suffix_array(&text);
+            let inv_suffix_array = testutil::build_inv_suffix_array(&suffix_array);
+            let fm_index =
+                MultiTextFMIndexBackend::new(text.clone(), converter, |sa| sample::sample(sa, 0));
 
-        let mut lf_map_expected = vec![0; text_size];
-        let mut lf_map_actual = vec![0; text_size];
-        for i in 0..text_size {
-            lf_map_expected[i] =
-                inv_suffix_array[modular_sub(suffix_array[i] as usize, 1, text_size)];
-            lf_map_actual[i] = fm_index.lf_map(i as u64);
+            let mut lf_map_expected = vec![None; text_size];
+            let mut lf_map_actual = vec![None; text_size];
+            for i in 0..text_size {
+                let k = modular_sub(suffix_array[i] as usize, 1, text_size);
+                lf_map_expected[i] = if text[k] == 0 {
+                    None
+                } else {
+                    Some(inv_suffix_array[k])
+                };
+                lf_map_actual[i] = fm_index.lf_map(i as u64);
+            }
+
+            assert_eq!(lf_map_expected, lf_map_actual);
         }
-
-        assert_eq!(lf_map_expected, lf_map_actual);
     }
 
     #[test]
     fn test_get_text_id() {
         let text = "foo\0bar\0baz\0".as_bytes();
         let converter = IdConverter::new::<u8>();
-        let suffix_array = MultiTextFMIndexBackend::<_, _, ()>::suffix_array(text, &converter);
+        let suffix_array = testutil::build_suffix_array(text);
         let fm_index =
             MultiTextFMIndexBackend::new(text.to_vec(), converter, |sa| sample::sample(sa, 0));
 
@@ -330,7 +314,7 @@ mod tests {
         for _ in 0..attempts {
             let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
             let converter = IdConverter::new::<u8>();
-            let suffix_array = MultiTextFMIndexBackend::<_, _, ()>::suffix_array(&text, &converter);
+            let suffix_array = testutil::build_suffix_array(&text);
             let fm_index =
                 MultiTextFMIndexBackend::new(text.clone(), converter, |sa| sample::sample(sa, 0));
 
@@ -349,19 +333,5 @@ mod tests {
                 );
             }
         }
-    }
-
-    fn generate_text_random(rng: &mut StdRng, text_size: usize, alphabet_size: u8) -> Vec<u8> {
-        (0..text_size)
-            .map(|_| rng.gen::<u8>() % alphabet_size)
-            .collect::<Vec<_>>()
-    }
-
-    fn inv_suffix_array(suffix_array: &[u64]) -> Vec<u64> {
-        let mut isa = vec![0; suffix_array.len()];
-        for (p, &i) in suffix_array.iter().enumerate() {
-            isa[i as usize] = p as u64;
-        }
-        isa
     }
 }

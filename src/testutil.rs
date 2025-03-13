@@ -1,25 +1,48 @@
+use crate::character::Character;
 use num_traits::Zero;
 
 /// Build a text for tests using a generator function `gen`.
-pub(crate) fn build_text<T: Zero, F: FnMut() -> T>(mut gen: F, len: usize) -> Vec<T> {
-    let mut text = (0..(len - 1)).map(|_| gen()).collect::<Vec<_>>();
+pub fn build_text<T: Zero + Clone, F: FnMut() -> T>(mut gen: F, len: usize) -> Vec<T> {
+    let mut text = vec![T::zero(); len];
 
-    // Truncate the trailing zeros, since SA-IS does not support trailing zero suffix longer than 1.
-    if let Some(pos) = text.iter().rposition(|x| !x.is_zero()) {
-        text.truncate(pos + 1);
-    } else {
-        text.clear();
-    }
-
-    // Add non-zero elements until the text length reaches len - 1.
-    while text.len() < len - 1 {
-        let c = gen();
-        if !c.is_zero() {
-            text.push(c);
+    let mut prev_zero = true;
+    for t in text.iter_mut().take(len - 1) {
+        let mut c = gen();
+        if prev_zero {
+            while c.is_zero() {
+                c = gen();
+            }
         }
+        prev_zero = c.is_zero();
+        *t = c;
     }
 
-    // Add the last zero as a sentinel for SA-IS.
-    text.push(T::zero());
+    while text[len - 2].is_zero() {
+        text[len - 2] = gen();
+    }
+
     text
+}
+
+/// Compute the suffix array of the given text in naive way for testing purpose.
+pub fn build_suffix_array<T, K>(text: K) -> Vec<u64>
+where
+    T: Character,
+    K: AsRef<[T]>,
+{
+    let text = text.as_ref();
+    let n = text.len();
+    let suffixes = (0..n).map(|i| &text[i..n]).collect::<Vec<_>>();
+    let mut sa = (0..(suffixes.len() as u64)).collect::<Vec<_>>();
+    sa.sort_by_key(|i| &suffixes[*i as usize]);
+    sa
+}
+
+/// Build the inverse suffix array from the suffix array.
+pub fn build_inv_suffix_array(suffix_array: &[u64]) -> Vec<u64> {
+    let mut isa = vec![0; suffix_array.len()];
+    for (p, &i) in suffix_array.iter().enumerate() {
+        isa[i as usize] = p as u64;
+    }
+    isa
 }
