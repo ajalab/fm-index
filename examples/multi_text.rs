@@ -57,15 +57,18 @@ fn main() {
         .collect::<Vec<_>>();
     assert_eq!(vec![b"rellevart".to_vec()], preceding_chars);
 
-    // As of this writing, MultiTextFMIndex cannot extract succeeding characters from a search position
-    // due to the lack of FL-mapping implementation.
-    // let prefix = fm_index
-    //     .search(" in the dark")
-    //     .iter_matches()
-    //     .map(|m| {
-    //         m.iter_chars_forward()
-    //             .take_while(|c| *c != b' ')
-    //             .collect::<Vec<_>>()
-    //     })
-    //     .collect::<Vec<_>>();
+    // Extract succeeding characters from a search position.
+    let succeeding_chars = fm_index
+        .search("ing ")
+        .iter_matches()
+        .map(|m| {
+            m.iter_chars_forward()
+                .take_while(|c| *c != b',')
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        vec![b"ing shines upon".to_vec(), b"ing sun is gone".to_vec()],
+        succeeding_chars,
+    );
 }
