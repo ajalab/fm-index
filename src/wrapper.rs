@@ -37,7 +37,7 @@ where
     where
         K: AsRef<[B::T]>,
     {
-        SearchWrapper::new(&self.0).search(pattern)
+        SearchWrapper::new(&self.0, 0, self.0.len()).search(pattern)
     }
 
     /// Get the length of the text in the index.
@@ -53,15 +53,27 @@ where
     }
 }
 
+impl<B> SearchIndexWrapper<B>
+where
+    B: SearchIndexBackend + HasMultiTexts,
+{
+    /// Search for the text which has the given suffix.
+    pub(crate) fn search_suffix<K>(&self, pattern: K) -> SearchWrapper<B>
+    where
+        K: AsRef<[B::T]>,
+    {
+        SearchWrapper::new(&self.0, 0, self.0.text_count()).search(pattern)
+    }
+}
+
 impl<'a, B> SearchWrapper<'a, B>
 where
     B: SearchIndexBackend,
 {
-    fn new(backend: &'a B) -> Self {
-        let e = backend.len();
+    fn new(backend: &'a B, s: u64, e: u64) -> Self {
         SearchWrapper {
             backend,
-            s: 0,
+            s,
             e,
             pattern: vec![],
         }

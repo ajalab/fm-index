@@ -50,6 +50,14 @@ pub trait SearchIndexWithLocate<T>: SearchIndex<T> {
         K: AsRef<[T]>;
 }
 
+/// Trait for searching in an index that supports multiple texts.
+pub trait SearchIndexWithMultiTexts<T>: SearchIndex<T> {
+    /// Search for a pattern that is a suffix of a text.
+    fn search_suffix<K>(&self, pattern: K) -> impl Search<T>
+    where
+        K: AsRef<[T]>;
+}
+
 /// The result of a search.
 ///
 /// A search result can be refined by adding more characters to the
@@ -356,6 +364,30 @@ macro_rules! impl_search_index_with_locate {
     };
 }
 
+macro_rules! impl_search_index_with_multi_texts {
+    ($t:ty, $s:ident, $st:ty) => {
+        impl<T: Character, C: Converter<T>> SearchIndexWithMultiTexts<T> for $t {
+            fn search_suffix<K>(&self, pattern: K) -> impl Search<T>
+            where
+                K: AsRef<[T]>,
+            {
+                $s(self.0.search_suffix(pattern))
+            }
+        }
+
+        // inherent
+        impl<T: Character, C: Converter<T>> $t {
+            /// Search for a pattern in the text.
+            pub fn search_suffix<K>(&self, pattern: K) -> $st
+            where
+                K: AsRef<[T]>,
+            {
+                $s(self.0.search_suffix(pattern))
+            }
+        }
+    };
+}
+
 macro_rules! impl_search {
     ($t:ty, $m:ident, $mt:ty) => {
         impl<'a, T: Character, C: Converter<T>> Search<'a, T> for $t {
@@ -505,6 +537,7 @@ impl_match!(RLFMIndexMatchWithLocate<'a, T, C>);
 impl_match_locate!(RLFMIndexMatchWithLocate<'a, T, C>);
 
 impl_search_index!(MultiTextFMIndex<T, C>, MultiTextFMIndexSearch, MultiTextFMIndexSearch<T, C>);
+impl_search_index_with_multi_texts!(MultiTextFMIndex<T, C>, MultiTextFMIndexSearch, MultiTextFMIndexSearch<T, C>);
 impl_search!(
     MultiTextFMIndexSearch<'a, T, C>,
     MultiTextFMIndexMatch,
@@ -513,6 +546,7 @@ impl_search!(
 impl_match!(MultiTextFMIndexMatch<'a, T, C>);
 
 impl_search_index_with_locate!(MultiTextFMIndexWithLocate<T, C>, MultiTextFMIndexSearchWithLocate, MultiTextFMIndexSearchWithLocate<T, C>);
+impl_search_index_with_multi_texts!(MultiTextFMIndexWithLocate<T, C>, MultiTextFMIndexSearchWithLocate, MultiTextFMIndexSearchWithLocate<T, C>);
 impl_search!(
     MultiTextFMIndexSearchWithLocate<'a, T, C>,
     MultiTextFMIndexMatchWithLocate,

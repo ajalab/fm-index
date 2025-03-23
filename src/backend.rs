@@ -48,4 +48,7 @@ pub(crate) trait HasPosition {
 pub(crate) trait HasMultiTexts {
     /// Returns the ID of the text that the character at the given position on the suffix array belongs to.
     fn text_id(&self, i: u64) -> TextId;
+
+    /// Returns the number of texts in the index.
+    fn text_count(&self) -> u64;
 }

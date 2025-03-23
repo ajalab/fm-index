@@ -155,6 +155,6 @@ pub use frontend::{
     MultiTextFMIndexMatch, MultiTextFMIndexMatchWithLocate, MultiTextFMIndexSearch,
     MultiTextFMIndexSearchWithLocate, MultiTextFMIndexWithLocate, RLFMIndex, RLFMIndexMatch,
     RLFMIndexMatchWithLocate, RLFMIndexSearch, RLFMIndexSearchWithLocate, RLFMIndexWithLocate,
-    Search, SearchIndex, SearchIndexWithLocate, SearchWithLocate,
+    Search, SearchIndex, SearchIndexWithLocate, SearchIndexWithMultiTexts, SearchWithLocate,
 };
 pub use text::TextId;
