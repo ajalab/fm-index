@@ -52,6 +52,11 @@ pub trait SearchIndexWithLocate<T>: SearchIndex<T> {
 
 /// Trait for searching in an index that supports multiple texts.
 pub trait SearchIndexWithMultiTexts<T>: SearchIndex<T> {
+    /// Search for a pattern that is a prefix of a text.
+    fn search_prefix<K>(&self, pattern: K) -> impl Search<T>
+    where
+        K: AsRef<[T]>;
+
     /// Search for a pattern that is a suffix of a text.
     fn search_suffix<K>(&self, pattern: K) -> impl Search<T>
     where
@@ -367,6 +372,13 @@ macro_rules! impl_search_index_with_locate {
 macro_rules! impl_search_index_with_multi_texts {
     ($t:ty, $s:ident, $st:ty) => {
         impl<T: Character, C: Converter<T>> SearchIndexWithMultiTexts<T> for $t {
+            fn search_prefix<K>(&self, pattern: K) -> impl Search<T>
+            where
+                K: AsRef<[T]>,
+            {
+                $s(self.0.search_prefix(pattern))
+            }
+
             fn search_suffix<K>(&self, pattern: K) -> impl Search<T>
             where
                 K: AsRef<[T]>,
@@ -377,7 +389,15 @@ macro_rules! impl_search_index_with_multi_texts {
 
         // inherent
         impl<T: Character, C: Converter<T>> $t {
-            /// Search for a pattern in the text.
+            /// Search for a pattern that is a prefix of a text.
+            pub fn search_prefix<K>(&self, pattern: K) -> $st
+            where
+                K: AsRef<[T]>,
+            {
+                $s(self.0.search_prefix(pattern))
+            }
+
+            /// Search for a pattern that is a suffix of a text.
             pub fn search_suffix<K>(&self, pattern: K) -> $st
             where
                 K: AsRef<[T]>,

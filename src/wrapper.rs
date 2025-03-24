@@ -2,6 +2,8 @@
 // the functionality used by the frontend.
 // This makes the implementation of the frontend more regular.
 
+use num_traits::Zero;
+
 use crate::backend::{HasMultiTexts, HasPosition, SearchIndexBackend};
 use crate::converter::Converter;
 use crate::text::TextId;
@@ -19,6 +21,7 @@ where
     s: u64,
     e: u64,
     pattern: Vec<B::T>,
+    match_prefix_only: bool,
 }
 
 impl<B> SearchIndexWrapper<B>
@@ -37,7 +40,7 @@ where
     where
         K: AsRef<[B::T]>,
     {
-        SearchWrapper::new(&self.0, 0, self.0.len()).search(pattern)
+        SearchWrapper::new(&self.0, 0, self.0.len(), false).search(pattern)
     }
 
     /// Get the length of the text in the index.
@@ -57,12 +60,19 @@ impl<B> SearchIndexWrapper<B>
 where
     B: SearchIndexBackend + HasMultiTexts,
 {
+    pub(crate) fn search_prefix<K>(&self, pattern: K) -> SearchWrapper<B>
+    where
+        K: AsRef<[B::T]>,
+    {
+        SearchWrapper::new(&self.0, 0, self.0.len(), true).search(pattern)
+    }
+
     /// Search for the text which has the given suffix.
     pub(crate) fn search_suffix<K>(&self, pattern: K) -> SearchWrapper<B>
     where
         K: AsRef<[B::T]>,
     {
-        SearchWrapper::new(&self.0, 0, self.0.text_count()).search(pattern)
+        SearchWrapper::new(&self.0, 0, self.0.text_count(), false).search(pattern)
     }
 }
 
@@ -70,12 +80,13 @@ impl<'a, B> SearchWrapper<'a, B>
 where
     B: SearchIndexBackend,
 {
-    fn new(backend: &'a B, s: u64, e: u64) -> Self {
+    fn new(backend: &'a B, s: u64, e: u64, match_prefix_only: bool) -> Self {
         SearchWrapper {
             backend,
             s,
             e,
             pattern: vec![],
+            match_prefix_only,
         }
     }
 
@@ -102,6 +113,7 @@ where
             s,
             e,
             pattern,
+            match_prefix_only: self.match_prefix_only,
         }
     }
 
@@ -141,7 +153,7 @@ where
 
     // Iterate all occurrences of the found patterns.
     pub(crate) fn iter_matches(&self) -> impl Iterator<Item = MatchWrapper<'a, B>> {
-        MatchIteratorWrapper::new(self.backend, self.s, self.e)
+        MatchIteratorWrapper::new(self.backend, self.s, self.e, self.match_prefix_only)
     }
 }
 
@@ -206,11 +218,17 @@ pub(crate) struct MatchIteratorWrapper<'a, B: SearchIndexBackend> {
     backend: &'a B,
     i: u64,
     e: u64,
+    match_prefix_only: bool,
 }
 
 impl<'a, B: SearchIndexBackend> MatchIteratorWrapper<'a, B> {
-    pub(crate) fn new(backend: &'a B, i: u64, e: u64) -> Self {
-        MatchIteratorWrapper { backend, i, e }
+    pub(crate) fn new(backend: &'a B, i: u64, e: u64, match_prefix_only: bool) -> Self {
+        MatchIteratorWrapper {
+            backend,
+            i,
+            e,
+            match_prefix_only,
+        }
     }
 }
 
@@ -218,10 +236,13 @@ impl<'a, B: SearchIndexBackend> Iterator for MatchIteratorWrapper<'a, B> {
     type Item = MatchWrapper<'a, B>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.i < self.e {
-            let location = MatchWrapper::new(self.backend, self.i);
+        while self.i < self.e {
+            if !self.match_prefix_only || self.backend.get_l(self.i).is_zero() {
+                let location = MatchWrapper::new(self.backend, self.i);
+                self.i += 1;
+                return Some(location);
+            }
             self.i += 1;
-            return Some(location);
         }
         None
     }
