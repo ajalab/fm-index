@@ -12,7 +12,7 @@ fn test_search_count() {
 
     let mut rng = StdRng::seed_from_u64(0);
     let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
-    let fm_index = MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), 0);
+    let fm_index = MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), 1);
 
     for i in 0..1000 {
         let pattern_size = rng.gen::<usize>() % (pattern_size_max - 1) + 1;
@@ -44,7 +44,7 @@ fn test_search_locate() {
 
     let mut rng = StdRng::seed_from_u64(0);
     let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
-    let fm_index = MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), 0);
+    let fm_index = MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), 1);
 
     for i in 0..1000 {
         let pattern_size = rng.gen::<usize>() % (pattern_size_max - 1) + 1;
@@ -78,7 +78,7 @@ fn test_search_iter_matches_locate() {
     let mut rng = StdRng::seed_from_u64(0);
     let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
 
-    let fm_index = MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), 0);
+    let fm_index = MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), 1);
 
     for i in 0..1000 {
         let pattern_size = rng.gen::<usize>() % (pattern_size_max - 1) + 1;
@@ -116,7 +116,7 @@ fn test_search_iter_matches_text_id() {
     let mut rng = StdRng::seed_from_u64(0);
     let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
 
-    let fm_index = MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), 0);
+    let fm_index = MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), 1);
 
     for i in 0..1000 {
         let pattern_size = rng.gen::<usize>() % (pattern_size_max - 1) + 1;

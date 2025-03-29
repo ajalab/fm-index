@@ -94,16 +94,16 @@ where
         Self::T::from_u64(self.bw.get_u64_unchecked(i as usize))
     }
 
-    fn lf_map(&self, i: u64) -> Option<u64> {
+    fn lf_map(&self, i: u64) -> u64 {
         let c = self.get_l(i);
         let c_count = self.cs[c.into() as usize];
         let rank = self.bw.rank_u64_unchecked(i as usize, c.into()) as u64;
-        Some(c_count + rank)
+        c_count + rank
     }
 
-    fn lf_map2(&self, c: T, i: u64) -> Option<u64> {
+    fn lf_map2(&self, c: T, i: u64) -> u64 {
         let c = self.converter.convert(c);
-        Some(self.cs[c.into() as usize] + self.bw.rank_u64_unchecked(i as usize, c.into()) as u64)
+        self.cs[c.into() as usize] + self.bw.rank_u64_unchecked(i as usize, c.into()) as u64
     }
 
     fn get_f(&self, i: u64) -> Self::T {
@@ -150,8 +150,7 @@ where
                     return (sa + steps) % self.bw.len() as u64;
                 }
                 None => {
-                    // safety: lf_map is always Some
-                    i = self.lf_map(i).unwrap();
+                    i = self.lf_map(i);
                     steps += 1;
                 }
             }
@@ -173,7 +172,7 @@ mod tests {
         });
         let mut i = 0;
         for a in ans {
-            i = fm_index.lf_map(i).unwrap();
+            i = fm_index.lf_map(i);
             assert_eq!(i, a);
         }
     }

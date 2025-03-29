@@ -12,9 +12,9 @@ pub(crate) trait SearchIndexBackend: Sized {
 
     fn get_l(&self, i: u64) -> Self::T;
 
-    fn lf_map(&self, i: u64) -> Option<u64>;
+    fn lf_map(&self, i: u64) -> u64;
 
-    fn lf_map2(&self, c: Self::T, i: u64) -> Option<u64>;
+    fn lf_map2(&self, c: Self::T, i: u64) -> u64;
 
     fn get_f(&self, i: u64) -> Self::T;
 
