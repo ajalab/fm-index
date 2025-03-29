@@ -22,6 +22,8 @@ pub struct MultiTextFMIndexBackend<T, C, S> {
     converter: C,
     suffix_array: S,
     doc: Vec<u64>,
+    // The index of the first text in the suffix array
+    sa_idx_first_text: u64,
     _t: std::marker::PhantomData<T>,
 }
 
@@ -36,7 +38,7 @@ where
         let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
         let sa = sais::build_suffix_array(&text, &converter);
         let bw = Self::wavelet_matrix(&text, &sa, &converter);
-        let doc = Self::doc(&text, &bw, &sa);
+        let (doc, sa_idx_first_text) = Self::doc(&text, &bw, &sa);
 
         MultiTextFMIndexBackend {
             cs,
@@ -44,11 +46,12 @@ where
             converter,
             suffix_array: get_sample(&sa),
             doc,
+            sa_idx_first_text,
             _t: std::marker::PhantomData::<T>,
         }
     }
 
-    fn doc(text: &[T], bw: &WaveletMatrix, sa: &[u64]) -> Vec<u64> {
+    fn doc(text: &[T], bw: &WaveletMatrix, sa: &[u64]) -> (Vec<u64>, u64) {
         let mut end_marker_bits = BitVec::from_zeros(text.len());
         let mut end_marker_count = 0;
         for (i, c) in text.iter().enumerate() {
@@ -61,15 +64,19 @@ where
 
         let mut end_marker_rank_l = 0;
         let mut doc = vec![0; end_marker_count];
+        let mut sa_idx_first_text = 0;
         while let Some(p) = bw.select_u64(end_marker_rank_l, 0) {
             let end_marker_idx = modular_sub(sa[p] as usize, 1, sa.len());
             let text_id = end_marker_flags.rank1(end_marker_idx) as u64;
+            if text_id == (end_marker_count as u64 - 1) {
+                sa_idx_first_text = p;
+            }
             doc[end_marker_rank_l] = text_id;
 
             end_marker_rank_l += 1;
         }
 
-        doc
+        (doc, sa_idx_first_text as u64)
     }
 
     fn wavelet_matrix(text: &[T], sa: &[u64], converter: &C) -> WaveletMatrix {
@@ -126,25 +133,33 @@ where
         Self::T::from_u64(self.bw.get_u64_unchecked(i as usize))
     }
 
-    fn lf_map(&self, i: u64) -> Option<u64> {
+    fn lf_map(&self, i: u64) -> u64 {
         let c = self.get_l(i);
+        let rank = self.bw.rank_u64_unchecked(i as usize, c.into());
         if c.is_zero() {
-            None
+            match i.cmp(&self.sa_idx_first_text) {
+                std::cmp::Ordering::Less => rank as u64 + 1,
+                std::cmp::Ordering::Equal => 0,
+                std::cmp::Ordering::Greater => rank as u64,
+            }
         } else {
-            let rank = self.bw.rank_u64_unchecked(i as usize, c.into());
             let c_count = self.cs[c.into() as usize];
-            Some(rank as u64 + c_count)
+            rank as u64 + c_count
         }
     }
 
-    fn lf_map2(&self, c: T, i: u64) -> Option<u64> {
+    fn lf_map2(&self, c: T, i: u64) -> u64 {
         let c = self.converter.convert(c);
+        let rank = self.bw.rank_u64_unchecked(i as usize, c.into());
         if c.is_zero() {
-            None
+            match i.cmp(&self.sa_idx_first_text) {
+                std::cmp::Ordering::Less => rank as u64 + 1,
+                std::cmp::Ordering::Equal => 0,
+                std::cmp::Ordering::Greater => rank as u64,
+            }
         } else {
-            let rank = self.bw.rank_u64_unchecked(i as usize, c.into());
             let c_count = self.cs[c.into() as usize];
-            Some(rank as u64 + c_count)
+            rank as u64 + c_count
         }
     }
 
@@ -197,8 +212,7 @@ where
                     return (sa + steps) % self.bw.len() as u64;
                 }
                 None => {
-                    // TODO: Fix
-                    i = self.lf_map(i).unwrap();
+                    i = self.lf_map(i);
                     steps += 1;
                 }
             }
@@ -213,12 +227,12 @@ where
 {
     fn text_id(&self, mut i: u64) -> TextId {
         loop {
-            if let Some(j) = self.lf_map(i) {
-                i = j;
-            } else {
+            if self.get_l(i).is_zero() {
                 let text_id_prev = self.doc[self.bw.rank_u64_unchecked(i as usize, 0)];
                 let text_id = modular_add(text_id_prev, 1, self.doc.len() as u64);
                 return TextId::from(text_id);
+            } else {
+                i = self.lf_map(i);
             }
         }
     }
@@ -264,15 +278,11 @@ mod tests {
             let fm_index =
                 MultiTextFMIndexBackend::new(text.clone(), converter, |sa| sample::sample(sa, 0));
 
-            let mut lf_map_expected = vec![None; text_size];
-            let mut lf_map_actual = vec![None; text_size];
+            let mut lf_map_expected = vec![0; text_size];
+            let mut lf_map_actual = vec![0; text_size];
             for i in 0..text_size {
                 let k = modular_sub(suffix_array[i] as usize, 1, text_size);
-                lf_map_expected[i] = if text[k] == 0 {
-                    None
-                } else {
-                    Some(inv_suffix_array[k])
-                };
+                lf_map_expected[i] = inv_suffix_array[k];
                 lf_map_actual[i] = fm_index.lf_map(i as u64);
             }
 

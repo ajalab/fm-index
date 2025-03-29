@@ -137,27 +137,24 @@ where
         T::from_u64(self.s.get_u64_unchecked(self.b.rank1(i as usize + 1) - 1))
     }
 
-    fn lf_map(&self, i: u64) -> Option<u64> {
+    fn lf_map(&self, i: u64) -> u64 {
         let c = self.get_l(i);
         let j = self.b.rank1(i as usize);
         let nr = self.s.rank_u64_unchecked(j, c.into());
-        Some(
-            self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64 + i
-                - self.b.select1(j) as u64,
-        )
+
+        self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64 + i
+            - self.b.select1(j) as u64
     }
 
-    fn lf_map2(&self, c: T, i: u64) -> Option<u64> {
+    fn lf_map2(&self, c: T, i: u64) -> u64 {
         let c = self.converter.convert(c);
         let j = self.b.rank1(i as usize);
         let nr = self.s.rank_u64_unchecked(j, c.into());
         if self.get_l(i) != c {
-            Some(self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64)
+            self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64
         } else {
-            Some(
-                self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64 + i
-                    - self.b.select1(j) as u64,
-            )
+            self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64 + i
+                - self.b.select1(j) as u64
         }
     }
 
@@ -205,8 +202,7 @@ where
                     return (sa + steps) % self.len();
                 }
                 None => {
-                    // safety: lf_map is always Some
-                    i = self.lf_map(i).unwrap();
+                    i = self.lf_map(i);
                     steps += 1;
                 }
             }
@@ -301,7 +297,7 @@ mod tests {
 
         let mut i = 0;
         for a in ans {
-            let next_i = rlfmi.lf_map(i).unwrap();
+            let next_i = rlfmi.lf_map(i);
             assert_eq!(next_i, a, "should be lf_map({}) == {}", i, a);
             i = next_i;
         }
@@ -321,8 +317,8 @@ mod tests {
         let n = rlfmi.len();
 
         for (c, r) in ans {
-            let s = rlfmi.lf_map2(c, 0).unwrap();
-            let e = rlfmi.lf_map2(c, n).unwrap();
+            let s = rlfmi.lf_map2(c, 0);
+            let e = rlfmi.lf_map2(c, n);
             assert_eq!(
                 (s, e),
                 r,
