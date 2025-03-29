@@ -236,6 +236,10 @@ where
             }
         }
     }
+
+    fn text_count(&self) -> u64 {
+        self.doc.len() as u64
+    }
 }
 
 fn modular_add<T: Rem<Output = T> + Ord + num_traits::Zero>(a: T, b: T, m: T) -> T {
