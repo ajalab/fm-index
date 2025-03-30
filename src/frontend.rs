@@ -50,6 +50,24 @@ pub trait SearchIndexWithLocate<T>: SearchIndex<T> {
         K: AsRef<[T]>;
 }
 
+/// Trait for searching in an index that supports multiple texts.
+pub trait SearchIndexWithMultiTexts<T>: SearchIndex<T> {
+    /// Search for a pattern that is a prefix of a text.
+    fn search_prefix<K>(&self, pattern: K) -> impl Search<T>
+    where
+        K: AsRef<[T]>;
+
+    /// Search for a pattern that is a suffix of a text.
+    fn search_suffix<K>(&self, pattern: K) -> impl Search<T>
+    where
+        K: AsRef<[T]>;
+
+    /// Search for a pattern that is an exact match of a text.
+    fn search_exact<K>(&self, pattern: K) -> impl Search<T>
+    where
+        K: AsRef<[T]>;
+}
+
 /// The result of a search.
 ///
 /// A search result can be refined by adding more characters to the
@@ -356,6 +374,60 @@ macro_rules! impl_search_index_with_locate {
     };
 }
 
+macro_rules! impl_search_index_with_multi_texts {
+    ($t:ty, $s:ident, $st:ty) => {
+        impl<T: Character, C: Converter<T>> SearchIndexWithMultiTexts<T> for $t {
+            fn search_prefix<K>(&self, pattern: K) -> impl Search<T>
+            where
+                K: AsRef<[T]>,
+            {
+                $s(self.0.search_prefix(pattern))
+            }
+
+            fn search_suffix<K>(&self, pattern: K) -> impl Search<T>
+            where
+                K: AsRef<[T]>,
+            {
+                $s(self.0.search_suffix(pattern))
+            }
+
+            fn search_exact<K>(&self, pattern: K) -> impl Search<T>
+            where
+                K: AsRef<[T]>,
+            {
+                $s(self.0.search_exact(pattern))
+            }
+        }
+
+        // inherent
+        impl<T: Character, C: Converter<T>> $t {
+            /// Search for a pattern that is a prefix of a text.
+            pub fn search_prefix<K>(&self, pattern: K) -> $st
+            where
+                K: AsRef<[T]>,
+            {
+                $s(self.0.search_prefix(pattern))
+            }
+
+            /// Search for a pattern that is a suffix of a text.
+            pub fn search_suffix<K>(&self, pattern: K) -> $st
+            where
+                K: AsRef<[T]>,
+            {
+                $s(self.0.search_suffix(pattern))
+            }
+
+            /// Search for a pattern that is an exact match of a text.
+            pub fn search_exact<K>(&self, pattern: K) -> $st
+            where
+                K: AsRef<[T]>,
+            {
+                $s(self.0.search_exact(pattern))
+            }
+        }
+    };
+}
+
 macro_rules! impl_search {
     ($t:ty, $m:ident, $mt:ty) => {
         impl<'a, T: Character, C: Converter<T>> Search<'a, T> for $t {
@@ -505,6 +577,7 @@ impl_match!(RLFMIndexMatchWithLocate<'a, T, C>);
 impl_match_locate!(RLFMIndexMatchWithLocate<'a, T, C>);
 
 impl_search_index!(MultiTextFMIndex<T, C>, MultiTextFMIndexSearch, MultiTextFMIndexSearch<T, C>);
+impl_search_index_with_multi_texts!(MultiTextFMIndex<T, C>, MultiTextFMIndexSearch, MultiTextFMIndexSearch<T, C>);
 impl_search!(
     MultiTextFMIndexSearch<'a, T, C>,
     MultiTextFMIndexMatch,
@@ -513,6 +586,7 @@ impl_search!(
 impl_match!(MultiTextFMIndexMatch<'a, T, C>);
 
 impl_search_index_with_locate!(MultiTextFMIndexWithLocate<T, C>, MultiTextFMIndexSearchWithLocate, MultiTextFMIndexSearchWithLocate<T, C>);
+impl_search_index_with_multi_texts!(MultiTextFMIndexWithLocate<T, C>, MultiTextFMIndexSearchWithLocate, MultiTextFMIndexSearchWithLocate<T, C>);
 impl_search!(
     MultiTextFMIndexSearchWithLocate<'a, T, C>,
     MultiTextFMIndexMatchWithLocate,

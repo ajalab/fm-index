@@ -71,4 +71,22 @@ fn main() {
         vec![b"ing shines upon".to_vec(), b"ing sun is gone".to_vec()],
         succeeding_chars,
     );
+
+    // List the IDs of texts that have the prefix.
+    let mut text_ids_with_prefix = fm_index
+        .search_prefix("Twinkle")
+        .iter_matches()
+        .map(|m| m.text_id().into())
+        .collect::<Vec<u64>>();
+    text_ids_with_prefix.sort();
+    assert_eq!(vec![0], text_ids_with_prefix);
+
+    // List the IDs of texts that have the suffix.
+    let mut text_ids_with_suffix = fm_index
+        .search_suffix("what you are!\n")
+        .iter_matches()
+        .map(|m| m.text_id().into())
+        .collect::<Vec<u64>>();
+    text_ids_with_suffix.sort();
+    assert_eq!(vec![0, 1, 2], text_ids_with_suffix);
 }

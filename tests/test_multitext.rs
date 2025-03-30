@@ -1,110 +1,102 @@
-use rand::{rngs::StdRng, Rng, SeedableRng};
-
 mod testutil;
 use fm_index::converter::IdConverter;
 use fm_index::{MatchWithLocate, MatchWithTextId, MultiTextFMIndexWithLocate, Search, TextId};
+use testutil::TestRunner;
 
 #[test]
 fn test_search_count() {
-    let texts = 100;
-    let patterns = 100;
     let text_size = 1024;
-    let alphabet_size = 8;
-    let pattern_size_max = 10;
 
-    let mut rng = StdRng::seed_from_u64(0);
-    for _ in 0..texts {
-        let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
-        let fm_index = MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), 1);
-
-        for i in 0..patterns {
-            let pattern_size = rng.gen::<usize>() % (pattern_size_max - 1) + 1;
-            let pattern = (0..pattern_size)
-                .map(|_| rng.gen::<u8>() % (alphabet_size - 1) + 1)
-                .collect::<Vec<_>>();
-
+    TestRunner {
+        texts: 100,
+        patterns: 100,
+        text_size,
+        alphabet_size: 8,
+        level_max: 3,
+        pattern_size_max: 10,
+    }
+    .run(
+        |text, level| {
+            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
+        },
+        |fm_index, text, pattern| {
             let mut count_expected = 0;
-            for i in 0..=(text_size - pattern_size) {
-                if text[i..i + pattern_size] == pattern {
+            for i in 0..=(text_size - pattern.len()) {
+                if &text[i..i + pattern.len()] == pattern {
                     count_expected += 1;
                 }
             }
-            let count_actual = fm_index.search(&pattern).count();
+            let count_actual = fm_index.search(pattern).count();
 
             assert_eq!(
                 count_expected, count_actual,
-                "i = {:?}, text = {:?}, pattern = {:?}",
-                i, text, pattern
+                "text = {:?}, pattern = {:?}",
+                text, pattern
             );
-        }
-    }
+        },
+    );
 }
 
 #[test]
 fn test_search_locate() {
-    let texts = 100;
-    let patterns = 100;
     let text_size = 1024;
-    let alphabet_size = 8;
-    let pattern_size_max = 10;
 
-    let mut rng = StdRng::seed_from_u64(0);
-    for _ in 0..texts {
-        let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
-        let fm_index = MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), 1);
-
-        for i in 0..patterns {
-            let pattern_size = rng.gen::<usize>() % (pattern_size_max - 1) + 1;
-            let pattern = (0..pattern_size)
-                .map(|_| rng.gen::<u8>() % (alphabet_size - 1) + 1)
-                .collect::<Vec<_>>();
-
+    TestRunner {
+        texts: 100,
+        patterns: 100,
+        text_size,
+        alphabet_size: 8,
+        level_max: 3,
+        pattern_size_max: 10,
+    }
+    .run(
+        |text, level| {
+            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
+        },
+        |fm_index, text, pattern| {
             let mut positions_expected = Vec::new();
-            for i in 0..=(text_size - pattern_size) {
-                if text[i..i + pattern_size] == pattern {
+            for i in 0..=(text_size - pattern.len()) {
+                if &text[i..i + pattern.len()] == pattern {
                     positions_expected.push(i as u64);
                 }
             }
-            let mut positions_actual = fm_index.search(&pattern).locate();
+            let mut positions_actual = fm_index.search(pattern).locate();
             positions_actual.sort();
 
             assert_eq!(
                 positions_expected, positions_actual,
-                "i = {:?}, text = {:?}, pattern = {:?}",
-                i, text, pattern
+                "text = {:?}, pattern = {:?}",
+                text, pattern
             );
-        }
-    }
+        },
+    );
 }
 
 #[test]
 fn test_search_iter_matches_locate() {
-    let texts = 100;
-    let patterns = 100;
     let text_size = 1024;
-    let alphabet_size = 8;
-    let pattern_size_max = 10;
 
-    let mut rng = StdRng::seed_from_u64(0);
-
-    for _ in 0..texts {
-        let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
-        let fm_index = MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), 1);
-
-        for i in 0..patterns {
-            let pattern_size = rng.gen::<usize>() % (pattern_size_max - 1) + 1;
-            let pattern = (0..pattern_size)
-                .map(|_| rng.gen::<u8>() % (alphabet_size - 1) + 1)
-                .collect::<Vec<_>>();
-
+    TestRunner {
+        texts: 100,
+        patterns: 100,
+        text_size,
+        alphabet_size: 8,
+        level_max: 3,
+        pattern_size_max: 10,
+    }
+    .run(
+        |text, level| {
+            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
+        },
+        |fm_index, text, pattern| {
             let mut positions_expected = Vec::new();
-            for i in 0..=(text_size - pattern_size) {
-                if text[i..i + pattern_size] == pattern {
+            for i in 0..=(text_size - pattern.len()) {
+                if &text[i..i + pattern.len()] == pattern {
                     positions_expected.push(i as u64);
                 }
             }
             let mut positions_actual = fm_index
-                .search(&pattern)
+                .search(pattern)
                 .iter_matches()
                 .map(|m| m.locate())
                 .collect::<Vec<_>>();
@@ -112,44 +104,42 @@ fn test_search_iter_matches_locate() {
 
             assert_eq!(
                 positions_expected, positions_actual,
-                "i = {:?}, text = {:?}, pattern = {:?}",
-                i, text, pattern
+                "text = {:?}, pattern = {:?}",
+                text, pattern
             );
-        }
-    }
+        },
+    );
 }
 
 #[test]
 fn test_search_iter_matches_text_id() {
-    let texts = 100;
-    let patterns = 100;
     let text_size = 1024;
-    let alphabet_size = 8;
-    let pattern_size_max = 10;
 
-    let mut rng = StdRng::seed_from_u64(0);
-    for _ in 0..texts {
-        let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
-        let fm_index = MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), 1);
-
-        for i in 0..patterns {
-            let pattern_size = rng.gen::<usize>() % (pattern_size_max - 1) + 1;
-            let pattern = (0..pattern_size)
-                .map(|_| rng.gen::<u8>() % (alphabet_size - 1) + 1)
-                .collect::<Vec<_>>();
-
+    TestRunner {
+        texts: 100,
+        patterns: 100,
+        text_size,
+        alphabet_size: 8,
+        level_max: 3,
+        pattern_size_max: 10,
+    }
+    .run(
+        |text, level| {
+            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
+        },
+        |fm_index, text, pattern| {
             let mut text_ids_expected = Vec::new();
             let mut text_id = 0;
-            for i in 0..=(text_size - pattern_size) {
+            for i in 0..=(text_size - pattern.len()) {
                 if text[i] == 0 {
                     text_id += 1;
                 }
-                if text[i..i + pattern_size] == pattern {
+                if &text[i..i + pattern.len()] == pattern {
                     text_ids_expected.push(TextId::from(text_id));
                 }
             }
             let mut text_ids_actual = fm_index
-                .search(&pattern)
+                .search(pattern)
                 .iter_matches()
                 .map(|m| m.text_id())
                 .collect::<Vec<_>>();
@@ -157,9 +147,143 @@ fn test_search_iter_matches_text_id() {
 
             assert_eq!(
                 text_ids_expected, text_ids_actual,
-                "i = {:?}, text = {:?}, pattern = {:?}",
-                i, text, pattern
+                "text = {:?}, pattern = {:?}",
+                text, pattern
             );
-        }
+        },
+    );
+}
+
+#[test]
+fn test_search_prefix_text_id() {
+    let text_size = 1024;
+
+    TestRunner {
+        texts: 100,
+        patterns: 100,
+        text_size,
+        alphabet_size: 8,
+        level_max: 3,
+        pattern_size_max: 10,
     }
+    .run(
+        |text, level| {
+            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
+        },
+        |fm_index, text, pattern| {
+            let mut text_ids_expected = Vec::new();
+            let mut text_id = 0;
+            for i in 0..=(text_size - pattern.len()) {
+                if text[i] == 0 {
+                    text_id += 1;
+                }
+                if (i == 0 || text[i - 1] == 0) && &text[i..i + pattern.len()] == pattern {
+                    text_ids_expected.push(TextId::from(text_id));
+                }
+            }
+            let mut text_ids_actual = fm_index
+                .search_prefix(pattern)
+                .iter_matches()
+                .map(|m| m.text_id())
+                .collect::<Vec<_>>();
+            text_ids_actual.sort();
+
+            assert_eq!(
+                text_ids_expected, text_ids_actual,
+                "text = {:?}, pattern = {:?}",
+                text, pattern
+            );
+        },
+    );
+}
+
+#[test]
+fn test_search_suffix_text_id() {
+    let text_size = 1024;
+
+    TestRunner {
+        texts: 100,
+        patterns: 100,
+        text_size,
+        alphabet_size: 8,
+        level_max: 3,
+        pattern_size_max: 10,
+    }
+    .run(
+        |text, level| {
+            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
+        },
+        |fm_index, text, pattern| {
+            let mut text_ids_expected = Vec::new();
+            let mut text_id = 0;
+            for i in 0..=(text_size - pattern.len()) {
+                if text[i] == 0 {
+                    text_id += 1;
+                }
+                if (i + pattern.len() >= text.len() || text[i + pattern.len()] == 0)
+                    && &text[i..i + pattern.len()] == pattern
+                {
+                    text_ids_expected.push(TextId::from(text_id));
+                }
+            }
+            let mut text_ids_actual = fm_index
+                .search_suffix(pattern)
+                .iter_matches()
+                .map(|m| m.text_id())
+                .collect::<Vec<_>>();
+            text_ids_actual.sort();
+
+            assert_eq!(
+                text_ids_expected, text_ids_actual,
+                "text = {:?}, pattern = {:?}",
+                text, pattern
+            );
+        },
+    );
+}
+
+#[test]
+fn test_search_exact_text_id() {
+    let text_size = 1024;
+
+    TestRunner {
+        texts: 100,
+        patterns: 100,
+        text_size,
+        alphabet_size: 8,
+        level_max: 3,
+        pattern_size_max: 10,
+    }
+    .run(
+        |text, level| {
+            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
+        },
+        |fm_index, text, pattern| {
+            let mut text_ids_expected = Vec::new();
+            let mut text_id = 0;
+            for i in 0..=(text_size - pattern.len()) {
+                if text[i] == 0 {
+                    text_id += 1;
+                }
+                if (i == 0 || text[i - 1] == 0)
+                    && (i + pattern.len() >= text.len() || text[i + pattern.len()] == 0)
+                    && &text[i..i + pattern.len()] == pattern
+                {
+                    text_ids_expected.push(TextId::from(text_id));
+                }
+            }
+            let mut text_ids_actual = fm_index
+                .search_exact(pattern)
+                .iter_matches()
+                .map(|m| m.text_id())
+                .collect::<Vec<_>>();
+            text_ids_actual.sort();
+
+            assert_eq!(
+                text_ids_expected, text_ids_actual,
+                "text = {:?}, pattern = {:?}",
+                text, pattern
+            );
+        },
+    );
 }
