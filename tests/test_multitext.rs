@@ -60,7 +60,7 @@ fn test_search_locate() {
                     positions_expected.push(i as u64);
                 }
             }
-            let mut positions_actual = fm_index.search(&pattern).locate();
+            let mut positions_actual = fm_index.search(pattern).locate();
             positions_actual.sort();
 
             assert_eq!(
@@ -96,7 +96,7 @@ fn test_search_iter_matches_locate() {
                 }
             }
             let mut positions_actual = fm_index
-                .search(&pattern)
+                .search(pattern)
                 .iter_matches()
                 .map(|m| m.locate())
                 .collect::<Vec<_>>();
@@ -139,7 +139,7 @@ fn test_search_iter_matches_text_id() {
                 }
             }
             let mut text_ids_actual = fm_index
-                .search(&pattern)
+                .search(pattern)
                 .iter_matches()
                 .map(|m| m.text_id())
                 .collect::<Vec<_>>();
@@ -182,7 +182,7 @@ fn test_search_prefix_text_id() {
                 }
             }
             let mut text_ids_actual = fm_index
-                .search_prefix(&pattern)
+                .search_prefix(pattern)
                 .iter_matches()
                 .map(|m| m.text_id())
                 .collect::<Vec<_>>();
@@ -227,7 +227,7 @@ fn test_search_suffix_text_id() {
                 }
             }
             let mut text_ids_actual = fm_index
-                .search_suffix(&pattern)
+                .search_suffix(pattern)
                 .iter_matches()
                 .map(|m| m.text_id())
                 .collect::<Vec<_>>();
@@ -273,7 +273,7 @@ fn test_search_exact_text_id() {
                 }
             }
             let mut text_ids_actual = fm_index
-                .search_exact(&pattern)
+                .search_exact(pattern)
                 .iter_matches()
                 .map(|m| m.text_id())
                 .collect::<Vec<_>>();

@@ -43,10 +43,7 @@ impl TestRunner {
         let mut rng = StdRng::seed_from_u64(0);
 
         for _ in 0..self.texts {
-            let text = build_text(
-                || rng.gen::<u8>() % (self.alphabet_size as u8),
-                self.text_size,
-            );
+            let text = build_text(|| rng.gen::<u8>() % self.alphabet_size, self.text_size);
             let level = rng.gen::<usize>() % (self.level_max + 1);
             let fm_index = build_index(text.clone(), level);
 
