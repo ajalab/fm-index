@@ -153,3 +153,137 @@ fn test_search_iter_matches_text_id() {
         },
     );
 }
+
+#[test]
+fn test_search_prefix_text_id() {
+    let text_size = 1024;
+
+    TestRunner {
+        texts: 100,
+        patterns: 100,
+        text_size,
+        alphabet_size: 8,
+        level_max: 3,
+        pattern_size_max: 10,
+    }
+    .run(
+        |text, level| {
+            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
+        },
+        |fm_index, text, pattern| {
+            let mut text_ids_expected = Vec::new();
+            let mut text_id = 0;
+            for i in 0..=(text_size - pattern.len()) {
+                if text[i] == 0 {
+                    text_id += 1;
+                }
+                if (i == 0 || text[i - 1] == 0) && &text[i..i + pattern.len()] == pattern {
+                    text_ids_expected.push(TextId::from(text_id));
+                }
+            }
+            let mut text_ids_actual = fm_index
+                .search_prefix(&pattern)
+                .iter_matches()
+                .map(|m| m.text_id())
+                .collect::<Vec<_>>();
+            text_ids_actual.sort();
+
+            assert_eq!(
+                text_ids_expected, text_ids_actual,
+                "text = {:?}, pattern = {:?}",
+                text, pattern
+            );
+        },
+    );
+}
+
+#[test]
+fn test_search_suffix_text_id() {
+    let text_size = 1024;
+
+    TestRunner {
+        texts: 100,
+        patterns: 100,
+        text_size,
+        alphabet_size: 8,
+        level_max: 3,
+        pattern_size_max: 10,
+    }
+    .run(
+        |text, level| {
+            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
+        },
+        |fm_index, text, pattern| {
+            let mut text_ids_expected = Vec::new();
+            let mut text_id = 0;
+            for i in 0..=(text_size - pattern.len()) {
+                if text[i] == 0 {
+                    text_id += 1;
+                }
+                if (i + pattern.len() >= text.len() || text[i + pattern.len()] == 0)
+                    && &text[i..i + pattern.len()] == pattern
+                {
+                    text_ids_expected.push(TextId::from(text_id));
+                }
+            }
+            let mut text_ids_actual = fm_index
+                .search_suffix(&pattern)
+                .iter_matches()
+                .map(|m| m.text_id())
+                .collect::<Vec<_>>();
+            text_ids_actual.sort();
+
+            assert_eq!(
+                text_ids_expected, text_ids_actual,
+                "text = {:?}, pattern = {:?}",
+                text, pattern
+            );
+        },
+    );
+}
+
+#[test]
+fn test_search_exact_text_id() {
+    let text_size = 1024;
+
+    TestRunner {
+        texts: 100,
+        patterns: 100,
+        text_size,
+        alphabet_size: 8,
+        level_max: 3,
+        pattern_size_max: 10,
+    }
+    .run(
+        |text, level| {
+            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
+        },
+        |fm_index, text, pattern| {
+            let mut text_ids_expected = Vec::new();
+            let mut text_id = 0;
+            for i in 0..=(text_size - pattern.len()) {
+                if text[i] == 0 {
+                    text_id += 1;
+                }
+                if (i == 0 || text[i - 1] == 0)
+                    && (i + pattern.len() >= text.len() || text[i + pattern.len()] == 0)
+                    && &text[i..i + pattern.len()] == pattern
+                {
+                    text_ids_expected.push(TextId::from(text_id));
+                }
+            }
+            let mut text_ids_actual = fm_index
+                .search_exact(&pattern)
+                .iter_matches()
+                .map(|m| m.text_id())
+                .collect::<Vec<_>>();
+            text_ids_actual.sort();
+
+            assert_eq!(
+                text_ids_expected, text_ids_actual,
+                "text = {:?}, pattern = {:?}",
+                text, pattern
+            );
+        },
+    );
+}
