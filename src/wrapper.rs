@@ -74,6 +74,14 @@ where
     {
         SearchWrapper::new(&self.0, 0, self.0.text_count(), false).search(pattern)
     }
+
+    /// Search for a pattern that is an exact match of a text.
+    pub(crate) fn search_exact<K>(&self, pattern: K) -> SearchWrapper<B>
+    where
+        K: AsRef<[B::T]>,
+    {
+        SearchWrapper::new(&self.0, 0, self.0.text_count(), true).search(pattern)
+    }
 }
 
 impl<'a, B> SearchWrapper<'a, B>

@@ -61,6 +61,11 @@ pub trait SearchIndexWithMultiTexts<T>: SearchIndex<T> {
     fn search_suffix<K>(&self, pattern: K) -> impl Search<T>
     where
         K: AsRef<[T]>;
+
+    /// Search for a pattern that is an exact match of a text.
+    fn search_exact<K>(&self, pattern: K) -> impl Search<T>
+    where
+        K: AsRef<[T]>;
 }
 
 /// The result of a search.
@@ -385,6 +390,13 @@ macro_rules! impl_search_index_with_multi_texts {
             {
                 $s(self.0.search_suffix(pattern))
             }
+
+            fn search_exact<K>(&self, pattern: K) -> impl Search<T>
+            where
+                K: AsRef<[T]>,
+            {
+                $s(self.0.search_exact(pattern))
+            }
         }
 
         // inherent
@@ -403,6 +415,14 @@ macro_rules! impl_search_index_with_multi_texts {
                 K: AsRef<[T]>,
             {
                 $s(self.0.search_suffix(pattern))
+            }
+
+            /// Search for a pattern that is an exact match of a text.
+            pub fn search_exact<K>(&self, pattern: K) -> $st
+            where
+                K: AsRef<[T]>,
+            {
+                $s(self.0.search_exact(pattern))
             }
         }
     };
