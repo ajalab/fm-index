@@ -28,8 +28,8 @@ fm-index = "0.2"
 
 ## Example
 ```rust
+use fm_index::{Search, FMIndexWithLocate, MatchWithLocate, Match};
 use fm_index::converter::RangeConverter;
-use fm_index::FMIndex;
 
 // Prepare a text string to search for patterns.
 let text = concat!(
@@ -43,40 +43,49 @@ let text = concat!(
 // `' '` ~ `'~'` represents a range of ASCII printable characters.
 let converter = RangeConverter::new(b' ', b'~');
 
-let index = SearchIndexBuilder::with_converter(converter)
-    // the sampling level determines how much is retained in order to support `locate`
-    // queries. `0` retains the full information, but we don't need the whole array
-    // since we can interpolate missing elements in a suffix array from others. A sampler
-    // will _sieve_ a suffix array for this purpose. If you don't need `locate` queries
-    // you can save the memory by not setting a sampling level. 
-    .sampling_leveL(2)
-   .build(text);
+// To perform locate queries, we need to use some storage.
+// the sampling level determines how much is retained in order to support `locate`
+// queries. `0` retains the full information, but we don't need the whole array
+// since we can interpolate missing elements in a suffix array from others. A sampler
+// will _sieve_ a suffix array for this purpose. If you don't need `locate` queries
+// you can save the memory by not setting a sampling level.
+let index = FMIndexWithLocate::new(text, converter, 2);
 
 // Search for a pattern string.
 let pattern = "dolor";
-let search = index.search_backward(pattern);
+let search = index.search(pattern);
 
 // Count the number of occurrences.
 let n = search.count();
 assert_eq!(n, 4);
 
 // List the position of all occurrences.
-let positions = search.locate();
+let positions = search.iter_matches().map(|m| m.locate()).collect::<Vec<u64>>();
 assert_eq!(positions, vec![246, 12, 300, 103]);
 
 // Extract preceding characters from a search position.
-let i = 0;
-let mut prefix = search.iter_backward(i).take(16).collect::<Vec<u8>>();
+let mut prefix = search
+    .iter_matches()
+    .nth(0)
+    .unwrap()
+    .iter_chars_backward()
+    .take(16)
+    .collect::<Vec<u8>>();
 prefix.reverse();
 assert_eq!(prefix, b"Duis aute irure ".to_owned());
 
 // Extract succeeding characters from a search position.
-let i = 3;
-let postfix = search.iter_forward(i).take(20).collect::<Vec<u8>>();
+let postfix = search
+    .iter_matches()
+    .nth(3)
+    .unwrap()
+    .iter_chars_forward()
+    .take(20)
+    .collect::<Vec<u8>>();
 assert_eq!(postfix, b"dolore magna aliqua.".to_owned());
 
 // Search can be chained backward.
-let search_chained = search.search_backward("et ");
+let search_chained = search.search("et ");
 assert_eq!(search_chained.count(), 1);
 ```
 

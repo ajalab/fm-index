@@ -38,41 +38,6 @@ fn test_search_count() {
 }
 
 #[test]
-fn test_search_locate() {
-    let text_size = 1024;
-
-    TestRunner {
-        texts: 100,
-        patterns: 100,
-        text_size,
-        alphabet_size: 8,
-        level_max: 3,
-        pattern_size_max: 10,
-    }
-    .run(
-        |text, level| {
-            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
-        },
-        |fm_index, text, pattern| {
-            let mut positions_expected = Vec::new();
-            for i in 0..=(text_size - pattern.len()) {
-                if &text[i..i + pattern.len()] == pattern {
-                    positions_expected.push(i as u64);
-                }
-            }
-            let mut positions_actual = fm_index.search(pattern).locate();
-            positions_actual.sort();
-
-            assert_eq!(
-                positions_expected, positions_actual,
-                "text = {:?}, pattern = {:?}",
-                text, pattern
-            );
-        },
-    );
-}
-
-#[test]
 fn test_search_iter_matches_locate() {
     let text_size = 1024;
 
