@@ -100,7 +100,7 @@ pub struct TestRunner {
 impl TestRunner {
     pub fn run<I, B, R>(&self, build_index: B, run_test: R)
     where
-        B: Fn(Vec<u8>, usize) -> I,
+        B: Fn(&[u8], usize) -> I,
         R: Fn(&I, &[u8], &[u8]),
     {
         let mut rng = StdRng::seed_from_u64(0);
@@ -112,7 +112,7 @@ impl TestRunner {
                 build_text(|| rng.gen::<u8>() % self.alphabet_size + 1, self.text_size)
             };
             let level = rng.gen::<usize>() % (self.level_max + 1);
-            let fm_index = build_index(text.clone(), level);
+            let fm_index = build_index(&text, level);
 
             for _ in 0..self.patterns {
                 let pattern_size = rng.gen::<usize>() % (self.pattern_size_max - 1) + 1;

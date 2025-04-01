@@ -17,7 +17,7 @@ fn test_search_count() {
         multi_text: false,
     }
     .run(
-        |text, level| RLFMIndexWithLocate::new(&text, IdConverter::new::<u8>(), level),
+        |text, level| RLFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text);
             let matches_expected = naive_index.search(pattern);
@@ -46,7 +46,7 @@ fn test_search_locate() {
         multi_text: false,
     }
     .run(
-        |text, level| RLFMIndexWithLocate::new(&text, IdConverter::new::<u8>(), level),
+        |text, level| RLFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text);
             let matches_expected = naive_index.search(pattern);
