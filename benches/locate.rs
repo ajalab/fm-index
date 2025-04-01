@@ -1,4 +1,5 @@
-use fm_index::{FMIndexWithLocate, RLFMIndexWithLocate, SearchIndexWithLocate, SearchWithLocate};
+use fm_index::converter::Converter;
+use fm_index::{FMIndexWithLocate, MatchWithLocate, RLFMIndexWithLocate, Search};
 
 use criterion::{criterion_group, criterion_main};
 use criterion::{BatchSize, BenchmarkId, Criterion, Throughput};
@@ -10,7 +11,7 @@ fn prepare_fmindex(
     prob: f64,
     m: usize,
     l: usize,
-) -> (impl SearchIndexWithLocate<u8>, Vec<String>) {
+) -> (FMIndexWithLocate<u8, impl Converter<u8>>, Vec<String>) {
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
     (FMIndexWithLocate::new(text, converter, l), patterns)
@@ -21,7 +22,7 @@ fn prepare_rlfmindex(
     prob: f64,
     m: usize,
     l: usize,
-) -> (impl SearchIndexWithLocate<u8>, Vec<String>) {
+) -> (RLFMIndexWithLocate<u8, impl Converter<u8>>, Vec<String>) {
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
     (RLFMIndexWithLocate::new(text, converter, l), patterns)
@@ -39,7 +40,11 @@ pub fn bench(c: &mut Criterion) {
                 || prepare_fmindex(n, prob, m, l),
                 |(index, patterns)| {
                     for pattern in patterns {
-                        index.search(pattern).locate();
+                        let _ = index
+                            .search(pattern)
+                            .iter_matches()
+                            .map(|m| m.locate())
+                            .collect::<Vec<_>>();
                     }
                 },
                 BatchSize::SmallInput,
@@ -51,7 +56,11 @@ pub fn bench(c: &mut Criterion) {
                 || prepare_rlfmindex(n, prob, m, l),
                 |(index, patterns)| {
                     for pattern in patterns {
-                        index.search(pattern).locate();
+                        let _ = index
+                            .search(pattern)
+                            .iter_matches()
+                            .map(|m| m.locate())
+                            .collect::<Vec<_>>();
                     }
                 },
                 BatchSize::SmallInput,

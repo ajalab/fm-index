@@ -135,47 +135,9 @@ where
         self.e - self.s
     }
 
-    /// Get an iterator that goes backwards through the text, producing
-    /// [`Character`].
-    pub(crate) fn iter_backward(&self, i: u64) -> impl Iterator<Item = B::T> + use<'a, B> {
-        let m = self.count();
-
-        debug_assert!(m > 0, "cannot iterate from empty search result");
-        debug_assert!(i < m, "{} is out of range", i);
-
-        debug_assert!(i < self.backend.len());
-        BackwardIteratorWrapper::new(self.backend, self.s + i)
-    }
-
-    // Get an iterator that goes forwards through the text, producing
-    /// [`Character`].
-    pub(crate) fn iter_forward(&self, i: u64) -> impl Iterator<Item = B::T> + use<'a, B> {
-        let m = self.count();
-
-        debug_assert!(m > 0, "cannot iterate from empty search result");
-        debug_assert!(i < m, "{} is out of range", i);
-        debug_assert!(i < self.backend.len());
-
-        ForwardIteratorWrapper::new(self.backend, self.s + i)
-    }
-
     // Iterate all occurrences of the found patterns.
     pub(crate) fn iter_matches(&self) -> impl Iterator<Item = MatchWrapper<'a, B>> {
         MatchIteratorWrapper::new(self.backend, self.s, self.e, self.match_prefix_only)
-    }
-}
-
-impl<B> SearchWrapper<'_, B>
-where
-    B: SearchIndexBackend + HasPosition,
-{
-    /// List the position of all occurrences.
-    pub(crate) fn locate(&self) -> Vec<u64> {
-        let mut results: Vec<u64> = Vec::with_capacity((self.e - self.s) as usize);
-        for k in self.s..self.e {
-            results.push(self.backend.get_sa(k));
-        }
-        results
     }
 }
 

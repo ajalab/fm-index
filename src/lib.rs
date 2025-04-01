@@ -23,7 +23,7 @@
 //!
 //! # Example
 //! ```
-//! use fm_index::FMIndexWithLocate;
+//! use fm_index::{Search, FMIndexWithLocate, MatchWithLocate, Match};
 //! use fm_index::converter::RangeConverter;
 //!
 //! // Prepare a text string to search for patterns.
@@ -55,18 +55,28 @@
 //! assert_eq!(n, 4);
 //!
 //! // List the position of all occurrences.
-//! let positions = search.locate();
+//! let positions = search.iter_matches().map(|m| m.locate()).collect::<Vec<u64>>();
 //! assert_eq!(positions, vec![246, 12, 300, 103]);
 //!
 //! // Extract preceding characters from a search position.
-//! let i = 0;
-//! let mut prefix = search.iter_backward(i).take(16).collect::<Vec<u8>>();
+//! let mut prefix = search
+//!     .iter_matches()
+//!     .nth(0)
+//!     .unwrap()
+//!     .iter_chars_backward()
+//!     .take(16)
+//!     .collect::<Vec<u8>>();
 //! prefix.reverse();
 //! assert_eq!(prefix, b"Duis aute irure ".to_owned());
 //!
 //! // Extract succeeding characters from a search position.
-//! let i = 3;
-//! let postfix = search.iter_forward(i).take(20).collect::<Vec<u8>>();
+//! let postfix = search
+//!     .iter_matches()
+//!     .nth(3)
+//!     .unwrap()
+//!     .iter_chars_forward()
+//!     .take(20)
+//!     .collect::<Vec<u8>>();
 //! assert_eq!(postfix, b"dolore magna aliqua.".to_owned());
 //!
 //! // Search can be chained backward.
@@ -155,6 +165,6 @@ pub use frontend::{
     MultiTextFMIndexMatch, MultiTextFMIndexMatchWithLocate, MultiTextFMIndexSearch,
     MultiTextFMIndexSearchWithLocate, MultiTextFMIndexWithLocate, RLFMIndex, RLFMIndexMatch,
     RLFMIndexMatchWithLocate, RLFMIndexSearch, RLFMIndexSearchWithLocate, RLFMIndexWithLocate,
-    Search, SearchIndex, SearchIndexWithLocate, SearchIndexWithMultiTexts, SearchWithLocate,
+    Search, SearchIndex, SearchIndexWithMultiTexts, SearchWithLocate,
 };
 pub use text::TextId;

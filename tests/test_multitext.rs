@@ -1,6 +1,6 @@
 mod testutil;
 use fm_index::converter::IdConverter;
-use fm_index::{MatchWithLocate, MatchWithTextId, MultiTextFMIndexWithLocate, Search, TextId};
+use fm_index::{MatchWithLocate, MatchWithTextId, MultiTextFMIndexWithLocate, Search};
 use testutil::TestRunner;
 
 #[test]
@@ -14,20 +14,16 @@ fn test_search_count() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
+        multi_text: true,
     }
     .run(
-        |text, level| {
-            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
-        },
+        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
         |fm_index, text, pattern| {
-            let mut count_expected = 0;
-            for i in 0..=(text_size - pattern.len()) {
-                if &text[i..i + pattern.len()] == pattern {
-                    count_expected += 1;
-                }
-            }
-            let count_actual = fm_index.search(pattern).count();
+            let naive_index = testutil::NaiveSearchIndex::new(text);
+            let matches_expected = naive_index.search(pattern);
 
+            let count_expected = matches_expected.len() as u64;
+            let count_actual = fm_index.search(pattern).count();
             assert_eq!(
                 count_expected, count_actual,
                 "text = {:?}, pattern = {:?}",
@@ -36,7 +32,6 @@ fn test_search_count() {
         },
     );
 }
-
 #[test]
 fn test_search_locate() {
     let text_size = 1024;
@@ -48,60 +43,24 @@ fn test_search_locate() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
+        multi_text: true,
     }
     .run(
-        |text, level| {
-            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
-        },
+        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
         |fm_index, text, pattern| {
-            let mut positions_expected = Vec::new();
-            for i in 0..=(text_size - pattern.len()) {
-                if &text[i..i + pattern.len()] == pattern {
-                    positions_expected.push(i as u64);
-                }
-            }
-            let mut positions_actual = fm_index.search(pattern).locate();
-            positions_actual.sort();
+            let naive_index = testutil::NaiveSearchIndex::new(text);
+            let matches_expected = naive_index.search(pattern);
 
-            assert_eq!(
-                positions_expected, positions_actual,
-                "text = {:?}, pattern = {:?}",
-                text, pattern
-            );
-        },
-    );
-}
-
-#[test]
-fn test_search_iter_matches_locate() {
-    let text_size = 1024;
-
-    TestRunner {
-        texts: 100,
-        patterns: 100,
-        text_size,
-        alphabet_size: 8,
-        level_max: 3,
-        pattern_size_max: 10,
-    }
-    .run(
-        |text, level| {
-            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
-        },
-        |fm_index, text, pattern| {
-            let mut positions_expected = Vec::new();
-            for i in 0..=(text_size - pattern.len()) {
-                if &text[i..i + pattern.len()] == pattern {
-                    positions_expected.push(i as u64);
-                }
-            }
+            let positions_expected = matches_expected
+                .iter()
+                .map(|m| m.position)
+                .collect::<Vec<_>>();
             let mut positions_actual = fm_index
                 .search(pattern)
                 .iter_matches()
                 .map(|m| m.locate())
                 .collect::<Vec<_>>();
             positions_actual.sort();
-
             assert_eq!(
                 positions_expected, positions_actual,
                 "text = {:?}, pattern = {:?}",
@@ -112,7 +71,7 @@ fn test_search_iter_matches_locate() {
 }
 
 #[test]
-fn test_search_iter_matches_text_id() {
+fn test_search_text_id() {
     let text_size = 1024;
 
     TestRunner {
@@ -122,29 +81,24 @@ fn test_search_iter_matches_text_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
+        multi_text: true,
     }
     .run(
-        |text, level| {
-            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
-        },
+        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
         |fm_index, text, pattern| {
-            let mut text_ids_expected = Vec::new();
-            let mut text_id = 0;
-            for i in 0..=(text_size - pattern.len()) {
-                if text[i] == 0 {
-                    text_id += 1;
-                }
-                if &text[i..i + pattern.len()] == pattern {
-                    text_ids_expected.push(TextId::from(text_id));
-                }
-            }
+            let naive_index = testutil::NaiveSearchIndex::new(text);
+            let matches_expected = naive_index.search(pattern);
+
+            let text_ids_expected = matches_expected
+                .iter()
+                .map(|m| m.text_id)
+                .collect::<Vec<_>>();
             let mut text_ids_actual = fm_index
                 .search(pattern)
                 .iter_matches()
                 .map(|m| m.text_id())
                 .collect::<Vec<_>>();
             text_ids_actual.sort();
-
             assert_eq!(
                 text_ids_expected, text_ids_actual,
                 "text = {:?}, pattern = {:?}",
@@ -165,29 +119,24 @@ fn test_search_prefix_text_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
+        multi_text: true,
     }
     .run(
-        |text, level| {
-            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
-        },
+        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
         |fm_index, text, pattern| {
-            let mut text_ids_expected = Vec::new();
-            let mut text_id = 0;
-            for i in 0..=(text_size - pattern.len()) {
-                if text[i] == 0 {
-                    text_id += 1;
-                }
-                if (i == 0 || text[i - 1] == 0) && &text[i..i + pattern.len()] == pattern {
-                    text_ids_expected.push(TextId::from(text_id));
-                }
-            }
+            let naive_index = testutil::NaiveSearchIndex::new(text);
+            let matches_expected = naive_index.search_prefix(pattern);
+
+            let text_ids_expected = matches_expected
+                .iter()
+                .map(|m| m.text_id)
+                .collect::<Vec<_>>();
             let mut text_ids_actual = fm_index
                 .search_prefix(pattern)
                 .iter_matches()
                 .map(|m| m.text_id())
                 .collect::<Vec<_>>();
             text_ids_actual.sort();
-
             assert_eq!(
                 text_ids_expected, text_ids_actual,
                 "text = {:?}, pattern = {:?}",
@@ -208,31 +157,24 @@ fn test_search_suffix_text_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
+        multi_text: true,
     }
     .run(
-        |text, level| {
-            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
-        },
+        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
         |fm_index, text, pattern| {
-            let mut text_ids_expected = Vec::new();
-            let mut text_id = 0;
-            for i in 0..=(text_size - pattern.len()) {
-                if text[i] == 0 {
-                    text_id += 1;
-                }
-                if (i + pattern.len() >= text.len() || text[i + pattern.len()] == 0)
-                    && &text[i..i + pattern.len()] == pattern
-                {
-                    text_ids_expected.push(TextId::from(text_id));
-                }
-            }
+            let naive_index = testutil::NaiveSearchIndex::new(text);
+            let matches_expected = naive_index.search_suffix(pattern);
+
+            let text_ids_expected = matches_expected
+                .iter()
+                .map(|m| m.text_id)
+                .collect::<Vec<_>>();
             let mut text_ids_actual = fm_index
                 .search_suffix(pattern)
                 .iter_matches()
                 .map(|m| m.text_id())
                 .collect::<Vec<_>>();
             text_ids_actual.sort();
-
             assert_eq!(
                 text_ids_expected, text_ids_actual,
                 "text = {:?}, pattern = {:?}",
@@ -253,32 +195,24 @@ fn test_search_exact_text_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
+        multi_text: true,
     }
     .run(
-        |text, level| {
-            MultiTextFMIndexWithLocate::new(text.clone(), IdConverter::new::<u8>(), level)
-        },
+        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
         |fm_index, text, pattern| {
-            let mut text_ids_expected = Vec::new();
-            let mut text_id = 0;
-            for i in 0..=(text_size - pattern.len()) {
-                if text[i] == 0 {
-                    text_id += 1;
-                }
-                if (i == 0 || text[i - 1] == 0)
-                    && (i + pattern.len() >= text.len() || text[i + pattern.len()] == 0)
-                    && &text[i..i + pattern.len()] == pattern
-                {
-                    text_ids_expected.push(TextId::from(text_id));
-                }
-            }
+            let naive_index = testutil::NaiveSearchIndex::new(text);
+            let matches_expected = naive_index.search_exact(pattern);
+
+            let text_ids_expected = matches_expected
+                .iter()
+                .map(|m| m.text_id)
+                .collect::<Vec<_>>();
             let mut text_ids_actual = fm_index
                 .search_exact(pattern)
                 .iter_matches()
                 .map(|m| m.text_id())
                 .collect::<Vec<_>>();
             text_ids_actual.sort();
-
             assert_eq!(
                 text_ids_expected, text_ids_actual,
                 "text = {:?}, pattern = {:?}",

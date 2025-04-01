@@ -37,19 +37,6 @@ pub trait SearchIndex<T> {
     fn len(&self) -> u64;
 }
 
-/// Trait for searching in an index that also supports locate queries.
-///
-/// You can use this to search in an index generically.
-pub trait SearchIndexWithLocate<T>: SearchIndex<T> {
-    /// Search for a pattern in the text.
-    ///
-    /// Return a [`SearchWithLocate`] object with information about the search
-    /// result, which also supports locate queries.
-    fn search<K>(&self, pattern: K) -> impl SearchWithLocate<T>
-    where
-        K: AsRef<[T]>;
-}
-
 /// Trait for searching in an index that supports multiple texts.
 pub trait SearchIndexWithMultiTexts<T>: SearchIndex<T> {
     /// Search for a pattern that is a prefix of a text.
@@ -84,12 +71,6 @@ pub trait Search<'a, T> {
     fn search<K: AsRef<[T]>>(&self, pattern: K) -> Self;
     /// Count the number of occurrences.
     fn count(&self) -> u64;
-    /// Get an iterator that goes backwards through the text, producing
-    /// [`Character`].
-    fn iter_backward(&'a self, i: u64) -> impl Iterator<Item = T> + 'a;
-    /// Get an iterator that goes forwards through the text, producing
-    /// [`Character`].
-    fn iter_forward(&'a self, i: u64) -> impl Iterator<Item = T> + 'a;
     /// Get an iterator over all matches.
     fn iter_matches(&'a self) -> impl Iterator<Item = Self::Match> + 'a;
 }
@@ -344,14 +325,6 @@ macro_rules! impl_search_index_with_locate {
                 self.0.len()
             }
         }
-        impl<T: Character, C: Converter<T>> SearchIndexWithLocate<T> for $t {
-            fn search<K>(&self, pattern: K) -> impl SearchWithLocate<T>
-            where
-                K: AsRef<[T]>,
-            {
-                $s(self.0.search(pattern))
-            }
-        }
         impl<T: Character, C: Converter<T>> HeapSize for $t {
             fn heap_size(&self) -> usize {
                 self.0.heap_size()
@@ -444,14 +417,6 @@ macro_rules! impl_search {
                 self.0.count()
             }
 
-            fn iter_backward(&'a self, i: u64) -> impl Iterator<Item = T> + 'a {
-                self.0.iter_backward(i)
-            }
-
-            fn iter_forward(&'a self, i: u64) -> impl Iterator<Item = T> + 'a {
-                self.0.iter_forward(i)
-            }
-
             fn iter_matches(&'a self) -> impl Iterator<Item = Self::Match> + 'a {
                 self.0.iter_matches().map(|m| $m(m))
             }
@@ -472,35 +437,6 @@ macro_rules! impl_search {
             /// Count the number of occurrences.
             pub fn count(&self) -> u64 {
                 Search::count(self)
-            }
-
-            /// Get an iterator that goes backwards through the text, producing
-            /// [`Character`].
-            pub fn iter_backward(&'a self, i: u64) -> impl Iterator<Item = T> + 'a {
-                Search::iter_backward(self, i)
-            }
-
-            /// Get an iterator that goes forwards through the text, producing
-            /// [`Character`].
-            pub fn iter_forward(&'a self, i: u64) -> impl Iterator<Item = T> + 'a {
-                Search::iter_forward(self, i)
-            }
-        }
-    };
-}
-
-macro_rules! impl_search_locate {
-    ($t:ty) => {
-        impl<'a, T: Character, C: Converter<T>> SearchWithLocate<'a, T> for $t {
-            fn locate(&self) -> Vec<u64> {
-                self.0.locate()
-            }
-        }
-        // inherent
-        impl<'a, T: Character, C: Converter<T>> $t {
-            /// List the position of all occurrences.
-            pub fn locate(&self) -> Vec<u64> {
-                SearchWithLocate::locate(self)
             }
         }
     };
@@ -554,7 +490,6 @@ impl_search!(
     FMIndexMatchWithLocate,
     FMIndexMatchWithLocate<'a, T, C>
 );
-impl_search_locate!(FMIndexSearchWithLocate<'a, T, C>);
 impl_match!(FMIndexMatchWithLocate<'a, T, C>);
 impl_match_locate!(FMIndexMatchWithLocate<'a, T, C>);
 
@@ -572,7 +507,6 @@ impl_search!(
     RLFMIndexMatchWithLocate,
     RLFMIndexMatchWithLocate<'a, T, C>
 );
-impl_search_locate!(RLFMIndexSearchWithLocate<'a, T, C>);
 impl_match!(RLFMIndexMatchWithLocate<'a, T, C>);
 impl_match_locate!(RLFMIndexMatchWithLocate<'a, T, C>);
 
@@ -592,7 +526,6 @@ impl_search!(
     MultiTextFMIndexMatchWithLocate,
     MultiTextFMIndexMatchWithLocate<'a, T, C>
 );
-impl_search_locate!(MultiTextFMIndexSearchWithLocate<'a, T, C>);
 impl_match!(MultiTextFMIndexMatchWithLocate<'a, T, C>);
 impl_match_locate!(MultiTextFMIndexMatchWithLocate<'a, T, C>);
 impl_match_text_id!(MultiTextFMIndexMatchWithLocate<'a, T, C>);
