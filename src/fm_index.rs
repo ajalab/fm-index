@@ -1,5 +1,5 @@
 use crate::backend::{HasPosition, HeapSize, SearchIndexBackend};
-use crate::character::{prepare_text, Character};
+use crate::character::Character;
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::Converter;
@@ -26,10 +26,9 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub(crate) fn new(text: Vec<T>, converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
-        let text = prepare_text(text);
-        let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
-        let sa = sais::build_suffix_array(&text, &converter);
+    pub(crate) fn new(text: &[T], converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
+        let cs = sais::get_bucket_start_pos(&sais::count_chars(text, &converter));
+        let sa = sais::build_suffix_array(text, &converter);
         let bw = Self::wavelet_matrix(text, &sa, &converter);
 
         FMIndexBackend {
@@ -41,7 +40,7 @@ where
         }
     }
 
-    fn wavelet_matrix(text: Vec<T>, sa: &[u64], converter: &C) -> WaveletMatrix {
+    fn wavelet_matrix(text: &[T], sa: &[u64], converter: &C) -> WaveletMatrix {
         let n = text.len();
         let mut bw = vec![T::zero(); n];
         for i in 0..n {
@@ -165,7 +164,7 @@ mod tests {
 
     #[test]
     fn test_lf_map() {
-        let text = "mississippi".to_string().into_bytes();
+        let text = "mississippi\0".as_bytes();
         let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
         let fm_index = FMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |sa| {
             sample::sample(sa, 2)
@@ -179,7 +178,7 @@ mod tests {
 
     #[test]
     fn test_fl_map() {
-        let text = "mississippi".to_string().into_bytes();
+        let text = "mississippi\0".as_bytes();
         let fm_index = FMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |sa| {
             sample::sample(sa, 2)
         });

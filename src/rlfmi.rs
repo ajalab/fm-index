@@ -1,5 +1,5 @@
 use crate::backend::{HasPosition, HeapSize, SearchIndexBackend};
-use crate::character::{prepare_text, Character};
+use crate::character::Character;
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::Converter;
@@ -30,12 +30,10 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub(crate) fn new(text: Vec<T>, converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
-        let text = prepare_text(text);
-
+    pub(crate) fn new(text: &[T], converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
         let n = text.len();
         let m = converter.len();
-        let sa = sais::build_suffix_array(&text, &converter);
+        let sa = sais::build_suffix_array(text, &converter);
 
         let mut c0 = T::zero();
         // sequence of run heads
@@ -217,18 +215,18 @@ mod tests {
 
     #[test]
     fn test_s() {
-        let text = "mississippi".to_string().into_bytes();
+        let text = "mississippi\0".as_bytes();
         let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
-        let ans = "ipsm\0pisi".to_string().into_bytes();
-        for (i, a) in ans.into_iter().enumerate() {
+        let ans = "ipsm\0pisi".as_bytes();
+        for (i, a) in ans.iter().enumerate() {
             let l: u8 = rlfmi.s.get_u64_unchecked(i) as u8;
-            assert_eq!(rlfmi.converter.convert_inv(l), a);
+            assert_eq!(rlfmi.converter.convert_inv(l), *a);
         }
     }
 
     #[test]
     fn test_b() {
-        let text = "mississippi".to_string().into_bytes();
+        let text = "mississippi\0".as_bytes();
         let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0];
@@ -251,7 +249,7 @@ mod tests {
 
     #[test]
     fn test_bp() {
-        let text = "mississippi".to_string().into_bytes();
+        let text = "mississippi\0".as_bytes();
         let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0];
@@ -268,7 +266,7 @@ mod tests {
 
     #[test]
     fn test_cs() {
-        let text = "mississippi".to_string().into_bytes();
+        let text = "mississippi\0".as_bytes();
         let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
         let ans = vec![(b'\0', 0), (b'i', 1), (b'm', 4), (b'p', 5), (b's', 7)];
         for (c, a) in ans {
@@ -279,7 +277,7 @@ mod tests {
 
     #[test]
     fn test_get_l() {
-        let text = "mississippi".to_string().into_bytes();
+        let text = "mississippi\0".as_bytes();
         let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
         let ans = "ipssm\0pissii".to_string().into_bytes();
 
@@ -291,7 +289,7 @@ mod tests {
 
     #[test]
     fn test_lf_map() {
-        let text = "mississippi".to_string().into_bytes();
+        let text = "mississippi\0".as_bytes();
         let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
         let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
 
@@ -305,7 +303,7 @@ mod tests {
 
     #[test]
     fn test_lf_map2() {
-        let text = "mississippi".to_string().into_bytes();
+        let text = "mississippi\0".as_bytes();
         let ans = vec![
             (b'\0', (0, 1)),
             (b'i', (1, 5)),
@@ -332,7 +330,7 @@ mod tests {
 
     #[test]
     fn test_search_backward() {
-        let text = "mississippi".to_string().into_bytes();
+        let text = "mississippi\0".as_bytes();
         let ans = vec![
             ("iss", (3, 5)),
             ("ppi", (7, 8)),
@@ -350,9 +348,8 @@ mod tests {
     }
     #[test]
     fn test_get_f() {
-        let text = "mississippi".to_string().into_bytes();
-        let mut ans = text.clone();
-        ans.push(0);
+        let text = "mississippi\0".as_bytes();
+        let mut ans = text.to_vec();
         ans.sort();
         let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
 
@@ -364,7 +361,7 @@ mod tests {
 
     #[test]
     fn test_fl_map() {
-        let text = "mississippi".to_string().into_bytes();
+        let text = "mississippi\0".as_bytes();
         let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
         let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {

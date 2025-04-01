@@ -17,7 +17,7 @@ fn test_search_count() {
         multi_text: true,
     }
     .run(
-        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
+        |text, level| MultiTextFMIndexWithLocate::new(&text, IdConverter::new::<u8>(), level),
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text);
             let matches_expected = naive_index.search(pattern);
@@ -46,7 +46,7 @@ fn test_search_locate() {
         multi_text: true,
     }
     .run(
-        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
+        |text, level| MultiTextFMIndexWithLocate::new(&text, IdConverter::new::<u8>(), level),
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text);
             let matches_expected = naive_index.search(pattern);
@@ -84,7 +84,7 @@ fn test_search_text_id() {
         multi_text: true,
     }
     .run(
-        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
+        |text, level| MultiTextFMIndexWithLocate::new(&text, IdConverter::new::<u8>(), level),
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text);
             let matches_expected = naive_index.search(pattern);
@@ -122,7 +122,7 @@ fn test_search_prefix_text_id() {
         multi_text: true,
     }
     .run(
-        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
+        |text, level| MultiTextFMIndexWithLocate::new(&text, IdConverter::new::<u8>(), level),
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text);
             let matches_expected = naive_index.search_prefix(pattern);
@@ -160,7 +160,7 @@ fn test_search_suffix_text_id() {
         multi_text: true,
     }
     .run(
-        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
+        |text, level| MultiTextFMIndexWithLocate::new(&text, IdConverter::new::<u8>(), level),
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text);
             let matches_expected = naive_index.search_suffix(pattern);
@@ -198,7 +198,7 @@ fn test_search_exact_text_id() {
         multi_text: true,
     }
     .run(
-        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
+        |text, level| MultiTextFMIndexWithLocate::new(&text, IdConverter::new::<u8>(), level),
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text);
             let matches_expected = naive_index.search_exact(pattern);

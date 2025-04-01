@@ -16,13 +16,6 @@ pub trait Character: Into<u64> + Copy + Clone + Num + Ord + Bounded + std::fmt::
     fn from_u64(n: u64) -> Self;
 }
 
-pub(crate) fn prepare_text<T: Character>(mut text: Vec<T>) -> Vec<T> {
-    if !text[text.len() - 1].is_zero() {
-        text.push(T::zero());
-    }
-    text
-}
-
 macro_rules! impl_character {
     ($t:ty) => {
         impl Character for $t {

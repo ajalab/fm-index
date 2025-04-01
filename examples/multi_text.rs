@@ -25,13 +25,14 @@ fn main() {
         "If you did not twinkle so.\n",
         "Twinkle, twinkle, little star,\n",
         "How I wonder what you are!\n\0",
-    );
+    )
+    .as_bytes();
 
     // Converter converts each character into packed representation.
     // IdConverter represents an identity converter, which preserves the given characters.
     let converter = IdConverter::new::<u8>();
 
-    let fm_index = MultiTextFMIndexWithLocate::new(text.as_bytes().to_vec(), converter, 2);
+    let fm_index = MultiTextFMIndexWithLocate::new(text, converter, 2);
 
     // Count the number of occurrences.
     assert_eq!(4, fm_index.search("star").count());
