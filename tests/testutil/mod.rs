@@ -39,14 +39,17 @@ impl<'a> NaiveSearchIndex<'a> {
         self.do_search(pattern, false, false)
     }
 
+    #[allow(dead_code)] // false positive?
     pub fn search_prefix(&self, pattern: &[u8]) -> Vec<NaiveSearchIndexMatch> {
         self.do_search(pattern, true, false)
     }
 
+    #[allow(dead_code)] // false positive?
     pub fn search_suffix(&self, pattern: &[u8]) -> Vec<NaiveSearchIndexMatch> {
         self.do_search(pattern, false, true)
     }
 
+    #[allow(dead_code)] // false positive?
     pub fn search_exact(&self, pattern: &[u8]) -> Vec<NaiveSearchIndexMatch> {
         self.do_search(pattern, true, true)
     }
@@ -80,6 +83,7 @@ impl<'a> NaiveSearchIndex<'a> {
 
 pub struct NaiveSearchIndexMatch {
     pub position: u64,
+    #[allow(dead_code)] // false positive?
     pub text_id: TextId,
 }
 
