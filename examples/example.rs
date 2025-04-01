@@ -39,7 +39,7 @@ fn main() {
     // Extract preceding characters from a search position.
     let mut prefix = search
         .iter_matches()
-        .nth(0)
+        .next()
         .unwrap()
         .iter_chars_backward()
         .take(16)
