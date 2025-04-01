@@ -14,7 +14,7 @@ fn prepare_fmindex(
 ) -> (FMIndexWithLocate<u8, impl Converter<u8>>, Vec<String>) {
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
-    (FMIndexWithLocate::new(text, converter, l), patterns)
+    (FMIndexWithLocate::new(&text, converter, l), patterns)
 }
 
 fn prepare_rlfmindex(
@@ -25,7 +25,7 @@ fn prepare_rlfmindex(
 ) -> (RLFMIndexWithLocate<u8, impl Converter<u8>>, Vec<String>) {
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
-    (RLFMIndexWithLocate::new(text, converter, l), patterns)
+    (RLFMIndexWithLocate::new(&text, converter, l), patterns)
 }
 
 pub fn bench(c: &mut Criterion) {

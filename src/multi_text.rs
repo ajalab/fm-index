@@ -1,7 +1,7 @@
 use std::ops::{Rem, Sub};
 
 use crate::backend::{HasMultiTexts, HasPosition, SearchIndexBackend};
-use crate::character::{prepare_text, Character};
+use crate::character::Character;
 #[cfg(doc)]
 use crate::converter;
 use crate::converter::Converter;
@@ -33,12 +33,11 @@ where
     T: Character,
     C: Converter<T>,
 {
-    pub(crate) fn new(text: Vec<T>, converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
-        let text = prepare_text(text);
-        let cs = sais::get_bucket_start_pos(&sais::count_chars(&text, &converter));
-        let sa = sais::build_suffix_array(&text, &converter);
-        let bw = Self::wavelet_matrix(&text, &sa, &converter);
-        let (doc, sa_idx_first_text) = Self::doc(&text, &bw, &sa);
+    pub(crate) fn new(text: &[T], converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
+        let cs = sais::get_bucket_start_pos(&sais::count_chars(text, &converter));
+        let sa = sais::build_suffix_array(text, &converter);
+        let bw = Self::wavelet_matrix(text, &sa, &converter);
+        let (doc, sa_idx_first_text) = Self::doc(text, &bw, &sa);
 
         MultiTextFMIndexBackend {
             cs,
@@ -280,7 +279,7 @@ mod tests {
             let suffix_array = testutil::build_suffix_array(&text);
             let inv_suffix_array = testutil::build_inv_suffix_array(&suffix_array);
             let fm_index =
-                MultiTextFMIndexBackend::new(text.clone(), converter, |sa| sample::sample(sa, 0));
+                MultiTextFMIndexBackend::new(&text, converter, |sa| sample::sample(sa, 0));
 
             let mut lf_map_expected = vec![0; text_size];
             let mut lf_map_actual = vec![0; text_size];
@@ -299,8 +298,7 @@ mod tests {
         let text = "foo\0bar\0baz\0".as_bytes();
         let converter = IdConverter::new::<u8>();
         let suffix_array = testutil::build_suffix_array(text);
-        let fm_index =
-            MultiTextFMIndexBackend::new(text.to_vec(), converter, |sa| sample::sample(sa, 0));
+        let fm_index = MultiTextFMIndexBackend::new(text, converter, |sa| sample::sample(sa, 0));
 
         for (i, &char_pos) in suffix_array.iter().enumerate() {
             let text_id_expected = TextId::from(
@@ -330,7 +328,7 @@ mod tests {
             let converter = IdConverter::new::<u8>();
             let suffix_array = testutil::build_suffix_array(&text);
             let fm_index =
-                MultiTextFMIndexBackend::new(text.clone(), converter, |sa| sample::sample(sa, 0));
+                MultiTextFMIndexBackend::new(&text, converter, |sa| sample::sample(sa, 0));
 
             for (i, &char_pos) in suffix_array.iter().enumerate() {
                 let text_id_expected = TextId::from(

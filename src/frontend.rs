@@ -193,7 +193,7 @@ pub struct MultiTextFMIndexMatchWithLocate<'a, T: Character, C: Converter<T>>(
 
 impl<T: Character, C: Converter<T>> FMIndex<T, C> {
     /// Create a new FMIndex without locate support.
-    pub fn new(text: Vec<T>, converter: C) -> Self {
+    pub fn new(text: &[T], converter: C) -> Self {
         FMIndex(SearchIndexWrapper::new(FMIndexBackend::new(
             text,
             converter,
@@ -210,7 +210,7 @@ impl<T: Character, C: Converter<T>> FMIndexWithLocate<T, C> {
     /// 0 means no sampling, and a level of 1 means half of the suffix array is
     /// sampled, a level of 2 means a quarter of the suffix array is sampled,
     /// and so on.
-    pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
+    pub fn new(text: &[T], converter: C, level: usize) -> Self {
         FMIndexWithLocate(SearchIndexWrapper::new(FMIndexBackend::new(
             text,
             converter,
@@ -221,7 +221,7 @@ impl<T: Character, C: Converter<T>> FMIndexWithLocate<T, C> {
 
 impl<T: Character, C: Converter<T>> RLFMIndex<T, C> {
     /// Create a new RLFMIndex without locate support.
-    pub fn new(text: Vec<T>, converter: C) -> Self {
+    pub fn new(text: &[T], converter: C) -> Self {
         RLFMIndex(SearchIndexWrapper::new(RLFMIndexBackend::new(
             text,
             converter,
@@ -238,7 +238,7 @@ impl<T: Character, C: Converter<T>> RLFMIndexWithLocate<T, C> {
     /// 0 means no sampling, and a level of 1 means half of the suffix array is
     /// sampled, a level of 2 means a quarter of the suffix array is sampled,
     /// and so on.
-    pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
+    pub fn new(text: &[T], converter: C, level: usize) -> Self {
         RLFMIndexWithLocate(SearchIndexWrapper::new(RLFMIndexBackend::new(
             text,
             converter,
@@ -249,7 +249,7 @@ impl<T: Character, C: Converter<T>> RLFMIndexWithLocate<T, C> {
 
 impl<T: Character, C: Converter<T>> MultiTextFMIndex<T, C> {
     /// Create a new MultiTextFMIndex without locate support.
-    pub fn new(text: Vec<T>, converter: C) -> Self {
+    pub fn new(text: &[T], converter: C) -> Self {
         MultiTextFMIndex(SearchIndexWrapper::new(MultiTextFMIndexBackend::new(
             text,
             converter,
@@ -266,7 +266,7 @@ impl<T: Character, C: Converter<T>> MultiTextFMIndexWithLocate<T, C> {
     /// 0 means no sampling, and a level of 1 means half of the suffix array is
     /// sampled, a level of 2 means a quarter of the suffix array is sampled,
     /// and so on.
-    pub fn new(text: Vec<T>, converter: C, level: usize) -> Self {
+    pub fn new(text: &[T], converter: C, level: usize) -> Self {
         MultiTextFMIndexWithLocate(SearchIndexWrapper::new(MultiTextFMIndexBackend::new(
             text,
             converter,
