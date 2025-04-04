@@ -1,5 +1,4 @@
 mod testutil;
-use fm_index::converter::IdConverter;
 use fm_index::{MatchWithLocate, MatchWithTextId, MultiTextFMIndexWithLocate, Search};
 use testutil::TestRunner;
 
@@ -17,17 +16,19 @@ fn test_search_count() {
         multi_text: true,
     }
     .run(
-        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
+        |text, level| MultiTextFMIndexWithLocate::new(text, level),
         |fm_index, text, pattern| {
-            let naive_index = testutil::NaiveSearchIndex::new(text);
+            let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search(pattern);
 
-            let count_expected = matches_expected.len() as u64;
+            let count_expected = matches_expected.len();
             let count_actual = fm_index.search(pattern).count();
             assert_eq!(
-                count_expected, count_actual,
+                count_expected,
+                count_actual,
                 "text = {:?}, pattern = {:?}",
-                text, pattern
+                text.text(),
+                pattern
             );
         },
     );
@@ -46,9 +47,9 @@ fn test_search_locate() {
         multi_text: true,
     }
     .run(
-        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
+        |text, level| MultiTextFMIndexWithLocate::new(text, level),
         |fm_index, text, pattern| {
-            let naive_index = testutil::NaiveSearchIndex::new(text);
+            let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search(pattern);
 
             let positions_expected = matches_expected
@@ -62,9 +63,11 @@ fn test_search_locate() {
                 .collect::<Vec<_>>();
             positions_actual.sort();
             assert_eq!(
-                positions_expected, positions_actual,
+                positions_expected,
+                positions_actual,
                 "text = {:?}, pattern = {:?}",
-                text, pattern
+                text.text(),
+                pattern
             );
         },
     );
@@ -84,9 +87,9 @@ fn test_search_text_id() {
         multi_text: true,
     }
     .run(
-        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
+        |text, level| MultiTextFMIndexWithLocate::new(text, level),
         |fm_index, text, pattern| {
-            let naive_index = testutil::NaiveSearchIndex::new(text);
+            let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search(pattern);
 
             let text_ids_expected = matches_expected
@@ -100,9 +103,11 @@ fn test_search_text_id() {
                 .collect::<Vec<_>>();
             text_ids_actual.sort();
             assert_eq!(
-                text_ids_expected, text_ids_actual,
+                text_ids_expected,
+                text_ids_actual,
                 "text = {:?}, pattern = {:?}",
-                text, pattern
+                text.text(),
+                pattern
             );
         },
     );
@@ -122,9 +127,9 @@ fn test_search_prefix_text_id() {
         multi_text: true,
     }
     .run(
-        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
+        |text, level| MultiTextFMIndexWithLocate::new(text, level),
         |fm_index, text, pattern| {
-            let naive_index = testutil::NaiveSearchIndex::new(text);
+            let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search_prefix(pattern);
 
             let text_ids_expected = matches_expected
@@ -138,9 +143,11 @@ fn test_search_prefix_text_id() {
                 .collect::<Vec<_>>();
             text_ids_actual.sort();
             assert_eq!(
-                text_ids_expected, text_ids_actual,
+                text_ids_expected,
+                text_ids_actual,
                 "text = {:?}, pattern = {:?}",
-                text, pattern
+                text.text(),
+                pattern
             );
         },
     );
@@ -160,9 +167,9 @@ fn test_search_suffix_text_id() {
         multi_text: true,
     }
     .run(
-        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
+        |text, level| MultiTextFMIndexWithLocate::new(text, level),
         |fm_index, text, pattern| {
-            let naive_index = testutil::NaiveSearchIndex::new(text);
+            let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search_suffix(pattern);
 
             let text_ids_expected = matches_expected
@@ -176,9 +183,11 @@ fn test_search_suffix_text_id() {
                 .collect::<Vec<_>>();
             text_ids_actual.sort();
             assert_eq!(
-                text_ids_expected, text_ids_actual,
+                text_ids_expected,
+                text_ids_actual,
                 "text = {:?}, pattern = {:?}",
-                text, pattern
+                text.text(),
+                pattern
             );
         },
     );
@@ -198,9 +207,9 @@ fn test_search_exact_text_id() {
         multi_text: true,
     }
     .run(
-        |text, level| MultiTextFMIndexWithLocate::new(text, IdConverter::new::<u8>(), level),
+        |text, level| MultiTextFMIndexWithLocate::new(text, level),
         |fm_index, text, pattern| {
-            let naive_index = testutil::NaiveSearchIndex::new(text);
+            let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search_exact(pattern);
 
             let text_ids_expected = matches_expected
@@ -214,9 +223,11 @@ fn test_search_exact_text_id() {
                 .collect::<Vec<_>>();
             text_ids_actual.sort();
             assert_eq!(
-                text_ids_expected, text_ids_actual,
+                text_ids_expected,
+                text_ids_actual,
                 "text = {:?}, pattern = {:?}",
-                text, pattern
+                text.text(),
+                pattern
             );
         },
     );

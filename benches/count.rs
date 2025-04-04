@@ -6,15 +6,15 @@ use criterion::{AxisScale, BatchSize, BenchmarkId, Criterion, PlotConfiguration,
 mod common;
 
 fn prepare_fmindex(len: usize, prob: f64, m: usize) -> (impl SearchIndex<u8>, Vec<String>) {
-    let (text, converter) = common::binary_text_set(len, prob);
+    let text = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
-    (FMIndex::new(&text, converter), patterns)
+    (FMIndex::new(&text), patterns)
 }
 
 fn prepare_rlfmindex(len: usize, prob: f64, m: usize) -> (impl SearchIndex<u8>, Vec<String>) {
-    let (text, converter) = common::binary_text_set(len, prob);
+    let text = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
-    (RLFMIndex::new(&text, converter), patterns)
+    (RLFMIndex::new(&text), patterns)
 }
 
 pub fn bench(c: &mut Criterion) {

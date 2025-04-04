@@ -1,4 +1,4 @@
-use num_traits::{Bounded, Num};
+use crate::util;
 
 /// A character is a type that can be used to store data and to compose a
 /// search pattern over this data.
@@ -9,18 +9,29 @@ use num_traits::{Bounded, Num};
 ///
 /// These can be converted into u64 using `.into()` and from u64 using
 /// `from_u64`. When converted from u64, they are truncated.
-pub trait Character: Into<u64> + Copy + Clone + Num + Ord + Bounded + std::fmt::Debug {
-    /// Take a u64 and convert it into the given data type.
-    ///
-    /// Truncates the u64 if it is too large to fit in the type.
-    fn from_u64(n: u64) -> Self;
+pub trait Character: Copy + Clone {
+    fn into_u64(self) -> u64;
+
+    fn from_u64(x: u64) -> Self;
+
+    fn into_usize(self) -> usize {
+        self.into_u64() as usize
+    }
+
+    fn from_usize(x: usize) -> Self {
+        Self::from_u64(x as u64)
+    }
 }
 
 macro_rules! impl_character {
     ($t:ty) => {
         impl Character for $t {
-            fn from_u64(n: u64) -> Self {
-                n as Self
+            fn into_u64(self) -> u64 {
+                self as u64
+            }
+
+            fn from_u64(x: u64) -> Self {
+                x as $t
             }
         }
     };
@@ -30,3 +41,4 @@ impl_character!(u64);
 impl_character!(u32);
 impl_character!(u16);
 impl_character!(u8);
+impl_character!(usize);
