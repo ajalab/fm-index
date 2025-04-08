@@ -1,5 +1,6 @@
-use fm_index::converter::IdConverter;
-use fm_index::{Match, MatchWithTextId, MultiTextFMIndexWithLocate, Search};
+use fm_index::{
+    converter::DefaultConverter, Match, MatchWithTextId, MultiTextFMIndexWithLocate, Search,
+};
 
 fn main() {
     // When using MultiTextFMIndex, the text is concatenated with an end marker \0.
@@ -30,7 +31,7 @@ fn main() {
 
     // Converter converts each character into packed representation.
     // IdConverter represents an identity converter, which preserves the given characters.
-    let converter = IdConverter::new::<u8>();
+    let converter = DefaultConverter::<u8>::default();
 
     let fm_index = MultiTextFMIndexWithLocate::new(text, converter, 2);
 
@@ -42,7 +43,7 @@ fn main() {
         .search("How I wonder")
         .iter_matches()
         .map(|m| m.text_id().into())
-        .collect::<Vec<u64>>();
+        .collect::<Vec<usize>>();
     text_ids.sort();
     assert_eq!(vec![0, 0, 1, 2], text_ids);
 
@@ -78,7 +79,7 @@ fn main() {
         .search_prefix("Twinkle")
         .iter_matches()
         .map(|m| m.text_id().into())
-        .collect::<Vec<u64>>();
+        .collect::<Vec<usize>>();
     text_ids_with_prefix.sort();
     assert_eq!(vec![0], text_ids_with_prefix);
 
@@ -87,7 +88,7 @@ fn main() {
         .search_suffix("what you are!\n")
         .iter_matches()
         .map(|m| m.text_id().into())
-        .collect::<Vec<u64>>();
+        .collect::<Vec<usize>>();
     text_ids_with_suffix.sort();
     assert_eq!(vec![0, 1, 2], text_ids_with_suffix);
 }

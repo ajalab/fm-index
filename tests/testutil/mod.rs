@@ -72,7 +72,7 @@ impl<'a> NaiveSearchIndex<'a> {
                 && &self.text[i..i + pattern.len()] == pattern
             {
                 result.push(NaiveSearchIndexMatch {
-                    position: i as u64,
+                    position: i as usize,
                     text_id: TextId::from(text_id),
                 });
             }
@@ -82,7 +82,7 @@ impl<'a> NaiveSearchIndex<'a> {
 }
 
 pub struct NaiveSearchIndexMatch {
-    pub position: u64,
+    pub position: usize,
     #[allow(dead_code)] // false positive?
     pub text_id: TextId,
 }

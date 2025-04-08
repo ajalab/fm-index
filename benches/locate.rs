@@ -11,7 +11,10 @@ fn prepare_fmindex(
     prob: f64,
     m: usize,
     l: usize,
-) -> (FMIndexWithLocate<u8, impl Converter<u8>>, Vec<String>) {
+) -> (
+    FMIndexWithLocate<u8, impl Converter<Char = u8>>,
+    Vec<String>,
+) {
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
     (FMIndexWithLocate::new(&text, converter, l), patterns)
@@ -22,7 +25,10 @@ fn prepare_rlfmindex(
     prob: f64,
     m: usize,
     l: usize,
-) -> (RLFMIndexWithLocate<u8, impl Converter<u8>>, Vec<String>) {
+) -> (
+    RLFMIndexWithLocate<u8, impl Converter<Char = u8>>,
+    Vec<String>,
+) {
     let (text, converter) = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
     (RLFMIndexWithLocate::new(&text, converter, l), patterns)

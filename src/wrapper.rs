@@ -2,8 +2,6 @@
 // the functionality used by the frontend.
 // This makes the implementation of the frontend more regular.
 
-use num_traits::Zero;
-
 use crate::backend::{HasMultiTexts, HasPosition, SearchIndexBackend};
 use crate::converter::Converter;
 use crate::text::TextId;
@@ -18,9 +16,8 @@ where
     B: SearchIndexBackend,
 {
     backend: &'a B,
-    s: u64,
-    e: u64,
-    pattern: Vec<B::T>,
+    s: usize,
+    e: usize,
     match_prefix_only: bool,
 }
 
@@ -47,7 +44,7 @@ where
     ///
     /// Note that this includes an ending \0 (terminator) character
     /// so will be one more than the length of the text passed in.
-    pub(crate) fn len(&self) -> u64 {
+    pub(crate) fn len(&self) -> usize {
         self.0.len()
     }
 
@@ -88,12 +85,11 @@ impl<'a, B> SearchWrapper<'a, B>
 where
     B: SearchIndexBackend,
 {
-    fn new(backend: &'a B, s: u64, e: u64, match_prefix_only: bool) -> Self {
+    fn new(backend: &'a B, s: usize, e: usize, match_prefix_only: bool) -> Self {
         SearchWrapper {
             backend,
             s,
             e,
-            pattern: vec![],
             match_prefix_only,
         }
     }
@@ -106,7 +102,7 @@ where
         // TODO: move this loop into backend to avoid dispatch overhead
         let mut s = self.s;
         let mut e = self.e;
-        let mut pattern = pattern.as_ref().to_vec();
+        let pattern = pattern.as_ref();
         for &c in pattern.iter().rev() {
             s = self.backend.lf_map2(c, s);
             e = self.backend.lf_map2(c, e);
@@ -114,24 +110,22 @@ where
                 break;
             }
         }
-        pattern.extend_from_slice(&self.pattern);
 
         SearchWrapper {
             backend: self.backend,
             s,
             e,
-            pattern,
             match_prefix_only: self.match_prefix_only,
         }
     }
 
     #[cfg(test)]
-    pub(crate) fn get_range(&self) -> (u64, u64) {
+    pub(crate) fn get_range(&self) -> (usize, usize) {
         (self.s, self.e)
     }
 
     /// Count the number of occurrences.
-    pub(crate) fn count(&self) -> u64 {
+    pub(crate) fn count(&self) -> usize {
         self.e - self.s
     }
 
@@ -144,11 +138,11 @@ where
 /// An iterator that goes backwards through the text, producing [`Character`].
 pub(crate) struct BackwardIteratorWrapper<'a, B: SearchIndexBackend> {
     backend: &'a B,
-    i: u64,
+    i: usize,
 }
 
 impl<'a, B: SearchIndexBackend> BackwardIteratorWrapper<'a, B> {
-    pub(crate) fn new(backend: &'a B, i: u64) -> Self {
+    pub(crate) fn new(backend: &'a B, i: usize) -> Self {
         BackwardIteratorWrapper { backend, i }
     }
 }
@@ -158,18 +152,18 @@ impl<B: SearchIndexBackend> Iterator for BackwardIteratorWrapper<'_, B> {
     fn next(&mut self) -> Option<Self::Item> {
         let c = self.backend.get_l(self.i);
         self.i = self.backend.lf_map(self.i);
-        Some(self.backend.get_converter().convert_inv(c))
+        Some(c)
     }
 }
 
 /// An iterator that goes forwards through the text, producing [`Character`].
 pub(crate) struct ForwardIteratorWrapper<'a, B: SearchIndexBackend> {
     backend: &'a B,
-    i: u64,
+    i: usize,
 }
 
 impl<'a, B: SearchIndexBackend> ForwardIteratorWrapper<'a, B> {
-    pub(crate) fn new(backend: &'a B, i: u64) -> Self {
+    pub(crate) fn new(backend: &'a B, i: usize) -> Self {
         ForwardIteratorWrapper { backend, i }
     }
 }
@@ -180,19 +174,19 @@ impl<B: SearchIndexBackend> Iterator for ForwardIteratorWrapper<'_, B> {
     fn next(&mut self) -> Option<Self::Item> {
         let c = self.backend.get_f(self.i);
         self.i = self.backend.fl_map(self.i)?;
-        Some(self.backend.get_converter().convert_inv(c))
+        Some(c)
     }
 }
 
 pub(crate) struct MatchIteratorWrapper<'a, B: SearchIndexBackend> {
     backend: &'a B,
-    i: u64,
-    e: u64,
+    i: usize,
+    e: usize,
     match_prefix_only: bool,
 }
 
 impl<'a, B: SearchIndexBackend> MatchIteratorWrapper<'a, B> {
-    pub(crate) fn new(backend: &'a B, i: u64, e: u64, match_prefix_only: bool) -> Self {
+    pub(crate) fn new(backend: &'a B, i: usize, e: usize, match_prefix_only: bool) -> Self {
         MatchIteratorWrapper {
             backend,
             i,
@@ -207,7 +201,13 @@ impl<'a, B: SearchIndexBackend> Iterator for MatchIteratorWrapper<'a, B> {
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.i < self.e {
-            if !self.match_prefix_only || self.backend.get_l(self.i).is_zero() {
+            if !self.match_prefix_only
+                || self
+                    .backend
+                    .get_converter()
+                    .to_u64(self.backend.get_l(self.i))
+                    == 0
+            {
                 let location = MatchWrapper::new(self.backend, self.i);
                 self.i += 1;
                 return Some(location);
@@ -220,11 +220,11 @@ impl<'a, B: SearchIndexBackend> Iterator for MatchIteratorWrapper<'a, B> {
 
 pub(crate) struct MatchWrapper<'a, B: SearchIndexBackend> {
     backend: &'a B,
-    i: u64,
+    i: usize,
 }
 
 impl<'a, B: SearchIndexBackend> MatchWrapper<'a, B> {
-    pub(crate) fn new(backend: &'a B, i: u64) -> Self {
+    pub(crate) fn new(backend: &'a B, i: usize) -> Self {
         MatchWrapper { backend, i }
     }
 
@@ -238,7 +238,7 @@ impl<'a, B: SearchIndexBackend> MatchWrapper<'a, B> {
 }
 
 impl<B: SearchIndexBackend + HasPosition> MatchWrapper<'_, B> {
-    pub(crate) fn locate(&self) -> u64 {
+    pub(crate) fn locate(&self) -> usize {
         self.backend.get_sa(self.i)
     }
 }

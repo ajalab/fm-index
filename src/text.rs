@@ -1,15 +1,15 @@
 /// A unique id identifying this text.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
-pub struct TextId(u64);
+pub struct TextId(usize);
 
-impl From<u64> for TextId {
-    fn from(value: u64) -> Self {
+impl From<usize> for TextId {
+    fn from(value: usize) -> Self {
         TextId(value)
     }
 }
 
-impl From<TextId> for u64 {
-    fn from(value: TextId) -> u64 {
+impl From<TextId> for usize {
+    fn from(value: TextId) -> usize {
         value.0
     }
 }

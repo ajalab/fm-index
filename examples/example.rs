@@ -1,5 +1,4 @@
-use fm_index::converter::RangeConverter;
-use fm_index::{FMIndexWithLocate, Match, MatchWithLocate, Search};
+use fm_index::{converter::DefaultConverter, FMIndexWithLocate, Match, MatchWithLocate, Search};
 
 fn main() {
     // Prepare a text string to search for patterns.
@@ -12,8 +11,7 @@ fn main() {
     ).as_bytes();
 
     // Converter converts each character into packed representation.
-    // `' '` ~ `'~'` represents a range of ASCII printable characters.
-    let converter = RangeConverter::new(b' ', b'~');
+    let converter = DefaultConverter::<u8>::default();
 
     // The sampling level determines how much is retained in order to support `locate`
     // queries. `0` retains the full information, but we don't need the whole array
@@ -34,7 +32,7 @@ fn main() {
     let positions = search
         .iter_matches()
         .map(|m| m.locate())
-        .collect::<Vec<u64>>();
+        .collect::<Vec<usize>>();
     assert_eq!(positions, vec![246, 12, 300, 103]);
 
     // Extract preceding characters from a search position.

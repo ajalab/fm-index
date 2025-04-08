@@ -24,7 +24,7 @@
 //! # Example
 //! ```
 //! use fm_index::{Search, FMIndexWithLocate, MatchWithLocate, Match};
-//! use fm_index::converter::RangeConverter;
+//! use fm_index::converter::DefaultConverter;
 //!
 //! // Prepare a text string to search for patterns.
 //! let text = concat!(
@@ -36,8 +36,7 @@
 //! ).as_bytes();
 //!
 //! // Converter converts each character into packed representation.
-//! // `' '` ~ `'~'` represents a range of ASCII printable characters.
-//! let converter = RangeConverter::new(b' ', b'~');
+//! let converter = DefaultConverter::<u8>::default();
 //!
 //! // To perform locate queries, we need to use some storage.
 //! // the sampling level determines how much is retained in order to support `locate`
@@ -56,7 +55,7 @@
 //! assert_eq!(n, 4);
 //!
 //! // List the position of all occurrences.
-//! let positions = search.iter_matches().map(|m| m.locate()).collect::<Vec<u64>>();
+//! let positions = search.iter_matches().map(|m| m.locate()).collect::<Vec<usize>>();
 //! assert_eq!(positions, vec![246, 12, 300, 103]);
 //!
 //! // Extract preceding characters from a search position.
