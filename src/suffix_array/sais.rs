@@ -80,8 +80,8 @@ where
 fn is_lms(types: &BitVec, i: usize) -> bool {
     i > 0
         && i < usize::MAX
-        && types.is_bit_set(i as usize).unwrap()
-        && !types.is_bit_set(i as usize - 1).unwrap()
+        && types.is_bit_set(i).unwrap()
+        && !types.is_bit_set(i - 1).unwrap()
 }
 
 fn induced_sort<T, K, C>(text: K, converter: &C, types: &BitVec, occs: &[usize], sa: &mut [usize])
@@ -95,7 +95,7 @@ where
     let mut bucket_start_pos = get_bucket_start_pos(occs);
     for i in 0..n {
         let j = sa[i];
-        if 0 < j && j < usize::MAX && !types.is_bit_set(j as usize - 1).unwrap() {
+        if 0 < j && j < usize::MAX && !types.is_bit_set(j - 1).unwrap() {
             let c = converter.to_usize(text[j - 1]);
             let p = bucket_start_pos[c] as usize;
             sa[p] = j - 1;
@@ -106,7 +106,7 @@ where
     let mut bucket_end_pos = get_bucket_end_pos(occs);
     for i in (0..n).rev() {
         let j = sa[i];
-        if j != 0 && j != usize::MAX && types.is_bit_set(j as usize - 1).unwrap() {
+        if j != 0 && j != usize::MAX && types.is_bit_set(j - 1).unwrap() {
             let c = converter.to_usize(text[j - 1]);
             let p = bucket_end_pos[c] as usize - 1;
             sa[p] = j - 1;
@@ -160,9 +160,9 @@ where
     for &i in lms.iter().rev() {
         // TODO: refactor
         let c = converter.to_usize(text[i]);
-        let k = bucket_end_pos[c as usize] as usize - 1;
-        sa[k] = i as usize;
-        bucket_end_pos[c as usize] = k as usize;
+        let k = bucket_end_pos[c] as usize - 1;
+        sa[k] = i;
+        bucket_end_pos[c] = k as usize;
     }
 
     // Step 2. Type-L
@@ -198,14 +198,14 @@ where
         for n in names.iter_mut() {
             *n = usize::MAX;
         }
-        names[sa_lms[0] as usize / 2] = 0; // name of the sentinel
+        names[sa_lms[0] / 2] = 0; // name of the sentinel
         if lms_len <= 1 {
             debug_assert!(lms_len != 0);
         } else {
-            names[sa_lms[1] as usize / 2] = 1; // name of the second least LMS substring
+            names[sa_lms[1] / 2] = 1; // name of the second least LMS substring
             for i in 2..lms_len {
-                let p = sa_lms[i - 1] as usize;
-                let q = sa_lms[i] as usize;
+                let p = sa_lms[i - 1];
+                let q = sa_lms[i];
                 let mut d = 1;
                 let mut same = converter.to_u64(text[p]) == converter.to_u64(text[q])
                     && types.is_bit_set(p) == types.is_bit_set(q);
@@ -215,7 +215,7 @@ where
                     {
                         same = false;
                         break;
-                    } else if is_lms(&types, (p + d) as usize) && is_lms(&types, (q + d) as usize) {
+                    } else if is_lms(&types, p + d) && is_lms(&types, q + d) {
                         break;
                     }
                     d += 1;
@@ -248,7 +248,7 @@ where
         //                         <------->
         //                          lms_len
         let (sa1, s1) = sa.split_at_mut(sa.len() - lms_len);
-        if name < lms_len as usize {
+        if name < lms_len {
             // Names of LMS substrings are not unique.
             // Computes the suffix array of the names of LMS substrings into `sa1`.
             sais_sub(&s1, sa1, &DefaultConverter::new(name));
@@ -256,7 +256,7 @@ where
             // Names of LMS substrings are unique.
             // The suffix array of the names of LMS substrings is the same as the order of LMS substrings.
             for (i, &s) in s1.iter().enumerate() {
-                sa1[s as usize] = i as usize
+                sa1[s] = i
             }
         }
 
@@ -270,7 +270,7 @@ where
         // Populate P1 (`p1`) with the positions of LMS substrings.
         let p1 = s1;
         for (j, i) in lms.into_iter().rev().enumerate() {
-            p1[j] = i as usize;
+            p1[j] = i;
         }
 
         //     sa1                 p1
@@ -282,7 +282,7 @@ where
         //
         // Populate `sa1` with the positions of LMS substrings.
         for i in 0..lms_len {
-            sa1[i] = p1[sa1[i] as usize];
+            sa1[i] = p1[sa1[i]];
         }
     }
 
@@ -292,16 +292,16 @@ where
 
     let mut bucket_end_pos = get_bucket_end_pos(&occs);
     for i in (0..lms_len).rev() {
-        let j = sa[i] as usize;
+        let j = sa[i];
         sa[i] = usize::MAX;
         let c = if j == n {
             0
         } else {
             converter.to_usize(text[j])
         };
-        let k = bucket_end_pos[c as usize] as usize - 1;
-        sa[k] = j as usize;
-        bucket_end_pos[c as usize] = k as usize;
+        let k = bucket_end_pos[c] as usize - 1;
+        sa[k] = j;
+        bucket_end_pos[c] = k as usize;
     }
     induced_sort(text, converter, &types, &occs, sa);
 }
@@ -558,8 +558,8 @@ mod tests {
         let text = text.as_ref();
         let n = text.len();
         let suffixes = (0..n).map(|i| &text[i..n]).collect::<Vec<_>>();
-        let mut sa = (0..(suffixes.len() as usize)).collect::<Vec<_>>();
-        sa.sort_by_key(|i| &suffixes[*i as usize]);
+        let mut sa = (0..suffixes.len()).collect::<Vec<_>>();
+        sa.sort_by_key(|i| &suffixes[*i]);
         sa
     }
 }

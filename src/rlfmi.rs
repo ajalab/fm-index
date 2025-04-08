@@ -40,9 +40,8 @@ where
         // sequence of run lengths
         // run length `l` is encoded as 10^{l-1}
         let mut b = BitVec::new();
-        let mut runs_by_char: Vec<Vec<usize>> = vec![vec![]; m as usize];
+        let mut runs_by_char: Vec<Vec<usize>> = vec![vec![]; m];
         for &k in &sa {
-            let k = k as usize;
             let c = if k > 0 { text[k - 1] } else { text[n - 1] };
             // We do not allow consecutive occurrences of zeroes,
             // so text[sa[0] - 1] = text[n - 2] is not zero.
@@ -61,7 +60,7 @@ where
         }
         let s = WaveletMatrix::from_slice(&s, (util::log2(m as u64 - 1) + 1) as u16);
         let mut bp = BitVec::new();
-        let mut cs = vec![0usize; m as usize];
+        let mut cs = vec![0usize; m];
         let mut c = 0;
         for (rs, ci) in runs_by_char.into_iter().zip(&mut cs) {
             *ci = c;
@@ -131,24 +130,21 @@ where
     fn get_l(&self, i: usize) -> T {
         // note: b[0] is always 1
         self.converter
-            .from_u64(self.s.get_u64_unchecked(self.b.rank1(i as usize + 1) - 1))
+            .from_u64(self.s.get_u64_unchecked(self.b.rank1(i + 1) - 1))
     }
 
     fn lf_map(&self, i: usize) -> usize {
         let c = self.get_l(i);
-        let j = self.b.rank1(i as usize);
+        let j = self.b.rank1(i);
         let nr = self.s.rank_u64_unchecked(j, self.converter.to_u64(c));
 
-        self.bp
-            .select1(self.cs[self.converter.to_usize(c)] as usize + nr) as usize
-            + i
-            - self.b.select1(j) as usize
+        self.bp.select1(self.cs[self.converter.to_usize(c)] + nr) + i - self.b.select1(j)
     }
 
     fn lf_map2(&self, c: T, i: usize) -> usize {
         let c_u64 = self.converter.to_u64(c);
         let c_usize = self.converter.to_usize(c);
-        let j = self.b.rank1(i as usize);
+        let j = self.b.rank1(i);
         let nr = self.s.rank_u64_unchecked(j, c_u64);
         if self.converter.to_u64(self.get_l(i)) != c_u64 {
             self.bp.select1(self.cs[c_usize] + nr)
@@ -160,7 +156,7 @@ where
     fn get_f(&self, i: usize) -> Self::T {
         let mut s = 0;
         let mut e = self.cs.len();
-        let r = (self.bp.rank1(i as usize + 1) - 1) as usize;
+        let r = self.bp.rank1(i + 1) - 1;
         while e - s > 1 {
             let m = s + (e - s) / 2;
             if self.cs[m] <= r {
@@ -176,10 +172,10 @@ where
         let c = self.get_f(i);
         let c_u64 = self.converter.to_u64(c);
         let c_usize = self.converter.to_usize(c);
-        let j = self.bp.rank1(i as usize + 1) - 1;
-        let p = self.bp.select1(j) as usize;
+        let j = self.bp.rank1(i + 1) - 1;
+        let p = self.bp.select1(j);
         let m = self.s.select_u64_unchecked(j - self.cs[c_usize], c_u64);
-        let n = self.b.select1(m) as usize;
+        let n = self.b.select1(m);
         Some(n + i - p)
     }
 
@@ -237,7 +233,7 @@ mod tests {
         // rank_1  1233456788999
         // s:      ipsm$pisi
         //         012345678
-        assert_eq!(n as usize, rlfmi.b.len());
+        assert_eq!({ n }, rlfmi.b.len());
         for (i, a) in ans.into_iter().enumerate() {
             assert_eq!(
                 rlfmi.b.get(i).unwrap(),
@@ -254,7 +250,7 @@ mod tests {
         let rlfmi = RLFMIndexBackend::new(text, DefaultConverter::<u8>::default(), |_| ());
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0];
-        assert_eq!(n as usize, rlfmi.bp.len());
+        assert_eq!({ n }, rlfmi.bp.len());
         for (i, a) in ans.into_iter().enumerate() {
             assert_eq!(
                 rlfmi.bp.get(i).unwrap(),

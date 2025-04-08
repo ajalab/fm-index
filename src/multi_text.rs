@@ -61,9 +61,9 @@ where
         let mut doc = vec![0; end_marker_count];
         let mut sa_idx_first_text = 0;
         while let Some(p) = bw.select_u64(end_marker_rank_l, 0) {
-            let end_marker_idx = util::modular_sub(sa[p] as usize, 1, sa.len());
+            let end_marker_idx = util::modular_sub(sa[p], 1, sa.len());
             let text_id = end_marker_flags.rank1(end_marker_idx) as usize;
-            if text_id == (end_marker_count as usize - 1) {
+            if text_id == (end_marker_count - 1) {
                 sa_idx_first_text = p;
             }
             doc[end_marker_rank_l] = text_id;
@@ -71,14 +71,14 @@ where
             end_marker_rank_l += 1;
         }
 
-        (doc, sa_idx_first_text as usize)
+        (doc, sa_idx_first_text)
     }
 
     fn wavelet_matrix(text: &[T], sa: &[usize], converter: &C) -> WaveletMatrix {
         let n = text.len();
         let mut bw = vec![0; n];
         for i in 0..n {
-            let k = sa[i] as usize;
+            let k = sa[i];
             if k > 0 {
                 bw[i] = converter.to_u64(text[k - 1]);
             }
@@ -123,12 +123,12 @@ where
     type C = C;
 
     fn len(&self) -> usize {
-        self.bw.len() as usize
+        self.bw.len()
     }
 
     fn get_l(&self, i: usize) -> Self::T {
         self.converter
-            .from_u64(self.bw.get_u64_unchecked(i as usize))
+            .from_u64(self.bw.get_u64_unchecked(i))
     }
 
     fn lf_map(&self, i: usize) -> usize {
@@ -138,9 +138,9 @@ where
         let rank = self.bw.rank_u64_unchecked(i, c_u64);
         if c_u64 == 0 {
             match i.cmp(&self.sa_idx_first_text) {
-                std::cmp::Ordering::Less => rank as usize + 1,
+                std::cmp::Ordering::Less => rank + 1,
                 std::cmp::Ordering::Equal => 0,
-                std::cmp::Ordering::Greater => rank as usize,
+                std::cmp::Ordering::Greater => rank,
             }
         } else {
             let c_count = self.cs[c_usize];
@@ -154,13 +154,13 @@ where
         let rank = self.bw.rank_u64_unchecked(i, c_u64);
         if c_u64 == 0 {
             match i.cmp(&self.sa_idx_first_text) {
-                std::cmp::Ordering::Less => rank as usize + 1,
+                std::cmp::Ordering::Less => rank + 1,
                 std::cmp::Ordering::Equal => 0,
-                std::cmp::Ordering::Greater => rank as usize,
+                std::cmp::Ordering::Greater => rank,
             }
         } else {
             let c_count = self.cs[c_usize];
-            rank as usize + c_count
+            rank + c_count
         }
     }
 
@@ -190,8 +190,7 @@ where
             let c_usize = self.converter.to_usize(c);
             Some(
                 self.bw
-                    .select_u64_unchecked(i as usize - self.cs[c_usize], c_u64)
-                    as usize,
+                    .select_u64_unchecked(i - self.cs[c_usize], c_u64),
             )
         }
     }
@@ -211,7 +210,7 @@ where
         loop {
             match self.suffix_array.get(i) {
                 Some(sa) => {
-                    return (sa + steps) % self.bw.len() as usize;
+                    return (sa + steps) % self.bw.len();
                 }
                 None => {
                     i = self.lf_map(i);
@@ -230,8 +229,8 @@ where
     fn text_id(&self, mut i: usize) -> TextId {
         loop {
             if self.converter.to_u64(self.get_l(i)) == 0 {
-                let text_id_prev = self.doc[self.bw.rank_u64_unchecked(i as usize, 0)];
-                let text_id = util::modular_add(text_id_prev, 1, self.doc.len() as usize);
+                let text_id_prev = self.doc[self.bw.rank_u64_unchecked(i, 0)];
+                let text_id = util::modular_add(text_id_prev, 1, self.doc.len());
                 return TextId::from(text_id);
             } else {
                 i = self.lf_map(i);
@@ -240,7 +239,7 @@ where
     }
 
     fn text_count(&self) -> usize {
-        self.doc.len() as usize
+        self.doc.len()
     }
 }
 
@@ -288,7 +287,7 @@ mod tests {
 
         for (i, &char_pos) in suffix_array.iter().enumerate() {
             let text_id_expected = TextId::from(
-                text[..(char_pos as usize)]
+                text[..char_pos]
                     .iter()
                     .filter(|&&c| c == 0)
                     .count(),
@@ -318,7 +317,7 @@ mod tests {
 
             for (i, &char_pos) in suffix_array.iter().enumerate() {
                 let text_id_expected = TextId::from(
-                    text[..(char_pos as usize)]
+                    text[..char_pos]
                         .iter()
                         .filter(|&&c| c == 0)
                         .count(),

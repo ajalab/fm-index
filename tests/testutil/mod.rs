@@ -72,7 +72,7 @@ impl<'a> NaiveSearchIndex<'a> {
                 && &self.text[i..i + pattern.len()] == pattern
             {
                 result.push(NaiveSearchIndexMatch {
-                    position: i as usize,
+                    position: i,
                     text_id: TextId::from(text_id),
                 });
             }

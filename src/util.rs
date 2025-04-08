@@ -5,7 +5,7 @@ pub fn log2(x: u64) -> u64 {
 }
 
 pub fn log2_usize(x: usize) -> usize {
-    ((std::mem::size_of::<usize>() * 8) as usize) - (x.leading_zeros() as usize) - 1
+    (std::mem::size_of::<usize>() * 8) - (x.leading_zeros() as usize) - 1
 }
 
 pub fn modular_add<T: Rem<Output = T> + Ord + num_traits::Zero>(a: T, b: T, m: T) -> T {

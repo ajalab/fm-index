@@ -42,7 +42,7 @@ where
         let n = text.len();
         let mut bw = vec![0; n];
         for i in 0..n {
-            let k = sa[i] as usize;
+            let k = sa[i];
             bw[i] = converter.to_u64(text[util::modular_sub(k, 1, n)]);
         }
 
@@ -84,7 +84,7 @@ where
     type C = C;
 
     fn len(&self) -> usize {
-        self.bw.len() as usize
+        self.bw.len()
     }
 
     fn get_l(&self, i: usize) -> Self::T {
@@ -96,7 +96,7 @@ where
         let c_count = self.cs[self.converter.to_usize(c)];
         let rank = self
             .bw
-            .rank_u64_unchecked(i as usize, self.converter.to_u64(c)) as usize;
+            .rank_u64_unchecked(i, self.converter.to_u64(c));
         c_count + rank
     }
 
@@ -104,7 +104,7 @@ where
         self.cs[self.converter.to_usize(c)]
             + self
                 .bw
-                .rank_u64_unchecked(i as usize, self.converter.to_u64(c)) as usize
+                .rank_u64_unchecked(i, self.converter.to_u64(c))
     }
 
     fn get_f(&self, i: usize) -> Self::T {
@@ -127,9 +127,9 @@ where
     fn fl_map(&self, i: usize) -> Option<usize> {
         let c = self.get_f(i);
         Some(self.bw.select_u64_unchecked(
-            i as usize - self.cs[self.converter.to_usize(c)],
+            i - self.cs[self.converter.to_usize(c)],
             self.converter.to_u64(c),
-        ) as usize)
+        ))
     }
 
     fn get_converter(&self) -> &Self::C {
@@ -147,7 +147,7 @@ where
         loop {
             match self.suffix_array.get(i) {
                 Some(sa) => {
-                    return (sa + steps) % self.bw.len() as usize;
+                    return (sa + steps) % self.bw.len();
                 }
                 None => {
                     i = self.lf_map(i);

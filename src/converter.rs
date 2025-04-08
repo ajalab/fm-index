@@ -37,7 +37,7 @@ macro_rules! impl_default_converter {
         impl Default for DefaultConverter<$t> {
             fn default() -> Self {
                 DefaultConverter {
-                    max_value: <$t>::max_value(),
+                    max_value: <$t>::MAX,
                 }
             }
         }
