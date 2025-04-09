@@ -39,9 +39,9 @@ where
         // sequence of run lengths
         // run length `l` is encoded as 10^{l-1}
         let mut b = BitVec::new();
-        let mut runs_by_char: Vec<Vec<usize>> = vec![vec![]; m as usize];
+        let mut runs_by_char: Vec<Vec<usize>> = vec![vec![]; m];
         for &k in &sa {
-            let k = k as usize;
+            let k = k;
             let c = if k > 0 {
                 text.text()[k - 1]
             } else {
@@ -65,7 +65,7 @@ where
         let s: Vec<u64> = s.into_iter().map(|c| c.into_u64()).collect();
         let s = WaveletMatrix::from_slice(&s, text.max_bits() as u16);
         let mut bp = BitVec::new();
-        let mut cs = vec![0usize; m as usize];
+        let mut cs = vec![0usize; m];
         let mut c = 0;
         for (rs, ci) in runs_by_char.into_iter().zip(&mut cs) {
             *ci = c;
@@ -134,14 +134,14 @@ where
 
     fn lf_map(&self, i: usize) -> usize {
         let c = self.get_l(i);
-        let j = self.b.rank1(i as usize);
+        let j = self.b.rank1(i);
         let nr = self.s.rank_u64_unchecked(j, c.into_u64());
 
         self.bp.select1(self.cs[c.into_usize()] + nr) + i - self.b.select1(j)
     }
 
     fn lf_map2(&self, c: C, i: usize) -> usize {
-        let j = self.b.rank1(i as usize);
+        let j = self.b.rank1(i);
         let nr = self.s.rank_u64_unchecked(j, c.into_u64());
         if self.get_l(i).into_u64() != c.into_u64() {
             self.bp.select1(self.cs[c.into_usize()] + nr)
@@ -225,7 +225,7 @@ mod tests {
         // rank_1  1233456788999
         // s:      ipsm$pisi
         //         012345678
-        assert_eq!(n as usize, rlfmi.b.len());
+        assert_eq!({ n }, rlfmi.b.len());
         for (i, a) in ans.into_iter().enumerate() {
             assert_eq!(
                 rlfmi.b.get(i).unwrap(),
@@ -242,7 +242,7 @@ mod tests {
         let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0];
-        assert_eq!(n as usize, rlfmi.bp.len());
+        assert_eq!({ n }, rlfmi.bp.len());
         for (i, a) in ans.into_iter().enumerate() {
             assert_eq!(
                 rlfmi.bp.get(i).unwrap(),

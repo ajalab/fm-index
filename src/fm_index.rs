@@ -49,7 +49,6 @@ where
                 bw[i] = text.text()[k - 1].into_u64();
             }
         }
-        let bw = bw.into_iter().map(|c| c.into()).collect::<Vec<u64>>();
 
         WaveletMatrix::from_slice(&bw, text.max_bits() as u16)
     }
@@ -97,7 +96,7 @@ where
     }
 
     fn lf_map2(&self, c: C, i: usize) -> usize {
-        self.cs[c.into_usize()] + self.bw.rank_u64_unchecked(i as usize, c.into_u64())
+        self.cs[c.into_usize()] + self.bw.rank_u64_unchecked(i, c.into_u64())
     }
 
     fn get_f(&self, i: usize) -> Self::C {

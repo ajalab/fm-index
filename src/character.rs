@@ -1,4 +1,3 @@
-use crate::util;
 
 /// A character is a type that can be used to store data and to compose a
 /// search pattern over this data.

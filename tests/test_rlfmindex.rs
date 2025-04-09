@@ -16,7 +16,7 @@ fn test_search_count() {
         multi_text: false,
     }
     .run(
-        |text, level| RLFMIndexWithLocate::new(text, level),
+        RLFMIndexWithLocate::new,
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search(pattern);
@@ -47,7 +47,7 @@ fn test_search_locate() {
         multi_text: false,
     }
     .run(
-        |text, level| RLFMIndexWithLocate::new(text, level),
+        RLFMIndexWithLocate::new,
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search(pattern);

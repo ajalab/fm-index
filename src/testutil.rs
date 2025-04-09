@@ -29,7 +29,6 @@ pub fn build_suffix_array<C>(text: &[C]) -> Vec<usize>
 where
     C: Character + Ord,
 {
-    let text = text.as_ref();
     let n = text.len();
     let suffixes = (0..n).map(|i| &text[i..n]).collect::<Vec<_>>();
     let mut sa = (0..(suffixes.len())).collect::<Vec<_>>();

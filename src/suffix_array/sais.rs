@@ -90,7 +90,7 @@ where
     let mut bucket_start_pos = get_bucket_start_pos(occs);
     for i in 0..n {
         let j = sa[i];
-        if 0 < j && j < usize::MAX && !types.is_bit_set(j as usize - 1).unwrap() {
+        if 0 < j && j < usize::MAX && !types.is_bit_set(j - 1).unwrap() {
             let c = text[j - 1].into_usize();
             let p = bucket_start_pos[c];
             sa[p] = j - 1;
@@ -101,8 +101,8 @@ where
     let mut bucket_end_pos = get_bucket_end_pos(occs);
     for i in (0..n).rev() {
         let j = sa[i];
-        if j != 0 && j != usize::MAX && types.is_bit_set(j as usize - 1).unwrap() {
-            let c = text[j as usize - 1].into_usize();
+        if j != 0 && j != usize::MAX && types.is_bit_set(j - 1).unwrap() {
+            let c = text[j - 1].into_usize();
             let p = bucket_end_pos[c] as usize - 1;
             sa[p] = j - 1;
             bucket_end_pos[c] -= 1;
@@ -282,7 +282,7 @@ where
 
     let mut bucket_end_pos = get_bucket_end_pos(&occs);
     for i in (0..lms_len).rev() {
-        let j = sa[i] as usize;
+        let j = sa[i];
         sa[i] = usize::MAX;
         let c = if j == n {
             0

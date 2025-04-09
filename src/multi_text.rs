@@ -81,12 +81,12 @@ where
         let n = text.text().len();
         let mut bw = vec![0u64; n];
         for i in 0..n {
-            let k = sa[i] as usize;
+            let k = sa[i];
             if k > 0 {
                 bw[i] = text.text()[k - 1].into_u64();
             }
         }
-        let bw = bw.into_iter().map(|c| c.into()).collect::<Vec<u64>>();
+        let bw = bw.into_iter().collect::<Vec<u64>>();
 
         WaveletMatrix::from_slice(&bw, text.max_bits() as u16)
     }
@@ -124,7 +124,7 @@ where
     }
 
     fn get_l(&self, i: usize) -> Self::C {
-        Self::C::from_u64(self.bw.get_u64_unchecked(i as usize))
+        Self::C::from_u64(self.bw.get_u64_unchecked(i))
     }
 
     fn lf_map(&self, i: usize) -> usize {
@@ -180,7 +180,7 @@ where
         } else {
             Some(
                 self.bw
-                    .select_u64_unchecked(i as usize - self.cs[c.into_usize()], c.into_u64()),
+                    .select_u64_unchecked(i - self.cs[c.into_usize()], c.into_u64()),
             )
         }
     }
@@ -213,7 +213,7 @@ where
     fn text_id(&self, mut i: usize) -> TextId {
         loop {
             if self.get_l(i).into_u64() == 0 {
-                let text_id_prev = self.doc[self.bw.rank_u64_unchecked(i as usize, 0)];
+                let text_id_prev = self.doc[self.bw.rank_u64_unchecked(i, 0)];
                 let text_id = modular_add(text_id_prev, 1, self.doc.len());
                 return TextId::from(text_id);
             } else {
@@ -286,7 +286,7 @@ mod tests {
 
         for (i, &char_pos) in suffix_array.iter().enumerate() {
             let text_id_expected = TextId::from(
-                text[..(char_pos as usize)]
+                text[..char_pos]
                     .iter()
                     .filter(|&&c| c == 0)
                     .count(),
