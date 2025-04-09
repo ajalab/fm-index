@@ -24,7 +24,7 @@
 //! # Example
 //! ```
 //! use fm_index::{Search, FMIndexWithLocate, MatchWithLocate, Match};
-//! use fm_index::converter::DefaultConverter;
+//! use fm_index::converter::NoOpConverter;
 //!
 //! // Prepare a text string to search for patterns.
 //! let text = concat!(
@@ -36,7 +36,7 @@
 //! ).as_bytes();
 //!
 //! // Converter converts each character into packed representation.
-//! let converter = DefaultConverter::<u8>::default();
+//! let converter = NoOpConverter::<u8>::default();
 //!
 //! // To perform locate queries, we need to use some storage.
 //! // the sampling level determines how much is retained in order to support `locate`

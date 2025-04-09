@@ -162,7 +162,7 @@ where
 mod tests {
     use super::*;
     use crate::testutil;
-    use crate::{converter::DefaultConverter, suffix_array::sample};
+    use crate::{converter::NoOpConverter, suffix_array::sample};
     use rand::{rngs::StdRng, Rng, SeedableRng};
 
     #[test]
@@ -174,7 +174,7 @@ mod tests {
 
         for _ in 0..attempts {
             let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size + 1, text_size);
-            let converter = DefaultConverter::<u8>::default();
+            let converter = NoOpConverter::<u8>::default();
             let suffix_array = testutil::build_suffix_array(&text);
             let inv_suffix_array = testutil::build_inv_suffix_array(&suffix_array);
             let fm_index = FMIndexBackend::new(&text, converter, |sa| sample::sample(sa, 0));

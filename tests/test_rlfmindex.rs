@@ -1,5 +1,5 @@
 mod testutil;
-use fm_index::converter::DefaultConverter;
+use fm_index::converter::NoOpConverter;
 use fm_index::{MatchWithLocate, RLFMIndexWithLocate, Search};
 use testutil::TestRunner;
 
@@ -17,7 +17,7 @@ fn test_search_count() {
         multi_text: false,
     }
     .run(
-        |text, level| RLFMIndexWithLocate::new(text, DefaultConverter::<u8>::default(), level),
+        |text, level| RLFMIndexWithLocate::new(text, NoOpConverter::<u8>::default(), level),
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text);
             let matches_expected = naive_index.search(pattern);
@@ -46,7 +46,7 @@ fn test_search_locate() {
         multi_text: false,
     }
     .run(
-        |text, level| RLFMIndexWithLocate::new(text, DefaultConverter::<u8>::default(), level),
+        |text, level| RLFMIndexWithLocate::new(text, NoOpConverter::<u8>::default(), level),
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text);
             let matches_expected = naive_index.search(pattern);

@@ -1,5 +1,5 @@
 use fm_index::{
-    converter::DefaultConverter, Match, MatchWithTextId, MultiTextFMIndexWithLocate, Search,
+    converter::NoOpConverter, Match, MatchWithTextId, MultiTextFMIndexWithLocate, Search,
 };
 
 fn main() {
@@ -31,7 +31,7 @@ fn main() {
 
     // Converter converts each character into packed representation.
     // IdConverter represents an identity converter, which preserves the given characters.
-    let converter = DefaultConverter::<u8>::default();
+    let converter = NoOpConverter::<u8>::default();
 
     let fm_index = MultiTextFMIndexWithLocate::new(text, converter, 2);
 

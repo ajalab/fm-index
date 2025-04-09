@@ -127,8 +127,7 @@ where
     }
 
     fn get_l(&self, i: usize) -> Self::T {
-        self.converter
-            .from_u64(self.bw.get_u64_unchecked(i))
+        self.converter.from_u64(self.bw.get_u64_unchecked(i))
     }
 
     fn lf_map(&self, i: usize) -> usize {
@@ -188,10 +187,7 @@ where
             None
         } else {
             let c_usize = self.converter.to_usize(c);
-            Some(
-                self.bw
-                    .select_u64_unchecked(i - self.cs[c_usize], c_u64),
-            )
+            Some(self.bw.select_u64_unchecked(i - self.cs[c_usize], c_u64))
         }
     }
 
@@ -246,7 +242,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::converter::DefaultConverter;
+    use crate::converter::NoOpConverter;
     use crate::suffix_array::sample;
     use crate::testutil;
     use rand::{rngs::StdRng, Rng, SeedableRng};
@@ -260,7 +256,7 @@ mod tests {
 
         for _ in 0..attempts {
             let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
-            let converter = DefaultConverter::<u8>::default();
+            let converter = NoOpConverter::<u8>::default();
             let suffix_array = testutil::build_suffix_array(&text);
             let inv_suffix_array = testutil::build_inv_suffix_array(&suffix_array);
             let fm_index =
@@ -281,17 +277,13 @@ mod tests {
     #[test]
     fn test_get_text_id() {
         let text = "foo\0bar\0baz\0".as_bytes();
-        let converter = DefaultConverter::<u8>::default();
+        let converter = NoOpConverter::<u8>::default();
         let suffix_array = testutil::build_suffix_array(text);
         let fm_index = MultiTextFMIndexBackend::new(text, converter, |sa| sample::sample(sa, 0));
 
         for (i, &char_pos) in suffix_array.iter().enumerate() {
-            let text_id_expected = TextId::from(
-                text[..char_pos]
-                    .iter()
-                    .filter(|&&c| c == 0)
-                    .count(),
-            );
+            let text_id_expected =
+                TextId::from(text[..char_pos].iter().filter(|&&c| c == 0).count());
             let text_id_actual = fm_index.text_id(i);
             assert_eq!(
                 text_id_expected, text_id_actual,
@@ -310,18 +302,14 @@ mod tests {
 
         for _ in 0..attempts {
             let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
-            let converter = DefaultConverter::<u8>::default();
+            let converter = NoOpConverter::<u8>::default();
             let suffix_array = testutil::build_suffix_array(&text);
             let fm_index =
                 MultiTextFMIndexBackend::new(&text, converter, |sa| sample::sample(sa, 0));
 
             for (i, &char_pos) in suffix_array.iter().enumerate() {
-                let text_id_expected = TextId::from(
-                    text[..char_pos]
-                        .iter()
-                        .filter(|&&c| c == 0)
-                        .count(),
-                );
+                let text_id_expected =
+                    TextId::from(text[..char_pos].iter().filter(|&&c| c == 0).count());
                 let text_id_actual = fm_index.text_id(i);
                 assert_eq!(
                     text_id_expected, text_id_actual,

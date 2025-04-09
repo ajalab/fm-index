@@ -208,12 +208,12 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{converter::DefaultConverter, wrapper::SearchIndexWrapper};
+    use crate::{converter::NoOpConverter, wrapper::SearchIndexWrapper};
 
     #[test]
     fn test_s() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(text, DefaultConverter::<u8>::default(), |_| ());
+        let rlfmi = RLFMIndexBackend::new(text, NoOpConverter::<u8>::default(), |_| ());
         let ans = "ipsm\0pisi".as_bytes();
         for (i, a) in ans.iter().enumerate() {
             let l = rlfmi.s.get_u64_unchecked(i);
@@ -224,7 +224,7 @@ mod tests {
     #[test]
     fn test_b() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(text, DefaultConverter::<u8>::default(), |_| ());
+        let rlfmi = RLFMIndexBackend::new(text, NoOpConverter::<u8>::default(), |_| ());
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0];
         // l:      ipssm$pissii
@@ -247,7 +247,7 @@ mod tests {
     #[test]
     fn test_bp() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(text, DefaultConverter::<u8>::default(), |_| ());
+        let rlfmi = RLFMIndexBackend::new(text, NoOpConverter::<u8>::default(), |_| ());
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0];
         assert_eq!({ n }, rlfmi.bp.len());
@@ -264,7 +264,7 @@ mod tests {
     #[test]
     fn test_cs() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(text, DefaultConverter::<u8>::default(), |_| ());
+        let rlfmi = RLFMIndexBackend::new(text, NoOpConverter::<u8>::default(), |_| ());
         let ans = vec![(b'\0', 0), (b'i', 1), (b'm', 4), (b'p', 5), (b's', 7)];
         for (c, a) in ans {
             let c = rlfmi.converter.to_usize(c);
@@ -275,7 +275,7 @@ mod tests {
     #[test]
     fn test_get_l() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(text, DefaultConverter::<u8>::default(), |_| ());
+        let rlfmi = RLFMIndexBackend::new(text, NoOpConverter::<u8>::default(), |_| ());
         let ans = "ipssm\0pissii".to_string().into_bytes();
 
         for (i, a) in ans.into_iter().enumerate() {
@@ -288,7 +288,7 @@ mod tests {
     fn test_lf_map() {
         let text = "mississippi\0".as_bytes();
         let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
-        let rlfmi = RLFMIndexBackend::new(text, DefaultConverter::<u8>::default(), |_| ());
+        let rlfmi = RLFMIndexBackend::new(text, NoOpConverter::<u8>::default(), |_| ());
 
         let mut i = 0;
         for a in ans {
@@ -308,7 +308,7 @@ mod tests {
             (b'p', (6, 8)),
             (b's', (8, 12)),
         ];
-        let rlfmi = RLFMIndexBackend::new(text, DefaultConverter::<u8>::default(), |_| ());
+        let rlfmi = RLFMIndexBackend::new(text, NoOpConverter::<u8>::default(), |_| ());
         let n = rlfmi.len();
 
         for (c, r) in ans {
@@ -334,7 +334,7 @@ mod tests {
             ("si", (8, 10)),
             ("ssi", (10, 12)),
         ];
-        let rlfmi = RLFMIndexBackend::new(text, DefaultConverter::<u8>::default(), |_| ());
+        let rlfmi = RLFMIndexBackend::new(text, NoOpConverter::<u8>::default(), |_| ());
 
         let wrapper = SearchIndexWrapper::new(rlfmi);
 
@@ -348,7 +348,7 @@ mod tests {
         let text = "mississippi\0".as_bytes();
         let mut ans = text.to_vec();
         ans.sort();
-        let rlfmi = RLFMIndexBackend::new(text, DefaultConverter::<u8>::default(), |_| ());
+        let rlfmi = RLFMIndexBackend::new(text, NoOpConverter::<u8>::default(), |_| ());
 
         for (i, a) in ans.into_iter().enumerate() {
             let f = rlfmi.get_f(i);
@@ -359,7 +359,7 @@ mod tests {
     #[test]
     fn test_fl_map() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(text, DefaultConverter::<u8>::default(), |_| ());
+        let rlfmi = RLFMIndexBackend::new(text, NoOpConverter::<u8>::default(), |_| ());
         let cases = vec![5, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
             let actual = rlfmi.fl_map(i).unwrap();

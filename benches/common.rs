@@ -1,4 +1,4 @@
-use fm_index::converter::{Converter, DefaultConverter};
+use fm_index::converter::{Converter, NoOpConverter};
 
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -12,7 +12,7 @@ pub fn binary_text_set(len: usize, prob: f64) -> (Vec<u8>, impl Converter<Char =
         .collect::<Vec<_>>();
     text.push(0);
 
-    let converter = DefaultConverter::new(one);
+    let converter = NoOpConverter::new(one);
     (text, converter)
 }
 

@@ -1,4 +1,4 @@
-use fm_index::{converter::DefaultConverter, FMIndexWithLocate, Match, MatchWithLocate, Search};
+use fm_index::{converter::NoOpConverter, FMIndexWithLocate, Match, MatchWithLocate, Search};
 
 fn main() {
     // Prepare a text string to search for patterns.
@@ -11,7 +11,7 @@ fn main() {
     ).as_bytes();
 
     // Converter converts each character into packed representation.
-    let converter = DefaultConverter::<u8>::default();
+    let converter = NoOpConverter::<u8>::default();
 
     // The sampling level determines how much is retained in order to support `locate`
     // queries. `0` retains the full information, but we don't need the whole array
