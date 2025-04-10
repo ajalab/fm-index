@@ -41,7 +41,6 @@ where
         let mut b = BitVec::new();
         let mut runs_by_char: Vec<Vec<usize>> = vec![vec![]; m];
         for &k in &sa {
-            let k = k;
             let c = if k > 0 {
                 text.text()[k - 1]
             } else {
