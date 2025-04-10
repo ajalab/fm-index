@@ -1,11 +1,8 @@
 use crate::backend::{HasPosition, HeapSize, SearchIndexBackend};
 use crate::character::Character;
-#[cfg(doc)]
-use crate::converter;
-use crate::converter::Converter;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::SuffixOrderSampledArray;
-use crate::util;
+use crate::text::Text;
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::{BitVec, RsVec, WaveletMatrix};
@@ -14,60 +11,64 @@ use vers_vecs::{BitVec, RsVec, WaveletMatrix};
 ///
 /// This can be more space-efficient than the FM-index, but is slower.
 #[derive(Serialize, Deserialize)]
-pub struct RLFMIndexBackend<T, C, S> {
-    converter: C,
+pub struct RLFMIndexBackend<C, S> {
     suffix_array: S,
     s: WaveletMatrix,
     b: RsVec,
     bp: RsVec,
-    cs: Vec<u64>,
-    len: u64,
-    _t: std::marker::PhantomData<T>,
+    cs: Vec<usize>,
+    len: usize,
+    _c: std::marker::PhantomData<C>,
 }
 
-impl<T, C, S> RLFMIndexBackend<T, C, S>
+impl<C, S> RLFMIndexBackend<C, S>
 where
-    T: Character,
-    C: Converter<T>,
+    C: Character,
 {
-    pub(crate) fn new(text: &[T], converter: C, get_sample: impl Fn(&[u64]) -> S) -> Self {
-        let n = text.len();
-        let m = converter.len();
-        let sa = sais::build_suffix_array(text, &converter);
+    pub(crate) fn new<T>(text: &Text<C, T>, get_sample: impl Fn(&[usize]) -> S) -> Self
+    where
+        T: AsRef<[C]>,
+    {
+        let n = text.text().len();
+        let m = text.max_character().into_usize() + 1;
+        let sa = sais::build_suffix_array(text);
 
-        let mut c0 = T::zero();
+        let mut c0 = C::from_u64(0);
         // sequence of run heads
         let mut s = Vec::new();
         // sequence of run lengths
         // run length `l` is encoded as 10^{l-1}
         let mut b = BitVec::new();
-        let mut runs_by_char: Vec<Vec<usize>> = vec![vec![]; m as usize];
+        let mut runs_by_char: Vec<Vec<usize>> = vec![vec![]; m];
         for &k in &sa {
-            let k = k as usize;
-            let c = converter.convert(if k > 0 { text[k - 1] } else { text[n - 1] });
+            let c = if k > 0 {
+                text.text()[k - 1]
+            } else {
+                text.text()[n - 1]
+            };
             // We do not allow consecutive occurrences of zeroes,
             // so text[sa[0] - 1] = text[n - 2] is not zero.
-            if c0 != c {
+            if c0.into_u64() != c.into_u64() {
                 s.push(c);
                 b.append(true);
-                runs_by_char[c.into() as usize].push(1);
+                runs_by_char[c.into_usize()].push(1);
             } else {
                 b.append(false);
-                match runs_by_char[c.into() as usize].last_mut() {
+                match runs_by_char[c.into_usize()].last_mut() {
                     Some(r) => *r += 1,
                     None => unreachable!(),
                 };
             }
             c0 = c;
         }
-        let s: Vec<u64> = s.into_iter().map(|c| c.into()).collect();
-        let s = WaveletMatrix::from_slice(&s, (util::log2(m - 1) + 1) as u16);
+        let s: Vec<u64> = s.into_iter().map(|c| c.into_u64()).collect();
+        let s = WaveletMatrix::from_slice(&s, text.max_bits() as u16);
         let mut bp = BitVec::new();
-        let mut cs = vec![0u64; m as usize];
+        let mut cs = vec![0usize; m];
         let mut c = 0;
         for (rs, ci) in runs_by_char.into_iter().zip(&mut cs) {
             *ci = c;
-            c += rs.len() as u64;
+            c += rs.len();
             for r in rs {
                 bp.append(true);
                 for _ in 0..(r - 1) {
@@ -79,22 +80,20 @@ where
         let b = RsVec::from_bit_vec(b);
         let bp = RsVec::from_bit_vec(bp);
         RLFMIndexBackend {
-            converter,
             suffix_array: get_sample(&sa),
             s,
             b,
             bp,
             cs,
-            len: n as u64,
-            _t: std::marker::PhantomData::<T>,
+            len: n,
+            _c: std::marker::PhantomData::<C>,
         }
     }
 }
 
-impl<T, C> HeapSize for RLFMIndexBackend<T, C, ()>
+impl<C> HeapSize for RLFMIndexBackend<C, ()>
 where
-    T: Character,
-    C: Converter<T>,
+    C: Character,
 {
     fn heap_size(&self) -> usize {
         self.s.heap_size()
@@ -104,10 +103,9 @@ where
     }
 }
 
-impl<T, C> HeapSize for RLFMIndexBackend<T, C, SuffixOrderSampledArray>
+impl<C> HeapSize for RLFMIndexBackend<C, SuffixOrderSampledArray>
 where
-    T: Character,
-    C: Converter<T>,
+    C: Character,
 {
     fn heap_size(&self) -> usize {
         self.s.heap_size()
@@ -118,48 +116,43 @@ where
     }
 }
 
-impl<T, C, S> SearchIndexBackend for RLFMIndexBackend<T, C, S>
+impl<C, S> SearchIndexBackend for RLFMIndexBackend<C, S>
 where
-    T: Character,
-    C: Converter<T>,
+    C: Character,
 {
-    type T = T;
     type C = C;
 
-    fn len(&self) -> u64 {
+    fn len(&self) -> usize {
         self.len
     }
 
-    fn get_l(&self, i: u64) -> T {
+    fn get_l(&self, i: usize) -> C {
         // note: b[0] is always 1
-        T::from_u64(self.s.get_u64_unchecked(self.b.rank1(i as usize + 1) - 1))
+        C::from_u64(self.s.get_u64_unchecked(self.b.rank1(i + 1) - 1))
     }
 
-    fn lf_map(&self, i: u64) -> u64 {
+    fn lf_map(&self, i: usize) -> usize {
         let c = self.get_l(i);
-        let j = self.b.rank1(i as usize);
-        let nr = self.s.rank_u64_unchecked(j, c.into());
+        let j = self.b.rank1(i);
+        let nr = self.s.rank_u64_unchecked(j, c.into_u64());
 
-        self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64 + i
-            - self.b.select1(j) as u64
+        self.bp.select1(self.cs[c.into_usize()] + nr) + i - self.b.select1(j)
     }
 
-    fn lf_map2(&self, c: T, i: u64) -> u64 {
-        let c = self.converter.convert(c);
-        let j = self.b.rank1(i as usize);
-        let nr = self.s.rank_u64_unchecked(j, c.into());
-        if self.get_l(i) != c {
-            self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64
+    fn lf_map2(&self, c: C, i: usize) -> usize {
+        let j = self.b.rank1(i);
+        let nr = self.s.rank_u64_unchecked(j, c.into_u64());
+        if self.get_l(i).into_u64() != c.into_u64() {
+            self.bp.select1(self.cs[c.into_usize()] + nr)
         } else {
-            self.bp.select1(self.cs[c.into() as usize] as usize + nr) as u64 + i
-                - self.b.select1(j) as u64
+            self.bp.select1(self.cs[c.into_usize()] + nr) + i - self.b.select1(j)
         }
     }
 
-    fn get_f(&self, i: u64) -> Self::T {
+    fn get_f(&self, i: usize) -> Self::C {
         let mut s = 0;
         let mut e = self.cs.len();
-        let r = (self.bp.rank1(i as usize + 1) - 1) as u64;
+        let r = self.bp.rank1(i + 1) - 1;
         while e - s > 1 {
             let m = s + (e - s) / 2;
             if self.cs[m] <= r {
@@ -168,31 +161,26 @@ where
                 e = m;
             }
         }
-        T::from_u64(s as u64)
+        C::from_usize(s)
     }
 
-    fn fl_map(&self, i: u64) -> Option<u64> {
+    fn fl_map(&self, i: usize) -> Option<usize> {
         let c = self.get_f(i);
-        let j = self.bp.rank1(i as usize + 1) - 1;
-        let p = self.bp.select1(j) as u64;
+        let j = self.bp.rank1(i + 1) - 1;
+        let p = self.bp.select1(j);
         let m = self
             .s
-            .select_u64_unchecked(j - self.cs[c.into() as usize] as usize, c.into());
-        let n = self.b.select1(m) as u64;
+            .select_u64_unchecked(j - self.cs[c.into_usize()], c.into_u64());
+        let n = self.b.select1(m);
         Some(n + i - p)
-    }
-
-    fn get_converter(&self) -> &Self::C {
-        &self.converter
     }
 }
 
-impl<T, C> HasPosition for RLFMIndexBackend<T, C, SuffixOrderSampledArray>
+impl<C> HasPosition for RLFMIndexBackend<C, SuffixOrderSampledArray>
 where
-    T: Character,
-    C: Converter<T>,
+    C: Character,
 {
-    fn get_sa(&self, mut i: u64) -> u64 {
+    fn get_sa(&self, mut i: usize) -> usize {
         let mut steps = 0;
         loop {
             match self.suffix_array.get(i) {
@@ -211,23 +199,23 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{converter::RangeConverter, wrapper::SearchIndexWrapper};
+    use crate::wrapper::SearchIndexWrapper;
 
     #[test]
     fn test_s() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
         let ans = "ipsm\0pisi".as_bytes();
         for (i, a) in ans.iter().enumerate() {
             let l: u8 = rlfmi.s.get_u64_unchecked(i) as u8;
-            assert_eq!(rlfmi.converter.convert_inv(l), *a);
+            assert_eq!(l, *a);
         }
     }
 
     #[test]
     fn test_b() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0];
         // l:      ipssm$pissii
@@ -236,7 +224,7 @@ mod tests {
         // rank_1  1233456788999
         // s:      ipsm$pisi
         //         012345678
-        assert_eq!(n as usize, rlfmi.b.len());
+        assert_eq!({ n }, rlfmi.b.len());
         for (i, a) in ans.into_iter().enumerate() {
             assert_eq!(
                 rlfmi.b.get(i).unwrap(),
@@ -250,10 +238,10 @@ mod tests {
     #[test]
     fn test_bp() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0];
-        assert_eq!(n as usize, rlfmi.bp.len());
+        assert_eq!({ n }, rlfmi.bp.len());
         for (i, a) in ans.into_iter().enumerate() {
             assert_eq!(
                 rlfmi.bp.get(i).unwrap(),
@@ -267,23 +255,22 @@ mod tests {
     #[test]
     fn test_cs() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
         let ans = vec![(b'\0', 0), (b'i', 1), (b'm', 4), (b'p', 5), (b's', 7)];
         for (c, a) in ans {
-            let c = rlfmi.converter.convert(c) as usize;
-            assert_eq!(rlfmi.cs[c], a);
+            assert_eq!(rlfmi.cs[c as usize], a);
         }
     }
 
     #[test]
     fn test_get_l() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
         let ans = "ipssm\0pissii".to_string().into_bytes();
 
         for (i, a) in ans.into_iter().enumerate() {
-            let l = rlfmi.get_l(i as u64);
-            assert_eq!(rlfmi.converter.convert_inv(l), a);
+            let l = rlfmi.get_l(i);
+            assert_eq!(l, a);
         }
     }
 
@@ -291,7 +278,7 @@ mod tests {
     fn test_lf_map() {
         let text = "mississippi\0".as_bytes();
         let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
-        let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
 
         let mut i = 0;
         for a in ans {
@@ -311,7 +298,7 @@ mod tests {
             (b'p', (6, 8)),
             (b's', (8, 12)),
         ];
-        let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
         let n = rlfmi.len();
 
         for (c, r) in ans {
@@ -337,7 +324,7 @@ mod tests {
             ("si", (8, 10)),
             ("ssi", (10, 12)),
         ];
-        let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
 
         let wrapper = SearchIndexWrapper::new(rlfmi);
 
@@ -351,21 +338,21 @@ mod tests {
         let text = "mississippi\0".as_bytes();
         let mut ans = text.to_vec();
         ans.sort();
-        let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
 
         for (i, a) in ans.into_iter().enumerate() {
-            let f = rlfmi.get_f(i as u64);
-            assert_eq!(rlfmi.converter.convert_inv(f), a);
+            let f = rlfmi.get_f(i);
+            assert_eq!(f, a);
         }
     }
 
     #[test]
     fn test_fl_map() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(text, RangeConverter::new(b'a', b'z'), |_| ());
-        let cases = vec![5u64, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
+        let cases = vec![5usize, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
-            let actual = rlfmi.fl_map(i as u64).unwrap();
+            let actual = rlfmi.fl_map(i).unwrap();
             assert_eq!(actual, expected);
         }
     }
