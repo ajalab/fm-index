@@ -222,7 +222,7 @@ where
         }
     }
 
-    fn text_count(&self) -> usize {
+    fn docs_count(&self) -> usize {
         self.doc.len()
     }
 }

@@ -45,5 +45,5 @@ pub(crate) trait HasMultiDocs {
     fn doc_id(&self, i: usize) -> DocId;
 
     /// Returns the number of documents in the index.
-    fn text_count(&self) -> usize;
+    fn docs_count(&self) -> usize;
 }
