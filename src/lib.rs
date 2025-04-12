@@ -144,7 +144,7 @@ mod character;
 mod doc;
 mod fm_index;
 mod frontend;
-mod multi_docs;
+mod multi_pieces;
 mod rlfmi;
 mod suffix_array;
 #[cfg(test)]

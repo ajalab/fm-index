@@ -13,7 +13,7 @@ fn test_search_count() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_docs: true,
+        multi_pieces: true,
     }
     .run(
         FMIndexMultiPiecesWithLocate::new,
@@ -44,7 +44,7 @@ fn test_search_locate() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_docs: true,
+        multi_pieces: true,
     }
     .run(
         FMIndexMultiPiecesWithLocate::new,
@@ -84,7 +84,7 @@ fn test_search_piece_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_docs: true,
+        multi_pieces: true,
     }
     .run(
         FMIndexMultiPiecesWithLocate::new,
@@ -124,7 +124,7 @@ fn test_search_prefix_piece_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_docs: true,
+        multi_pieces: true,
     }
     .run(
         FMIndexMultiPiecesWithLocate::new,
@@ -164,7 +164,7 @@ fn test_search_suffix_piece_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_docs: true,
+        multi_pieces: true,
     }
     .run(
         FMIndexMultiPiecesWithLocate::new,
@@ -204,7 +204,7 @@ fn test_search_exact_piece_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_docs: true,
+        multi_pieces: true,
     }
     .run(
         FMIndexMultiPiecesWithLocate::new,

@@ -13,7 +13,7 @@ use crate::backend::HeapSize;
 use crate::character::Character;
 use crate::doc::PieceId;
 use crate::fm_index::FMIndexBackend;
-use crate::multi_docs::FMIndexMultiPiecesBackend;
+use crate::multi_pieces::FMIndexMultiPiecesBackend;
 use crate::rlfmi::RLFMIndexBackend;
 use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
 use crate::text::Text;
@@ -324,7 +324,7 @@ macro_rules! impl_search_index_with_locate {
     };
 }
 
-macro_rules! impl_search_index_with_multi_docs {
+macro_rules! impl_search_index_with_multi_pieces {
     ($t:ty, $s:ident, $st:ty) => {
         impl<C: Character> SearchIndexWithMultiPieces<C> for $t {
             fn search_prefix<K>(&self, pattern: K) -> impl Search<C>
@@ -496,7 +496,7 @@ impl_search_index!(
     FMIndexMultiPiecesSearch,
     FMIndexMultiPiecesSearch<C>
 );
-impl_search_index_with_multi_docs!(
+impl_search_index_with_multi_pieces!(
     FMIndexMultiPieces<C>,
     FMIndexMultiPiecesSearch,
     FMIndexMultiPiecesSearch<C>
@@ -513,7 +513,7 @@ impl_search_index_with_locate!(
     FMIndexMultiPiecesSearchWithLocate,
     FMIndexMultiPiecesSearchWithLocate<C>
 );
-impl_search_index_with_multi_docs!(
+impl_search_index_with_multi_pieces!(
     FMIndexMultiPiecesWithLocate<C>,
     FMIndexMultiPiecesSearchWithLocate,
     FMIndexMultiPiecesSearchWithLocate<C>
