@@ -2,6 +2,7 @@ use std::ops::{Rem, Sub};
 
 use crate::backend::{HasMultiPieces, HasPosition, SearchIndexBackend};
 use crate::character::Character;
+use crate::error::Error;
 use crate::piece::PieceId;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::SOSampledSuffixArray;
@@ -27,23 +28,26 @@ impl<C, S> FMIndexMultiPiecesBackend<C, S>
 where
     C: Character,
 {
-    pub(crate) fn new<T>(text: &Text<C, T>, get_sample: impl Fn(&[usize]) -> S) -> Self
+    pub(crate) fn new<T>(
+        text: &Text<C, T>,
+        get_sample: impl Fn(&[usize]) -> S,
+    ) -> Result<Self, Error>
     where
         T: AsRef<[C]>,
     {
         let cs = sais::get_bucket_start_pos(&sais::count_chars(text));
-        let sa = sais::build_suffix_array(text);
+        let sa = sais::build_suffix_array(text).map_err(Error::from)?;
         let bw = Self::wavelet_matrix(text, &sa);
         let (doc, sa_idx_first_text) = Self::doc(text.text(), &bw, &sa);
 
-        FMIndexMultiPiecesBackend {
+        Ok(FMIndexMultiPiecesBackend {
             cs,
             bw,
             suffix_array: get_sample(&sa),
             doc,
             sa_idx_first_text,
             _c: std::marker::PhantomData::<C>,
-        }
+        })
     }
 
     fn doc(text: &[C], bw: &WaveletMatrix, sa: &[usize]) -> (Vec<usize>, usize) {
@@ -253,7 +257,7 @@ mod tests {
     use rand::{rngs::StdRng, Rng, SeedableRng};
 
     #[test]
-    fn test_lf_map_random() {
+    fn test_lf_map_random() -> Result<(), Error> {
         let text_size = 512;
         let attempts = 100;
         let alphabet_size = 8;
@@ -265,7 +269,7 @@ mod tests {
             let inv_suffix_array = testutil::build_inv_suffix_array(&suffix_array);
             let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(text), |sa| {
                 SOSampledSuffixArray::sample(sa, 0)
-            });
+            })?;
 
             let mut lf_map_expected = vec![0; text_size];
             let mut lf_map_actual = vec![0; text_size];
@@ -277,15 +281,16 @@ mod tests {
 
             assert_eq!(lf_map_expected, lf_map_actual);
         }
+        Ok(())
     }
 
     #[test]
-    fn test_get_piece_id() {
+    fn test_get_piece_id() -> Result<(), Error> {
         let text = "foo\0bar\0baz\0".as_bytes();
         let suffix_array = testutil::build_suffix_array(text);
         let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(text), |sa| {
             SOSampledSuffixArray::sample(sa, 0)
-        });
+        })?;
 
         for (i, &char_pos) in suffix_array.iter().enumerate() {
             let piece_id_expected =
@@ -297,10 +302,11 @@ mod tests {
                 char_pos, i, piece_id_expected
             );
         }
+        Ok(())
     }
 
     #[test]
-    fn test_get_piece_id_random() {
+    fn test_get_piece_id_random() -> Result<(), Error> {
         let text_size = 512;
         let attempts = 100;
         let alphabet_size = 8;
@@ -311,7 +317,7 @@ mod tests {
             let suffix_array = testutil::build_suffix_array(&text);
             let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(&text), |sa| {
                 SOSampledSuffixArray::sample(sa, 0)
-            });
+            })?;
 
             for (i, &char_pos) in suffix_array.iter().enumerate() {
                 let piece_id_expected =
@@ -324,5 +330,6 @@ mod tests {
                 );
             }
         }
+        Ok(())
     }
 }

@@ -1,4 +1,4 @@
-use fm_index::{PieceId, Text};
+use fm_index::{Error, PieceId, Text};
 use num_traits::Zero;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -102,7 +102,7 @@ pub struct TestRunner {
 impl TestRunner {
     pub fn run<I, B, R>(&self, build_index: B, run_test: R)
     where
-        B: Fn(&Text<u8, Vec<u8>>, usize) -> I,
+        B: Fn(&Text<u8, Vec<u8>>, usize) -> Result<I, Error>,
         R: Fn(&I, &Text<u8, Vec<u8>>, &[u8]),
     {
         let mut rng = StdRng::seed_from_u64(0);
@@ -116,7 +116,7 @@ impl TestRunner {
             };
             let text = Text::new(text);
             let level = rng.gen::<usize>() % (self.level_max + 1);
-            let fm_index = build_index(&text, level);
+            let fm_index = build_index(&text, level).unwrap();
 
             for _ in 0..self.patterns {
                 let pattern_size_max = if self.pattern_size_max > text_size {
