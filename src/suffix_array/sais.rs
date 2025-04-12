@@ -118,27 +118,29 @@ where
     T: AsRef<[C]>,
 {
     let n = text.text().len();
-    match n {
-        0 => Ok(vec![]),
-        1 => Ok(vec![0]),
-        _ => {
-            let first_char = text.text()[0];
-            if first_char.into_u64() == 0 {
-                return Err(Error::InvalidText(
-                    "the given text must not start with zero character".to_string(),
-                ));
-            }
-            let last_non_zero_char = text.text().iter().rposition(|&c| c.into_u64() != 0);
-            if last_non_zero_char != Some(text.text().len() - 2) {
-                return Err(Error::InvalidText(
-                    "the given text must end with exactly one zero character".to_string(),
-                ));
-            }
-            let mut sa = vec![usize::MAX; n];
-            sais_sub(text, &mut sa);
-            Ok(sa)
-        }
+    if n == 0 {
+        return Ok(vec![]);
     }
+    if n == 1 {
+        return Ok(vec![0]);
+    }
+
+    let first_char = text.text()[0];
+    if first_char.into_u64() == 0 {
+        return Err(Error::InvalidText(
+            "the given text must not start with zero character".to_string(),
+        ));
+    }
+    let last_non_zero_char = text.text().iter().rposition(|&c| c.into_u64() != 0);
+    if last_non_zero_char != Some(text.text().len() - 2) {
+        return Err(Error::InvalidText(
+            "the given text must end with exactly one zero character".to_string(),
+        ));
+    }
+
+    let mut sa = vec![usize::MAX; n];
+    sais_sub(text, &mut sa);
+    Ok(sa)
 }
 
 #[allow(clippy::cognitive_complexity)]
