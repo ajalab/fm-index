@@ -33,7 +33,7 @@ fn main() {
     // Count the number of occurrences.
     assert_eq!(4, fm_index.search("star").count());
 
-    // List the document IDs of all occurrences.
+    // List the IDs of pieces that match the given pattern.
     let mut piece_ids = fm_index
         .search("How I wonder")
         .iter_matches()
@@ -69,7 +69,7 @@ fn main() {
         succeeding_chars,
     );
 
-    // List the IDs of documents that start with a given prefix.
+    // List the IDs of pieces that start with a given prefix.
     let mut piece_ids_with_prefix = fm_index
         .search_prefix("Twinkle")
         .iter_matches()
@@ -78,7 +78,7 @@ fn main() {
     piece_ids_with_prefix.sort();
     assert_eq!(vec![0], piece_ids_with_prefix);
 
-    // List the IDs of documents that end with a given suffix.
+    // List the IDs of pieces that end with a given suffix.
     let mut piece_ids_with_suffix = fm_index
         .search_suffix("what you are!\n")
         .iter_matches()

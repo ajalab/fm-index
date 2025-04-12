@@ -1,4 +1,4 @@
-/// A unique id identifying a single document in a text.
+/// A unique id identifying a single piece (text fragment) in a text.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub struct PieceId(usize);
 
