@@ -1,5 +1,5 @@
 mod testutil;
-use fm_index::{FMIndexMultiDocsWithLocate, MatchWithLocate, MatchWithDocId, Search};
+use fm_index::{FMIndexMultiPiecesWithLocate, MatchWithLocate, MatchWithPieceId, Search};
 use testutil::TestRunner;
 
 #[test]
@@ -13,10 +13,10 @@ fn test_search_count() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_docs: true,
+        multi_pieces: true,
     }
     .run(
-        FMIndexMultiDocsWithLocate::new,
+        FMIndexMultiPiecesWithLocate::new,
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search(pattern);
@@ -44,10 +44,10 @@ fn test_search_locate() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_docs: true,
+        multi_pieces: true,
     }
     .run(
-        FMIndexMultiDocsWithLocate::new,
+        FMIndexMultiPiecesWithLocate::new,
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search(pattern);
@@ -74,7 +74,7 @@ fn test_search_locate() {
 }
 
 #[test]
-fn test_search_doc_id() {
+fn test_search_piece_id() {
     let text_size = 1024;
 
     TestRunner {
@@ -84,27 +84,27 @@ fn test_search_doc_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_docs: true,
+        multi_pieces: true,
     }
     .run(
-        FMIndexMultiDocsWithLocate::new,
+        FMIndexMultiPiecesWithLocate::new,
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search(pattern);
 
-            let doc_ids_expected = matches_expected
+            let piece_ids_expected = matches_expected
                 .iter()
-                .map(|m| m.doc_id)
+                .map(|m| m.piece_id)
                 .collect::<Vec<_>>();
-            let mut doc_ids_actual = fm_index
+            let mut piece_ids_actual = fm_index
                 .search(pattern)
                 .iter_matches()
-                .map(|m| m.doc_id())
+                .map(|m| m.piece_id())
                 .collect::<Vec<_>>();
-            doc_ids_actual.sort();
+            piece_ids_actual.sort();
             assert_eq!(
-                doc_ids_expected,
-                doc_ids_actual,
+                piece_ids_expected,
+                piece_ids_actual,
                 "text = {:?}, pattern = {:?}",
                 text.text(),
                 pattern
@@ -114,7 +114,7 @@ fn test_search_doc_id() {
 }
 
 #[test]
-fn test_search_prefix_doc_id() {
+fn test_search_prefix_piece_id() {
     let text_size = 1024;
 
     TestRunner {
@@ -124,27 +124,27 @@ fn test_search_prefix_doc_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_docs: true,
+        multi_pieces: true,
     }
     .run(
-        FMIndexMultiDocsWithLocate::new,
+        FMIndexMultiPiecesWithLocate::new,
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search_prefix(pattern);
 
-            let doc_ids_expected = matches_expected
+            let piece_ids_expected = matches_expected
                 .iter()
-                .map(|m| m.doc_id)
+                .map(|m| m.piece_id)
                 .collect::<Vec<_>>();
-            let mut doc_ids_actual = fm_index
+            let mut piece_ids_actual = fm_index
                 .search_prefix(pattern)
                 .iter_matches()
-                .map(|m| m.doc_id())
+                .map(|m| m.piece_id())
                 .collect::<Vec<_>>();
-            doc_ids_actual.sort();
+            piece_ids_actual.sort();
             assert_eq!(
-                doc_ids_expected,
-                doc_ids_actual,
+                piece_ids_expected,
+                piece_ids_actual,
                 "text = {:?}, pattern = {:?}",
                 text.text(),
                 pattern
@@ -154,7 +154,7 @@ fn test_search_prefix_doc_id() {
 }
 
 #[test]
-fn test_search_suffix_doc_id() {
+fn test_search_suffix_piece_id() {
     let text_size = 1024;
 
     TestRunner {
@@ -164,27 +164,27 @@ fn test_search_suffix_doc_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_docs: true,
+        multi_pieces: true,
     }
     .run(
-        FMIndexMultiDocsWithLocate::new,
+        FMIndexMultiPiecesWithLocate::new,
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search_suffix(pattern);
 
-            let doc_ids_expected = matches_expected
+            let piece_ids_expected = matches_expected
                 .iter()
-                .map(|m| m.doc_id)
+                .map(|m| m.piece_id)
                 .collect::<Vec<_>>();
-            let mut doc_ids_actual = fm_index
+            let mut piece_ids_actual = fm_index
                 .search_suffix(pattern)
                 .iter_matches()
-                .map(|m| m.doc_id())
+                .map(|m| m.piece_id())
                 .collect::<Vec<_>>();
-            doc_ids_actual.sort();
+            piece_ids_actual.sort();
             assert_eq!(
-                doc_ids_expected,
-                doc_ids_actual,
+                piece_ids_expected,
+                piece_ids_actual,
                 "text = {:?}, pattern = {:?}",
                 text.text(),
                 pattern
@@ -194,7 +194,7 @@ fn test_search_suffix_doc_id() {
 }
 
 #[test]
-fn test_search_exact_doc_id() {
+fn test_search_exact_piece_id() {
     let text_size = 1024;
 
     TestRunner {
@@ -204,27 +204,27 @@ fn test_search_exact_doc_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_docs: true,
+        multi_pieces: true,
     }
     .run(
-        FMIndexMultiDocsWithLocate::new,
+        FMIndexMultiPiecesWithLocate::new,
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search_exact(pattern);
 
-            let doc_ids_expected = matches_expected
+            let piece_ids_expected = matches_expected
                 .iter()
-                .map(|m| m.doc_id)
+                .map(|m| m.piece_id)
                 .collect::<Vec<_>>();
-            let mut doc_ids_actual = fm_index
+            let mut piece_ids_actual = fm_index
                 .search_exact(pattern)
                 .iter_matches()
-                .map(|m| m.doc_id())
+                .map(|m| m.piece_id())
                 .collect::<Vec<_>>();
-            doc_ids_actual.sort();
+            piece_ids_actual.sort();
             assert_eq!(
-                doc_ids_expected,
-                doc_ids_actual,
+                piece_ids_expected,
+                piece_ids_actual,
                 "text = {:?}, pattern = {:?}",
                 text.text(),
                 pattern

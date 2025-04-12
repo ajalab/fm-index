@@ -141,10 +141,10 @@
 
 mod backend;
 mod character;
-mod doc;
 mod fm_index;
 mod frontend;
-mod multi_docs;
+mod multi_pieces;
+mod piece;
 mod rlfmi;
 mod suffix_array;
 #[cfg(test)]
@@ -155,13 +155,14 @@ mod wrapper;
 
 pub use backend::HeapSize;
 pub use character::Character;
-pub use doc::DocId;
 pub use frontend::{
-    FMIndex, FMIndexMatch, FMIndexMatchWithLocate, FMIndexMultiDocs, FMIndexMultiDocsMatch,
-    FMIndexMultiDocsMatchWithLocate, FMIndexMultiDocsSearch, FMIndexMultiDocsSearchWithLocate,
-    FMIndexMultiDocsWithLocate, FMIndexSearch, FMIndexSearchWithLocate, FMIndexWithLocate, Match,
-    MatchWithDocId, MatchWithLocate, RLFMIndex, RLFMIndexMatch, RLFMIndexMatchWithLocate,
-    RLFMIndexSearch, RLFMIndexSearchWithLocate, RLFMIndexWithLocate, Search, SearchIndex,
-    SearchIndexWithMultiDocs, SearchWithLocate,
+    FMIndex, FMIndexMatch, FMIndexMatchWithLocate, FMIndexMultiPieces, FMIndexMultiPiecesMatch,
+    FMIndexMultiPiecesMatchWithLocate, FMIndexMultiPiecesSearch,
+    FMIndexMultiPiecesSearchWithLocate, FMIndexMultiPiecesWithLocate, FMIndexSearch,
+    FMIndexSearchWithLocate, FMIndexWithLocate, Match, MatchWithLocate, MatchWithPieceId,
+    RLFMIndex, RLFMIndexMatch, RLFMIndexMatchWithLocate, RLFMIndexSearch,
+    RLFMIndexSearchWithLocate, RLFMIndexWithLocate, Search, SearchIndex,
+    SearchIndexWithMultiPieces, SearchWithLocate,
 };
+pub use piece::PieceId;
 pub use text::Text;

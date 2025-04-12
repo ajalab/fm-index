@@ -13,7 +13,7 @@ fn test_search_count() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_docs: false,
+        multi_pieces: false,
     }
     .run(RLFMIndexWithLocate::new, |fm_index, text, pattern| {
         let naive_index = testutil::NaiveSearchIndex::new(text.text());
@@ -41,7 +41,7 @@ fn test_search_locate() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_docs: false,
+        multi_pieces: false,
     }
     .run(RLFMIndexWithLocate::new, |fm_index, text, pattern| {
         let naive_index = testutil::NaiveSearchIndex::new(text.text());

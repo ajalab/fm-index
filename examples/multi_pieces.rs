@@ -1,7 +1,7 @@
-use fm_index::{FMIndexMultiDocsWithLocate, Match, MatchWithDocId, Search, Text};
+use fm_index::{FMIndexMultiPiecesWithLocate, Match, MatchWithPieceId, Search, Text};
 
 fn main() {
-    // When using FMIndexMultiDocs, the text is concatenated with an end marker \0.
+    // When using FMIndexMultiPieces, the text is concatenated with an end marker \0.
     let text = concat!(
         // 0
         "Twinkle, twinkle, little star,\n",
@@ -28,19 +28,19 @@ fn main() {
     .as_bytes();
     let text = Text::new(text);
 
-    let fm_index = FMIndexMultiDocsWithLocate::new(&text, 2);
+    let fm_index = FMIndexMultiPiecesWithLocate::new(&text, 2);
 
     // Count the number of occurrences.
     assert_eq!(4, fm_index.search("star").count());
 
-    // List the document IDs of all occurrences.
-    let mut doc_ids = fm_index
+    // List the IDs of pieces that match the given pattern.
+    let mut piece_ids = fm_index
         .search("How I wonder")
         .iter_matches()
-        .map(|m| m.doc_id().into())
+        .map(|m| m.piece_id().into())
         .collect::<Vec<usize>>();
-    doc_ids.sort();
-    assert_eq!(vec![0, 0, 1, 2], doc_ids);
+    piece_ids.sort();
+    assert_eq!(vec![0, 0, 1, 2], piece_ids);
 
     // Extract preceding characters from a search position.
     let preceding_chars = fm_index
@@ -69,21 +69,21 @@ fn main() {
         succeeding_chars,
     );
 
-    // List the IDs of documents that start with a given prefix.
-    let mut doc_ids_with_prefix = fm_index
+    // List the IDs of pieces that start with a given prefix.
+    let mut piece_ids_with_prefix = fm_index
         .search_prefix("Twinkle")
         .iter_matches()
-        .map(|m| m.doc_id().into())
+        .map(|m| m.piece_id().into())
         .collect::<Vec<usize>>();
-    doc_ids_with_prefix.sort();
-    assert_eq!(vec![0], doc_ids_with_prefix);
+    piece_ids_with_prefix.sort();
+    assert_eq!(vec![0], piece_ids_with_prefix);
 
-    // List the IDs of documents that end with a given suffix.
-    let mut doc_ids_with_suffix = fm_index
+    // List the IDs of pieces that end with a given suffix.
+    let mut piece_ids_with_suffix = fm_index
         .search_suffix("what you are!\n")
         .iter_matches()
-        .map(|m| m.doc_id().into())
+        .map(|m| m.piece_id().into())
         .collect::<Vec<usize>>();
-    doc_ids_with_suffix.sort();
-    assert_eq!(vec![0, 1, 2], doc_ids_with_suffix);
+    piece_ids_with_suffix.sort();
+    assert_eq!(vec![0, 1, 2], piece_ids_with_suffix);
 }

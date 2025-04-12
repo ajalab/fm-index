@@ -1,8 +1,8 @@
 use std::ops::{Rem, Sub};
 
-use crate::backend::{HasMultiDocs, HasPosition, SearchIndexBackend};
+use crate::backend::{HasMultiPieces, HasPosition, SearchIndexBackend};
 use crate::character::Character;
-use crate::doc::DocId;
+use crate::piece::PieceId;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::SuffixOrderSampledArray;
 use crate::text::Text;
@@ -13,7 +13,7 @@ use vers_vecs::{BitVec, RsVec, WaveletMatrix};
 
 // An FM-Index supporting multiple \0 separated texts
 #[derive(Serialize, Deserialize)]
-pub struct FMIndexMultiDocsBackend<C, S> {
+pub struct FMIndexMultiPiecesBackend<C, S> {
     bw: WaveletMatrix,
     cs: Vec<usize>,
     suffix_array: S,
@@ -23,7 +23,7 @@ pub struct FMIndexMultiDocsBackend<C, S> {
     _c: std::marker::PhantomData<C>,
 }
 
-impl<C, S> FMIndexMultiDocsBackend<C, S>
+impl<C, S> FMIndexMultiPiecesBackend<C, S>
 where
     C: Character,
 {
@@ -36,7 +36,7 @@ where
         let bw = Self::wavelet_matrix(text, &sa);
         let (doc, sa_idx_first_text) = Self::doc(text.text(), &bw, &sa);
 
-        FMIndexMultiDocsBackend {
+        FMIndexMultiPiecesBackend {
             cs,
             bw,
             suffix_array: get_sample(&sa),
@@ -62,11 +62,11 @@ where
         let mut sa_idx_first_text = 0;
         while let Some(p) = bw.select_u64(end_marker_rank_l, 0) {
             let end_marker_idx = modular_sub(sa[p], 1, sa.len());
-            let doc_id = end_marker_flags.rank1(end_marker_idx);
-            if doc_id == end_marker_count - 1 {
+            let piece_id = end_marker_flags.rank1(end_marker_idx);
+            if piece_id == end_marker_count - 1 {
                 sa_idx_first_text = p;
             }
-            doc[end_marker_rank_l] = doc_id;
+            doc[end_marker_rank_l] = piece_id;
 
             end_marker_rank_l += 1;
         }
@@ -92,7 +92,7 @@ where
     }
 }
 
-impl<C> HeapSize for FMIndexMultiDocsBackend<C, ()>
+impl<C> HeapSize for FMIndexMultiPiecesBackend<C, ()>
 where
     C: Character,
 {
@@ -101,7 +101,7 @@ where
     }
 }
 
-impl<C> HeapSize for FMIndexMultiDocsBackend<C, SuffixOrderSampledArray>
+impl<C> HeapSize for FMIndexMultiPiecesBackend<C, SuffixOrderSampledArray>
 where
     C: Character,
 {
@@ -113,7 +113,7 @@ where
     }
 }
 
-impl<C, S> SearchIndexBackend for FMIndexMultiDocsBackend<C, S>
+impl<C, S> SearchIndexBackend for FMIndexMultiPiecesBackend<C, S>
 where
     C: Character,
 {
@@ -186,7 +186,7 @@ where
     }
 }
 
-impl<C> HasPosition for FMIndexMultiDocsBackend<C, SuffixOrderSampledArray>
+impl<C> HasPosition for FMIndexMultiPiecesBackend<C, SuffixOrderSampledArray>
 where
     C: Character,
 {
@@ -206,23 +206,23 @@ where
     }
 }
 
-impl<C, S> HasMultiDocs for FMIndexMultiDocsBackend<C, S>
+impl<C, S> HasMultiPieces for FMIndexMultiPiecesBackend<C, S>
 where
     C: Character,
 {
-    fn doc_id(&self, mut i: usize) -> DocId {
+    fn piece_id(&self, mut i: usize) -> PieceId {
         loop {
             if self.get_l(i).into_u64() == 0 {
-                let doc_id_prev = self.doc[self.bw.rank_u64_unchecked(i, 0)];
-                let doc_id = modular_add(doc_id_prev, 1, self.doc.len());
-                return DocId::from(doc_id);
+                let piece_id_prev = self.doc[self.bw.rank_u64_unchecked(i, 0)];
+                let piece_id = modular_add(piece_id_prev, 1, self.doc.len());
+                return PieceId::from(piece_id);
             } else {
                 i = self.lf_map(i);
             }
         }
     }
 
-    fn docs_count(&self) -> usize {
+    fn pieces_count(&self) -> usize {
         self.doc.len()
     }
 }
@@ -264,7 +264,7 @@ mod tests {
             let suffix_array = testutil::build_suffix_array(&text);
             let inv_suffix_array = testutil::build_inv_suffix_array(&suffix_array);
             let fm_index =
-                FMIndexMultiDocsBackend::new(&Text::new(text), |sa| sample::sample(sa, 0));
+                FMIndexMultiPiecesBackend::new(&Text::new(text), |sa| sample::sample(sa, 0));
 
             let mut lf_map_expected = vec![0; text_size];
             let mut lf_map_actual = vec![0; text_size];
@@ -279,24 +279,25 @@ mod tests {
     }
 
     #[test]
-    fn test_get_doc_id() {
+    fn test_get_piece_id() {
         let text = "foo\0bar\0baz\0".as_bytes();
         let suffix_array = testutil::build_suffix_array(text);
-        let fm_index = FMIndexMultiDocsBackend::new(&Text::new(text), |sa| sample::sample(sa, 0));
+        let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(text), |sa| sample::sample(sa, 0));
 
         for (i, &char_pos) in suffix_array.iter().enumerate() {
-            let doc_id_expected = DocId::from(text[..char_pos].iter().filter(|&&c| c == 0).count());
-            let doc_id_actual = fm_index.doc_id(i);
+            let piece_id_expected =
+                PieceId::from(text[..char_pos].iter().filter(|&&c| c == 0).count());
+            let piece_id_actual = fm_index.piece_id(i);
             assert_eq!(
-                doc_id_expected, doc_id_actual,
-                "the doc ID of a character at position {} ({} in suffix array) must be {:?}",
-                char_pos, i, doc_id_expected
+                piece_id_expected, piece_id_actual,
+                "the piece ID of a character at position {} ({} in suffix array) must be {:?}",
+                char_pos, i, piece_id_expected
             );
         }
     }
 
     #[test]
-    fn test_get_doc_id_random() {
+    fn test_get_piece_id_random() {
         let text_size = 512;
         let attempts = 100;
         let alphabet_size = 8;
@@ -306,16 +307,16 @@ mod tests {
             let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
             let suffix_array = testutil::build_suffix_array(&text);
             let fm_index =
-                FMIndexMultiDocsBackend::new(&Text::new(&text), |sa| sample::sample(sa, 0));
+                FMIndexMultiPiecesBackend::new(&Text::new(&text), |sa| sample::sample(sa, 0));
 
             for (i, &char_pos) in suffix_array.iter().enumerate() {
-                let doc_id_expected =
-                    DocId::from(text[..(char_pos)].iter().filter(|&&c| c == 0).count());
-                let doc_id_actual = fm_index.doc_id(i);
+                let piece_id_expected =
+                    PieceId::from(text[..(char_pos)].iter().filter(|&&c| c == 0).count());
+                let piece_id_actual = fm_index.piece_id(i);
                 assert_eq!(
-                    doc_id_expected, doc_id_actual,
-                    "the doc ID of a character at position {} ({} in suffix array) must be {:?}. text={:?}, suffix_array={:?}",
-                    char_pos, i, doc_id_expected, text, suffix_array,
+                    piece_id_expected, piece_id_actual,
+                    "the piece ID of a character at position {} ({} in suffix array) must be {:?}. text={:?}, suffix_array={:?}",
+                    char_pos, i, piece_id_expected, text, suffix_array,
                 );
             }
         }
