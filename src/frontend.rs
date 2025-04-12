@@ -11,9 +11,9 @@
 
 use crate::backend::HeapSize;
 use crate::character::Character;
-use crate::doc::PieceId;
 use crate::fm_index::FMIndexBackend;
 use crate::multi_pieces::FMIndexMultiPiecesBackend;
+use crate::piece::PieceId;
 use crate::rlfmi::RLFMIndexBackend;
 use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
 use crate::text::Text;

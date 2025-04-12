@@ -1,5 +1,5 @@
 use crate::character::Character;
-use crate::doc::PieceId;
+use crate::piece::PieceId;
 
 /// Trait for an FM-Index backend implementation
 pub(crate) trait SearchIndexBackend: Sized {

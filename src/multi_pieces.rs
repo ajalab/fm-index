@@ -2,7 +2,7 @@ use std::ops::{Rem, Sub};
 
 use crate::backend::{HasMultiPieces, HasPosition, SearchIndexBackend};
 use crate::character::Character;
-use crate::doc::PieceId;
+use crate::piece::PieceId;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::SuffixOrderSampledArray;
 use crate::text::Text;

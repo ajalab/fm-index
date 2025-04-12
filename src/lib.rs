@@ -141,10 +141,10 @@
 
 mod backend;
 mod character;
-mod doc;
 mod fm_index;
 mod frontend;
 mod multi_pieces;
+mod piece;
 mod rlfmi;
 mod suffix_array;
 #[cfg(test)]
@@ -155,7 +155,6 @@ mod wrapper;
 
 pub use backend::HeapSize;
 pub use character::Character;
-pub use doc::PieceId;
 pub use frontend::{
     FMIndex, FMIndexMatch, FMIndexMatchWithLocate, FMIndexMultiPieces, FMIndexMultiPiecesMatch,
     FMIndexMultiPiecesMatchWithLocate, FMIndexMultiPiecesSearch,
@@ -165,4 +164,5 @@ pub use frontend::{
     RLFMIndexSearchWithLocate, RLFMIndexWithLocate, Search, SearchIndex,
     SearchIndexWithMultiPieces, SearchWithLocate,
 };
+pub use piece::PieceId;
 pub use text::Text;
