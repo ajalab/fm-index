@@ -3,7 +3,7 @@
 // This makes the implementation of the frontend more regular.
 
 use crate::backend::{HasMultiPieces, HasPosition, SearchIndexBackend};
-use crate::doc::DocId;
+use crate::doc::PieceId;
 use crate::{Character, HeapSize};
 
 pub(crate) struct SearchIndexWrapper<B>(B)
@@ -241,7 +241,7 @@ impl<B: SearchIndexBackend + HasPosition> MatchWrapper<'_, B> {
 }
 
 impl<B: SearchIndexBackend + HasMultiPieces> MatchWrapper<'_, B> {
-    pub(crate) fn doc_id(&self) -> DocId {
-        self.backend.doc_id(self.i)
+    pub(crate) fn piece_id(&self) -> PieceId {
+        self.backend.piece_id(self.i)
     }
 }

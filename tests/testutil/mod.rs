@@ -1,4 +1,4 @@
-use fm_index::{DocId, Text};
+use fm_index::{PieceId, Text};
 use num_traits::Zero;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -61,10 +61,10 @@ impl<'a> NaiveSearchIndex<'a> {
         match_suffix_only: bool,
     ) -> Vec<NaiveSearchIndexMatch> {
         let mut result = Vec::new();
-        let mut doc_id = 0;
+        let mut piece_id = 0;
         for i in 0..self.text.len() - pattern.len() + 1 {
             if self.text[i] == 0 {
-                doc_id += 1;
+                piece_id += 1;
             }
             if (!match_prefix_only || (i == 0 || self.text[i - 1] == 0))
                 && (!match_suffix_only
@@ -73,7 +73,7 @@ impl<'a> NaiveSearchIndex<'a> {
             {
                 result.push(NaiveSearchIndexMatch {
                     position: i,
-                    doc_id: DocId::from(doc_id),
+                    piece_id: PieceId::from(piece_id),
                 });
             }
         }
@@ -84,7 +84,7 @@ impl<'a> NaiveSearchIndex<'a> {
 pub struct NaiveSearchIndexMatch {
     pub position: usize,
     #[allow(dead_code)] // false positive?
-    pub doc_id: DocId,
+    pub piece_id: PieceId,
 }
 
 pub struct TestRunner {

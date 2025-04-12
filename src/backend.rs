@@ -1,5 +1,5 @@
 use crate::character::Character;
-use crate::doc::DocId;
+use crate::doc::PieceId;
 
 /// Trait for an FM-Index backend implementation
 pub(crate) trait SearchIndexBackend: Sized {
@@ -42,7 +42,7 @@ pub(crate) trait HasPosition {
 /// A trait for an index that contains multiple documents.
 pub(crate) trait HasMultiPieces {
     /// Returns the ID of the document that the character at the given position on the suffix array belongs to.
-    fn doc_id(&self, i: usize) -> DocId;
+    fn piece_id(&self, i: usize) -> PieceId;
 
     /// Returns the number of documents in the index.
     fn docs_count(&self) -> usize;

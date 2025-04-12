@@ -11,7 +11,7 @@
 
 use crate::backend::HeapSize;
 use crate::character::Character;
-use crate::doc::DocId;
+use crate::doc::PieceId;
 use crate::fm_index::FMIndexBackend;
 use crate::multi_docs::FMIndexMultiPiecesBackend;
 use crate::rlfmi::RLFMIndexBackend;
@@ -98,9 +98,9 @@ pub trait MatchWithLocate<'a, C>: Match<'a, C> {
 }
 
 /// A match in the text that contains the ID of the document where the pattern is found.
-pub trait MatchWithDocId<'a, C>: Match<'a, C> {
+pub trait MatchWithPieceId<'a, C>: Match<'a, C> {
     /// Get the ID of the text that the character at the matched position belongs to.
-    fn doc_id(&self) -> DocId;
+    fn piece_id(&self) -> PieceId;
 }
 
 /// FMIndex, count only.
@@ -443,11 +443,11 @@ macro_rules! impl_match_locate {
     };
 }
 
-macro_rules! impl_match_doc_id {
+macro_rules! impl_match_piece_id {
     ($t:ty) => {
-        impl<'a, C: Character> MatchWithDocId<'a, C> for $t {
-            fn doc_id(&self) -> DocId {
-                self.0.doc_id()
+        impl<'a, C: Character> MatchWithPieceId<'a, C> for $t {
+            fn piece_id(&self) -> PieceId {
+                self.0.piece_id()
             }
         }
     };
@@ -525,4 +525,4 @@ impl_search!(
 );
 impl_match!(FMIndexMultiPiecesMatchWithLocate<'a, C>);
 impl_match_locate!(FMIndexMultiPiecesMatchWithLocate<'a, C>);
-impl_match_doc_id!(FMIndexMultiPiecesMatchWithLocate<'a, C>);
+impl_match_piece_id!(FMIndexMultiPiecesMatchWithLocate<'a, C>);

@@ -155,13 +155,14 @@ mod wrapper;
 
 pub use backend::HeapSize;
 pub use character::Character;
-pub use doc::DocId;
+pub use doc::PieceId;
 pub use frontend::{
     FMIndex, FMIndexMatch, FMIndexMatchWithLocate, FMIndexMultiPieces, FMIndexMultiPiecesMatch,
     FMIndexMultiPiecesMatchWithLocate, FMIndexMultiPiecesSearch,
     FMIndexMultiPiecesSearchWithLocate, FMIndexMultiPiecesWithLocate, FMIndexSearch,
-    FMIndexSearchWithLocate, FMIndexWithLocate, Match, MatchWithDocId, MatchWithLocate, RLFMIndex,
-    RLFMIndexMatch, RLFMIndexMatchWithLocate, RLFMIndexSearch, RLFMIndexSearchWithLocate,
-    RLFMIndexWithLocate, Search, SearchIndex, SearchIndexWithMultiPieces, SearchWithLocate,
+    FMIndexSearchWithLocate, FMIndexWithLocate, Match, MatchWithLocate, MatchWithPieceId,
+    RLFMIndex, RLFMIndexMatch, RLFMIndexMatchWithLocate, RLFMIndexSearch,
+    RLFMIndexSearchWithLocate, RLFMIndexWithLocate, Search, SearchIndex,
+    SearchIndexWithMultiPieces, SearchWithLocate,
 };
 pub use text::Text;
