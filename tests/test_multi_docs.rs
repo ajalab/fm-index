@@ -1,5 +1,5 @@
 mod testutil;
-use fm_index::{FMIndexMultiDocsWithLocate, MatchWithLocate, MatchWithDocId, Search};
+use fm_index::{FMIndexMultiPiecesWithLocate, MatchWithDocId, MatchWithLocate, Search};
 use testutil::TestRunner;
 
 #[test]
@@ -16,7 +16,7 @@ fn test_search_count() {
         multi_docs: true,
     }
     .run(
-        FMIndexMultiDocsWithLocate::new,
+        FMIndexMultiPiecesWithLocate::new,
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search(pattern);
@@ -47,7 +47,7 @@ fn test_search_locate() {
         multi_docs: true,
     }
     .run(
-        FMIndexMultiDocsWithLocate::new,
+        FMIndexMultiPiecesWithLocate::new,
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search(pattern);
@@ -87,7 +87,7 @@ fn test_search_doc_id() {
         multi_docs: true,
     }
     .run(
-        FMIndexMultiDocsWithLocate::new,
+        FMIndexMultiPiecesWithLocate::new,
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search(pattern);
@@ -127,7 +127,7 @@ fn test_search_prefix_doc_id() {
         multi_docs: true,
     }
     .run(
-        FMIndexMultiDocsWithLocate::new,
+        FMIndexMultiPiecesWithLocate::new,
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search_prefix(pattern);
@@ -167,7 +167,7 @@ fn test_search_suffix_doc_id() {
         multi_docs: true,
     }
     .run(
-        FMIndexMultiDocsWithLocate::new,
+        FMIndexMultiPiecesWithLocate::new,
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search_suffix(pattern);
@@ -207,7 +207,7 @@ fn test_search_exact_doc_id() {
         multi_docs: true,
     }
     .run(
-        FMIndexMultiDocsWithLocate::new,
+        FMIndexMultiPiecesWithLocate::new,
         |fm_index, text, pattern| {
             let naive_index = testutil::NaiveSearchIndex::new(text.text());
             let matches_expected = naive_index.search_exact(pattern);

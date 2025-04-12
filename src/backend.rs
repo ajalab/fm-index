@@ -40,7 +40,7 @@ pub(crate) trait HasPosition {
 }
 
 /// A trait for an index that contains multiple documents.
-pub(crate) trait HasMultiDocs {
+pub(crate) trait HasMultiPieces {
     /// Returns the ID of the document that the character at the given position on the suffix array belongs to.
     fn doc_id(&self, i: usize) -> DocId;
 
