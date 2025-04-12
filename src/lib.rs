@@ -141,6 +141,7 @@
 
 mod backend;
 mod character;
+mod doc;
 mod fm_index;
 mod frontend;
 mod multi_docs;
@@ -154,12 +155,13 @@ mod wrapper;
 
 pub use backend::HeapSize;
 pub use character::Character;
+pub use doc::DocId;
 pub use frontend::{
     FMIndex, FMIndexMatch, FMIndexMatchWithLocate, FMIndexMultiDocs, FMIndexMultiDocsMatch,
     FMIndexMultiDocsMatchWithLocate, FMIndexMultiDocsSearch, FMIndexMultiDocsSearchWithLocate,
     FMIndexMultiDocsWithLocate, FMIndexSearch, FMIndexSearchWithLocate, FMIndexWithLocate, Match,
-    MatchWithLocate, MatchWithTextId, RLFMIndex, RLFMIndexMatch, RLFMIndexMatchWithLocate,
+    MatchWithDocId, MatchWithLocate, RLFMIndex, RLFMIndexMatch, RLFMIndexMatchWithLocate,
     RLFMIndexSearch, RLFMIndexSearchWithLocate, RLFMIndexWithLocate, Search, SearchIndex,
     SearchIndexWithMultiTexts, SearchWithLocate,
 };
-pub use text::{Text, TextId};
+pub use text::Text;

@@ -11,11 +11,12 @@
 
 use crate::backend::HeapSize;
 use crate::character::Character;
+use crate::doc::DocId;
 use crate::fm_index::FMIndexBackend;
 use crate::multi_docs::FMIndexMultiDocsBackend;
 use crate::rlfmi::RLFMIndexBackend;
 use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
-use crate::text::{Text, TextId};
+use crate::text::Text;
 use crate::wrapper::{MatchWrapper, SearchIndexWrapper, SearchWrapper};
 
 /// Trait for searching in an index.
@@ -97,9 +98,9 @@ pub trait MatchWithLocate<'a, C>: Match<'a, C> {
 }
 
 /// A match in the text that contains its text ID on the text.
-pub trait MatchWithTextId<'a, C>: Match<'a, C> {
+pub trait MatchWithDocId<'a, C>: Match<'a, C> {
     /// Get the ID of the text that the character at the matched position belongs to.
-    fn text_id(&self) -> TextId;
+    fn text_id(&self) -> DocId;
 }
 
 /// FMIndex, count only.
@@ -444,8 +445,8 @@ macro_rules! impl_match_locate {
 
 macro_rules! impl_match_text_id {
     ($t:ty) => {
-        impl<'a, C: Character> MatchWithTextId<'a, C> for $t {
-            fn text_id(&self) -> TextId {
+        impl<'a, C: Character> MatchWithDocId<'a, C> for $t {
+            fn text_id(&self) -> DocId {
                 self.0.text_id()
             }
         }

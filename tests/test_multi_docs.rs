@@ -1,5 +1,5 @@
 mod testutil;
-use fm_index::{FMIndexMultiDocsWithLocate, MatchWithLocate, MatchWithTextId, Search};
+use fm_index::{FMIndexMultiDocsWithLocate, MatchWithLocate, MatchWithDocId, Search};
 use testutil::TestRunner;
 
 #[test]

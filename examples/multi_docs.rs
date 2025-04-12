@@ -1,4 +1,4 @@
-use fm_index::{FMIndexMultiDocsWithLocate, Match, MatchWithTextId, Search, Text};
+use fm_index::{FMIndexMultiDocsWithLocate, Match, MatchWithDocId, Search, Text};
 
 fn main() {
     // When using FMIndexMultiDocs, the text is concatenated with an end marker \0.

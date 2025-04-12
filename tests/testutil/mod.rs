@@ -1,4 +1,4 @@
-use fm_index::{Text, TextId};
+use fm_index::{DocId, Text};
 use num_traits::Zero;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -73,7 +73,7 @@ impl<'a> NaiveSearchIndex<'a> {
             {
                 result.push(NaiveSearchIndexMatch {
                     position: i,
-                    text_id: TextId::from(text_id),
+                    text_id: DocId::from(text_id),
                 });
             }
         }
@@ -84,7 +84,7 @@ impl<'a> NaiveSearchIndex<'a> {
 pub struct NaiveSearchIndexMatch {
     pub position: usize,
     #[allow(dead_code)] // false positive?
-    pub text_id: TextId,
+    pub text_id: DocId,
 }
 
 pub struct TestRunner {
