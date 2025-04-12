@@ -39,11 +39,11 @@ pub(crate) trait HasPosition {
     fn get_sa(&self, i: usize) -> usize;
 }
 
-/// A trait for an index that contains multiple documents.
+/// A trait for an index that contains multiple pieces (text fragments).
 pub(crate) trait HasMultiPieces {
-    /// Returns the ID of the document that the character at the given position on the suffix array belongs to.
+    /// Returns the ID of the piece the character at the given position on the suffix array belongs to.
     fn piece_id(&self, i: usize) -> PieceId;
 
-    /// Returns the number of documents in the index.
+    /// Returns the number of pieces in the index.
     fn docs_count(&self) -> usize;
 }
