@@ -35,7 +35,7 @@ where
     {
         let n = text.text().len();
         let m = text.max_character().into_usize() + 1;
-        let sa = sais::build_suffix_array(text).map_err(Error::from)?;
+        let sa = sais::build_suffix_array(text)?;
 
         let mut c0 = C::from_u64(0);
         // sequence of run heads

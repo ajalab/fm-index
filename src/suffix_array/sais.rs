@@ -3,7 +3,7 @@
 //!    IEEE Transactions on Computers, 60(10), 1471–1484. <https://doi.org/10.1109/tc.2010.188>
 use vers_vecs::BitVec;
 
-use crate::suffix_array::Error;
+use crate::error::Error;
 use crate::{text::Text, Character};
 
 pub fn count_chars<C, T>(text: &Text<C, T>) -> Vec<usize>
@@ -128,13 +128,13 @@ where
     let first_char = text.text()[0];
     if first_char.into_u64() == 0 {
         return Err(Error::InvalidText(
-            "the given text must not start with zero character".to_string(),
+            "the given text must not start with zero character",
         ));
     }
     let last_non_zero_char = text.text().iter().rposition(|&c| c.into_u64() != 0);
     if last_non_zero_char != Some(text.text().len() - 2) {
         return Err(Error::InvalidText(
-            "the given text must end with exactly one zero character".to_string(),
+            "the given text must end with exactly one zero character",
         ));
     }
 

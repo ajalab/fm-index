@@ -36,7 +36,7 @@ where
         T: AsRef<[C]>,
     {
         let cs = sais::get_bucket_start_pos(&sais::count_chars(text));
-        let sa = sais::build_suffix_array(text).map_err(Error::from)?;
+        let sa = sais::build_suffix_array(text)?;
         let bw = Self::wavelet_matrix(text, &sa);
         let (doc, sa_idx_first_text) = Self::doc(text.text(), &bw, &sa);
 
