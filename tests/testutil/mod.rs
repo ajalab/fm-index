@@ -1,4 +1,4 @@
-use fm_index::{Text, TextId};
+use fm_index::{DocId, Text};
 use num_traits::Zero;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -61,10 +61,10 @@ impl<'a> NaiveSearchIndex<'a> {
         match_suffix_only: bool,
     ) -> Vec<NaiveSearchIndexMatch> {
         let mut result = Vec::new();
-        let mut text_id = 0;
+        let mut doc_id = 0;
         for i in 0..self.text.len() - pattern.len() + 1 {
             if self.text[i] == 0 {
-                text_id += 1;
+                doc_id += 1;
             }
             if (!match_prefix_only || (i == 0 || self.text[i - 1] == 0))
                 && (!match_suffix_only
@@ -73,7 +73,7 @@ impl<'a> NaiveSearchIndex<'a> {
             {
                 result.push(NaiveSearchIndexMatch {
                     position: i,
-                    text_id: TextId::from(text_id),
+                    doc_id: DocId::from(doc_id),
                 });
             }
         }
@@ -84,7 +84,7 @@ impl<'a> NaiveSearchIndex<'a> {
 pub struct NaiveSearchIndexMatch {
     pub position: usize,
     #[allow(dead_code)] // false positive?
-    pub text_id: TextId,
+    pub doc_id: DocId,
 }
 
 pub struct TestRunner {
@@ -94,7 +94,7 @@ pub struct TestRunner {
     pub alphabet_size: u8,
     pub level_max: usize,
     pub pattern_size_max: usize,
-    pub multi_text: bool,
+    pub multi_docs: bool,
 }
 
 impl TestRunner {
@@ -106,7 +106,7 @@ impl TestRunner {
         let mut rng = StdRng::seed_from_u64(0);
 
         for _ in 0..self.texts {
-            let text = if self.multi_text {
+            let text = if self.multi_docs {
                 build_text(|| rng.gen::<u8>() % self.alphabet_size, self.text_size)
             } else {
                 build_text(|| rng.gen::<u8>() % self.alphabet_size + 1, self.text_size)

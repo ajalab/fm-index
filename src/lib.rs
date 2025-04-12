@@ -141,9 +141,10 @@
 
 mod backend;
 mod character;
+mod doc;
 mod fm_index;
 mod frontend;
-mod multi_text;
+mod multi_docs;
 mod rlfmi;
 mod suffix_array;
 #[cfg(test)]
@@ -154,12 +155,13 @@ mod wrapper;
 
 pub use backend::HeapSize;
 pub use character::Character;
+pub use doc::DocId;
 pub use frontend::{
-    FMIndex, FMIndexMatch, FMIndexMatchWithLocate, FMIndexSearch, FMIndexSearchWithLocate,
-    FMIndexWithLocate, Match, MatchWithLocate, MatchWithTextId, MultiTextFMIndex,
-    MultiTextFMIndexMatch, MultiTextFMIndexMatchWithLocate, MultiTextFMIndexSearch,
-    MultiTextFMIndexSearchWithLocate, MultiTextFMIndexWithLocate, RLFMIndex, RLFMIndexMatch,
-    RLFMIndexMatchWithLocate, RLFMIndexSearch, RLFMIndexSearchWithLocate, RLFMIndexWithLocate,
-    Search, SearchIndex, SearchIndexWithMultiTexts, SearchWithLocate,
+    FMIndex, FMIndexMatch, FMIndexMatchWithLocate, FMIndexMultiDocs, FMIndexMultiDocsMatch,
+    FMIndexMultiDocsMatchWithLocate, FMIndexMultiDocsSearch, FMIndexMultiDocsSearchWithLocate,
+    FMIndexMultiDocsWithLocate, FMIndexSearch, FMIndexSearchWithLocate, FMIndexWithLocate, Match,
+    MatchWithDocId, MatchWithLocate, RLFMIndex, RLFMIndexMatch, RLFMIndexMatchWithLocate,
+    RLFMIndexSearch, RLFMIndexSearchWithLocate, RLFMIndexWithLocate, Search, SearchIndex,
+    SearchIndexWithMultiDocs, SearchWithLocate,
 };
-pub use text::{Text, TextId};
+pub use text::Text;

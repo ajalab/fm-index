@@ -2,8 +2,8 @@
 // the functionality used by the frontend.
 // This makes the implementation of the frontend more regular.
 
-use crate::backend::{HasMultiTexts, HasPosition, SearchIndexBackend};
-use crate::text::TextId;
+use crate::backend::{HasMultiDocs, HasPosition, SearchIndexBackend};
+use crate::doc::DocId;
 use crate::{Character, HeapSize};
 
 pub(crate) struct SearchIndexWrapper<B>(B)
@@ -55,7 +55,7 @@ where
 
 impl<B> SearchIndexWrapper<B>
 where
-    B: SearchIndexBackend + HasMultiTexts,
+    B: SearchIndexBackend + HasMultiDocs,
 {
     pub(crate) fn search_prefix<K>(&self, pattern: K) -> SearchWrapper<B>
     where
@@ -69,7 +69,7 @@ where
     where
         K: AsRef<[B::C]>,
     {
-        SearchWrapper::new(&self.0, 0, self.0.text_count(), false).search(pattern)
+        SearchWrapper::new(&self.0, 0, self.0.docs_count(), false).search(pattern)
     }
 
     /// Search for a pattern that is an exact match of a text.
@@ -77,7 +77,7 @@ where
     where
         K: AsRef<[B::C]>,
     {
-        SearchWrapper::new(&self.0, 0, self.0.text_count(), true).search(pattern)
+        SearchWrapper::new(&self.0, 0, self.0.docs_count(), true).search(pattern)
     }
 }
 
@@ -240,8 +240,8 @@ impl<B: SearchIndexBackend + HasPosition> MatchWrapper<'_, B> {
     }
 }
 
-impl<B: SearchIndexBackend + HasMultiTexts> MatchWrapper<'_, B> {
-    pub(crate) fn text_id(&self) -> TextId {
-        self.backend.text_id(self.i)
+impl<B: SearchIndexBackend + HasMultiDocs> MatchWrapper<'_, B> {
+    pub(crate) fn doc_id(&self) -> DocId {
+        self.backend.doc_id(self.i)
     }
 }

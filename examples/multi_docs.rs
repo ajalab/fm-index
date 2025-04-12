@@ -1,7 +1,7 @@
-use fm_index::{Match, MatchWithTextId, MultiTextFMIndexWithLocate, Search, Text};
+use fm_index::{FMIndexMultiDocsWithLocate, Match, MatchWithDocId, Search, Text};
 
 fn main() {
-    // When using MultiTextFMIndex, the text is concatenated with an end marker \0.
+    // When using FMIndexMultiDocs, the text is concatenated with an end marker \0.
     let text = concat!(
         // 0
         "Twinkle, twinkle, little star,\n",
@@ -28,19 +28,19 @@ fn main() {
     .as_bytes();
     let text = Text::new(text);
 
-    let fm_index = MultiTextFMIndexWithLocate::new(&text, 2);
+    let fm_index = FMIndexMultiDocsWithLocate::new(&text, 2);
 
     // Count the number of occurrences.
     assert_eq!(4, fm_index.search("star").count());
 
-    // List the text IDs of all occurrences.
-    let mut text_ids = fm_index
+    // List the document IDs of all occurrences.
+    let mut doc_ids = fm_index
         .search("How I wonder")
         .iter_matches()
-        .map(|m| m.text_id().into())
+        .map(|m| m.doc_id().into())
         .collect::<Vec<usize>>();
-    text_ids.sort();
-    assert_eq!(vec![0, 0, 1, 2], text_ids);
+    doc_ids.sort();
+    assert_eq!(vec![0, 0, 1, 2], doc_ids);
 
     // Extract preceding characters from a search position.
     let preceding_chars = fm_index
@@ -69,21 +69,21 @@ fn main() {
         succeeding_chars,
     );
 
-    // List the IDs of texts that have the prefix.
-    let mut text_ids_with_prefix = fm_index
+    // List the IDs of documents that start with a given prefix.
+    let mut doc_ids_with_prefix = fm_index
         .search_prefix("Twinkle")
         .iter_matches()
-        .map(|m| m.text_id().into())
+        .map(|m| m.doc_id().into())
         .collect::<Vec<usize>>();
-    text_ids_with_prefix.sort();
-    assert_eq!(vec![0], text_ids_with_prefix);
+    doc_ids_with_prefix.sort();
+    assert_eq!(vec![0], doc_ids_with_prefix);
 
-    // List the IDs of texts that have the suffix.
-    let mut text_ids_with_suffix = fm_index
+    // List the IDs of documents that end with a given suffix.
+    let mut doc_ids_with_suffix = fm_index
         .search_suffix("what you are!\n")
         .iter_matches()
-        .map(|m| m.text_id().into())
+        .map(|m| m.doc_id().into())
         .collect::<Vec<usize>>();
-    text_ids_with_suffix.sort();
-    assert_eq!(vec![0, 1, 2], text_ids_with_suffix);
+    doc_ids_with_suffix.sort();
+    assert_eq!(vec![0, 1, 2], doc_ids_with_suffix);
 }

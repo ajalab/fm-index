@@ -2,22 +2,6 @@ use crate::util;
 use crate::Character;
 use num_traits::Bounded;
 
-/// A unique id identifying this text.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
-pub struct TextId(usize);
-
-impl From<usize> for TextId {
-    fn from(value: usize) -> Self {
-        TextId(value)
-    }
-}
-
-impl From<TextId> for usize {
-    fn from(value: TextId) -> usize {
-        value.0
-    }
-}
-
 /// A text structure used as the target for pattern searching in the index.
 ///
 /// Not only does it contain the text, but also the maximum character value in the

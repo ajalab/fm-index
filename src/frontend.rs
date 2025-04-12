@@ -11,11 +11,12 @@
 
 use crate::backend::HeapSize;
 use crate::character::Character;
+use crate::doc::DocId;
 use crate::fm_index::FMIndexBackend;
-use crate::multi_text::MultiTextFMIndexBackend;
+use crate::multi_docs::FMIndexMultiDocsBackend;
 use crate::rlfmi::RLFMIndexBackend;
 use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
-use crate::text::{Text, TextId};
+use crate::text::Text;
 use crate::wrapper::{MatchWrapper, SearchIndexWrapper, SearchWrapper};
 
 /// Trait for searching in an index.
@@ -38,7 +39,7 @@ pub trait SearchIndex<C> {
 }
 
 /// Trait for searching in an index that supports multiple texts.
-pub trait SearchIndexWithMultiTexts<C>: SearchIndex<C> {
+pub trait SearchIndexWithMultiDocs<C>: SearchIndex<C> {
     /// Search for a pattern that is a prefix of a text.
     fn search_prefix<K>(&self, pattern: K) -> impl Search<C>
     where
@@ -96,10 +97,10 @@ pub trait MatchWithLocate<'a, C>: Match<'a, C> {
     fn locate(&self) -> usize;
 }
 
-/// A match in the text that contains its text ID on the text.
-pub trait MatchWithTextId<'a, C>: Match<'a, C> {
+/// A match in the text that contains the ID of the document where the pattern is found.
+pub trait MatchWithDocId<'a, C>: Match<'a, C> {
     /// Get the ID of the text that the character at the matched position belongs to.
-    fn text_id(&self) -> TextId;
+    fn doc_id(&self) -> DocId;
 }
 
 /// FMIndex, count only.
@@ -155,30 +156,30 @@ pub struct RLFMIndexMatchWithLocate<'a, C: Character>(
 /// MultiText index, count only.
 ///
 /// This is a multi-text version of the FM-Index. It allows \0 separated strings.
-pub struct MultiTextFMIndex<C: Character>(SearchIndexWrapper<MultiTextFMIndexBackend<C, ()>>);
+pub struct FMIndexMultiDocs<C: Character>(SearchIndexWrapper<FMIndexMultiDocsBackend<C, ()>>);
 /// Search result for MultiText index, count only.
-pub struct MultiTextFMIndexSearch<'a, C: Character>(
-    SearchWrapper<'a, MultiTextFMIndexBackend<C, ()>>,
+pub struct FMIndexMultiDocsSearch<'a, C: Character>(
+    SearchWrapper<'a, FMIndexMultiDocsBackend<C, ()>>,
 );
 /// Match in the text for MultiText index.
-pub struct MultiTextFMIndexMatch<'a, C: Character>(
-    MatchWrapper<'a, MultiTextFMIndexBackend<C, ()>>,
+pub struct FMIndexMultiDocsMatch<'a, C: Character>(
+    MatchWrapper<'a, FMIndexMultiDocsBackend<C, ()>>,
 );
 
 /// MultiText index with locate support.
 ///
 /// This is a multi-text version of the FM-Index. It allows \0 separated strings.
 /// It uses additional storage to support locate queries.
-pub struct MultiTextFMIndexWithLocate<C: Character>(
-    SearchIndexWrapper<MultiTextFMIndexBackend<C, SuffixOrderSampledArray>>,
+pub struct FMIndexMultiDocsWithLocate<C: Character>(
+    SearchIndexWrapper<FMIndexMultiDocsBackend<C, SuffixOrderSampledArray>>,
 );
 /// Search result for MultiText index with locate support.
-pub struct MultiTextFMIndexSearchWithLocate<'a, C: Character>(
-    SearchWrapper<'a, MultiTextFMIndexBackend<C, SuffixOrderSampledArray>>,
+pub struct FMIndexMultiDocsSearchWithLocate<'a, C: Character>(
+    SearchWrapper<'a, FMIndexMultiDocsBackend<C, SuffixOrderSampledArray>>,
 );
 /// Match in the text for MultiText index with locate support.
-pub struct MultiTextFMIndexMatchWithLocate<'a, C: Character>(
-    MatchWrapper<'a, MultiTextFMIndexBackend<C, SuffixOrderSampledArray>>,
+pub struct FMIndexMultiDocsMatchWithLocate<'a, C: Character>(
+    MatchWrapper<'a, FMIndexMultiDocsBackend<C, SuffixOrderSampledArray>>,
 );
 
 impl<C: Character> FMIndex<C> {
@@ -225,18 +226,18 @@ impl<C: Character> RLFMIndexWithLocate<C> {
     }
 }
 
-impl<C: Character> MultiTextFMIndex<C> {
-    /// Create a new MultiTextFMIndex without locate support.
+impl<C: Character> FMIndexMultiDocs<C> {
+    /// Create a new FMIndexMultiDocs without locate support.
     pub fn new<T: AsRef<[C]>>(text: &Text<C, T>) -> Self {
-        MultiTextFMIndex(SearchIndexWrapper::new(MultiTextFMIndexBackend::new(
+        FMIndexMultiDocs(SearchIndexWrapper::new(FMIndexMultiDocsBackend::new(
             text,
             |_| (),
         )))
     }
 }
 
-impl<C: Character> MultiTextFMIndexWithLocate<C> {
-    /// Create a new MultiTextFMIndex with locate support.
+impl<C: Character> FMIndexMultiDocsWithLocate<C> {
+    /// Create a new FMIndexMultiDocs with locate support.
     ///
     /// The level argument controls the sampling rate used. Higher levels use
     /// less storage, at the cost of performance of locate queries. A level of
@@ -244,7 +245,7 @@ impl<C: Character> MultiTextFMIndexWithLocate<C> {
     /// sampled, a level of 2 means a quarter of the suffix array is sampled,
     /// and so on.
     pub fn new<T: AsRef<[C]>>(text: &Text<C, T>, level: usize) -> Self {
-        MultiTextFMIndexWithLocate(SearchIndexWrapper::new(MultiTextFMIndexBackend::new(
+        FMIndexMultiDocsWithLocate(SearchIndexWrapper::new(FMIndexMultiDocsBackend::new(
             text,
             |sa| sample::sample(sa, level),
         )))
@@ -323,9 +324,9 @@ macro_rules! impl_search_index_with_locate {
     };
 }
 
-macro_rules! impl_search_index_with_multi_texts {
+macro_rules! impl_search_index_with_multi_docs {
     ($t:ty, $s:ident, $st:ty) => {
-        impl<C: Character> SearchIndexWithMultiTexts<C> for $t {
+        impl<C: Character> SearchIndexWithMultiDocs<C> for $t {
             fn search_prefix<K>(&self, pattern: K) -> impl Search<C>
             where
                 K: AsRef<[C]>,
@@ -442,11 +443,11 @@ macro_rules! impl_match_locate {
     };
 }
 
-macro_rules! impl_match_text_id {
+macro_rules! impl_match_doc_id {
     ($t:ty) => {
-        impl<'a, C: Character> MatchWithTextId<'a, C> for $t {
-            fn text_id(&self) -> TextId {
-                self.0.text_id()
+        impl<'a, C: Character> MatchWithDocId<'a, C> for $t {
+            fn doc_id(&self) -> DocId {
+                self.0.doc_id()
             }
         }
     };
@@ -491,37 +492,37 @@ impl_match!(RLFMIndexMatchWithLocate<'a, C>);
 impl_match_locate!(RLFMIndexMatchWithLocate<'a, C>);
 
 impl_search_index!(
-    MultiTextFMIndex<C>,
-    MultiTextFMIndexSearch,
-    MultiTextFMIndexSearch<C>
+    FMIndexMultiDocs<C>,
+    FMIndexMultiDocsSearch,
+    FMIndexMultiDocsSearch<C>
 );
-impl_search_index_with_multi_texts!(
-    MultiTextFMIndex<C>,
-    MultiTextFMIndexSearch,
-    MultiTextFMIndexSearch<C>
+impl_search_index_with_multi_docs!(
+    FMIndexMultiDocs<C>,
+    FMIndexMultiDocsSearch,
+    FMIndexMultiDocsSearch<C>
 );
 impl_search!(
-    MultiTextFMIndexSearch<'a, C>,
-    MultiTextFMIndexMatch,
-    MultiTextFMIndexMatch<'a, C>
+    FMIndexMultiDocsSearch<'a, C>,
+    FMIndexMultiDocsMatch,
+    FMIndexMultiDocsMatch<'a, C>
 );
-impl_match!(MultiTextFMIndexMatch<'a, C>);
+impl_match!(FMIndexMultiDocsMatch<'a, C>);
 
 impl_search_index_with_locate!(
-    MultiTextFMIndexWithLocate<C>,
-    MultiTextFMIndexSearchWithLocate,
-    MultiTextFMIndexSearchWithLocate<C>
+    FMIndexMultiDocsWithLocate<C>,
+    FMIndexMultiDocsSearchWithLocate,
+    FMIndexMultiDocsSearchWithLocate<C>
 );
-impl_search_index_with_multi_texts!(
-    MultiTextFMIndexWithLocate<C>,
-    MultiTextFMIndexSearchWithLocate,
-    MultiTextFMIndexSearchWithLocate<C>
+impl_search_index_with_multi_docs!(
+    FMIndexMultiDocsWithLocate<C>,
+    FMIndexMultiDocsSearchWithLocate,
+    FMIndexMultiDocsSearchWithLocate<C>
 );
 impl_search!(
-    MultiTextFMIndexSearchWithLocate<'a, C>,
-    MultiTextFMIndexMatchWithLocate,
-    MultiTextFMIndexMatchWithLocate<'a, C>
+    FMIndexMultiDocsSearchWithLocate<'a, C>,
+    FMIndexMultiDocsMatchWithLocate,
+    FMIndexMultiDocsMatchWithLocate<'a, C>
 );
-impl_match!(MultiTextFMIndexMatchWithLocate<'a, C>);
-impl_match_locate!(MultiTextFMIndexMatchWithLocate<'a, C>);
-impl_match_text_id!(MultiTextFMIndexMatchWithLocate<'a, C>);
+impl_match!(FMIndexMultiDocsMatchWithLocate<'a, C>);
+impl_match_locate!(FMIndexMultiDocsMatchWithLocate<'a, C>);
+impl_match_doc_id!(FMIndexMultiDocsMatchWithLocate<'a, C>);
