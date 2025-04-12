@@ -22,7 +22,6 @@ pub struct MultiTextFMIndexBackend<C, S> {
     _c: std::marker::PhantomData<C>,
 }
 
-// TODO: Refactor types (Converter converts T -> u64)
 impl<C, S> MultiTextFMIndexBackend<C, S>
 where
     C: Character,
@@ -285,12 +284,8 @@ mod tests {
         let fm_index = MultiTextFMIndexBackend::new(&Text::new(text), |sa| sample::sample(sa, 0));
 
         for (i, &char_pos) in suffix_array.iter().enumerate() {
-            let text_id_expected = TextId::from(
-                text[..char_pos]
-                    .iter()
-                    .filter(|&&c| c == 0)
-                    .count(),
-            );
+            let text_id_expected =
+                TextId::from(text[..char_pos].iter().filter(|&&c| c == 0).count());
             let text_id_actual = fm_index.text_id(i);
             assert_eq!(
                 text_id_expected, text_id_actual,

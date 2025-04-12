@@ -16,7 +16,6 @@ pub struct FMIndexBackend<C, S> {
     _c: std::marker::PhantomData<C>,
 }
 
-// TODO: Refactor types (Converter converts T -> u64)
 impl<C, S> FMIndexBackend<C, S>
 where
     C: Character,
