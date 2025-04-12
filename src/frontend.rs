@@ -39,7 +39,7 @@ pub trait SearchIndex<C> {
 }
 
 /// Trait for searching in an index that supports multiple texts.
-pub trait SearchIndexWithMultiTexts<C>: SearchIndex<C> {
+pub trait SearchIndexWithMultiDocs<C>: SearchIndex<C> {
     /// Search for a pattern that is a prefix of a text.
     fn search_prefix<K>(&self, pattern: K) -> impl Search<C>
     where
@@ -326,7 +326,7 @@ macro_rules! impl_search_index_with_locate {
 
 macro_rules! impl_search_index_with_multi_docs {
     ($t:ty, $s:ident, $st:ty) => {
-        impl<C: Character> SearchIndexWithMultiTexts<C> for $t {
+        impl<C: Character> SearchIndexWithMultiDocs<C> for $t {
             fn search_prefix<K>(&self, pattern: K) -> impl Search<C>
             where
                 K: AsRef<[C]>,

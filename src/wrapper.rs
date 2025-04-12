@@ -2,7 +2,7 @@
 // the functionality used by the frontend.
 // This makes the implementation of the frontend more regular.
 
-use crate::backend::{HasMultiTexts, HasPosition, SearchIndexBackend};
+use crate::backend::{HasMultiDocs, HasPosition, SearchIndexBackend};
 use crate::doc::DocId;
 use crate::{Character, HeapSize};
 
@@ -55,7 +55,7 @@ where
 
 impl<B> SearchIndexWrapper<B>
 where
-    B: SearchIndexBackend + HasMultiTexts,
+    B: SearchIndexBackend + HasMultiDocs,
 {
     pub(crate) fn search_prefix<K>(&self, pattern: K) -> SearchWrapper<B>
     where
@@ -240,7 +240,7 @@ impl<B: SearchIndexBackend + HasPosition> MatchWrapper<'_, B> {
     }
 }
 
-impl<B: SearchIndexBackend + HasMultiTexts> MatchWrapper<'_, B> {
+impl<B: SearchIndexBackend + HasMultiDocs> MatchWrapper<'_, B> {
     pub(crate) fn doc_id(&self) -> DocId {
         self.backend.doc_id(self.i)
     }

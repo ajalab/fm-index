@@ -1,6 +1,6 @@
 use std::ops::{Rem, Sub};
 
-use crate::backend::{HasMultiTexts, HasPosition, SearchIndexBackend};
+use crate::backend::{HasMultiDocs, HasPosition, SearchIndexBackend};
 use crate::character::Character;
 use crate::doc::DocId;
 use crate::suffix_array::sais;
@@ -206,7 +206,7 @@ where
     }
 }
 
-impl<C, S> HasMultiTexts for FMIndexMultiDocsBackend<C, S>
+impl<C, S> HasMultiDocs for FMIndexMultiDocsBackend<C, S>
 where
     C: Character,
 {

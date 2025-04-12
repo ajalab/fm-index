@@ -39,11 +39,11 @@ pub(crate) trait HasPosition {
     fn get_sa(&self, i: usize) -> usize;
 }
 
-/// A trait for an index that contains multiple texts.
-pub(crate) trait HasMultiTexts {
-    /// Returns the ID of the text that the character at the given position on the suffix array belongs to.
+/// A trait for an index that contains multiple documents.
+pub(crate) trait HasMultiDocs {
+    /// Returns the ID of the document that the character at the given position on the suffix array belongs to.
     fn doc_id(&self, i: usize) -> DocId;
 
-    /// Returns the number of texts in the index.
+    /// Returns the number of documents in the index.
     fn text_count(&self) -> usize;
 }

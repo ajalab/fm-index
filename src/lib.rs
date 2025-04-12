@@ -162,6 +162,6 @@ pub use frontend::{
     FMIndexMultiDocsWithLocate, FMIndexSearch, FMIndexSearchWithLocate, FMIndexWithLocate, Match,
     MatchWithDocId, MatchWithLocate, RLFMIndex, RLFMIndexMatch, RLFMIndexMatchWithLocate,
     RLFMIndexSearch, RLFMIndexSearchWithLocate, RLFMIndexWithLocate, Search, SearchIndex,
-    SearchIndexWithMultiTexts, SearchWithLocate,
+    SearchIndexWithMultiDocs, SearchWithLocate,
 };
 pub use text::Text;
