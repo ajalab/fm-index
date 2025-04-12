@@ -12,7 +12,7 @@ use vers_vecs::{BitVec, RsVec, WaveletMatrix};
 
 // An FM-Index supporting multiple \0 separated texts
 #[derive(Serialize, Deserialize)]
-pub struct MultiTextFMIndexBackend<C, S> {
+pub struct FMIndexMultiDocsBackend<C, S> {
     bw: WaveletMatrix,
     cs: Vec<usize>,
     suffix_array: S,
@@ -22,7 +22,7 @@ pub struct MultiTextFMIndexBackend<C, S> {
     _c: std::marker::PhantomData<C>,
 }
 
-impl<C, S> MultiTextFMIndexBackend<C, S>
+impl<C, S> FMIndexMultiDocsBackend<C, S>
 where
     C: Character,
 {
@@ -35,7 +35,7 @@ where
         let bw = Self::wavelet_matrix(text, &sa);
         let (doc, sa_idx_first_text) = Self::doc(text.text(), &bw, &sa);
 
-        MultiTextFMIndexBackend {
+        FMIndexMultiDocsBackend {
             cs,
             bw,
             suffix_array: get_sample(&sa),
@@ -91,7 +91,7 @@ where
     }
 }
 
-impl<C> HeapSize for MultiTextFMIndexBackend<C, ()>
+impl<C> HeapSize for FMIndexMultiDocsBackend<C, ()>
 where
     C: Character,
 {
@@ -100,7 +100,7 @@ where
     }
 }
 
-impl<C> HeapSize for MultiTextFMIndexBackend<C, SuffixOrderSampledArray>
+impl<C> HeapSize for FMIndexMultiDocsBackend<C, SuffixOrderSampledArray>
 where
     C: Character,
 {
@@ -112,7 +112,7 @@ where
     }
 }
 
-impl<C, S> SearchIndexBackend for MultiTextFMIndexBackend<C, S>
+impl<C, S> SearchIndexBackend for FMIndexMultiDocsBackend<C, S>
 where
     C: Character,
 {
@@ -185,7 +185,7 @@ where
     }
 }
 
-impl<C> HasPosition for MultiTextFMIndexBackend<C, SuffixOrderSampledArray>
+impl<C> HasPosition for FMIndexMultiDocsBackend<C, SuffixOrderSampledArray>
 where
     C: Character,
 {
@@ -205,7 +205,7 @@ where
     }
 }
 
-impl<C, S> HasMultiTexts for MultiTextFMIndexBackend<C, S>
+impl<C, S> HasMultiTexts for FMIndexMultiDocsBackend<C, S>
 where
     C: Character,
 {
@@ -263,7 +263,7 @@ mod tests {
             let suffix_array = testutil::build_suffix_array(&text);
             let inv_suffix_array = testutil::build_inv_suffix_array(&suffix_array);
             let fm_index =
-                MultiTextFMIndexBackend::new(&Text::new(text), |sa| sample::sample(sa, 0));
+                FMIndexMultiDocsBackend::new(&Text::new(text), |sa| sample::sample(sa, 0));
 
             let mut lf_map_expected = vec![0; text_size];
             let mut lf_map_actual = vec![0; text_size];
@@ -281,7 +281,7 @@ mod tests {
     fn test_get_text_id() {
         let text = "foo\0bar\0baz\0".as_bytes();
         let suffix_array = testutil::build_suffix_array(text);
-        let fm_index = MultiTextFMIndexBackend::new(&Text::new(text), |sa| sample::sample(sa, 0));
+        let fm_index = FMIndexMultiDocsBackend::new(&Text::new(text), |sa| sample::sample(sa, 0));
 
         for (i, &char_pos) in suffix_array.iter().enumerate() {
             let text_id_expected =
@@ -306,7 +306,7 @@ mod tests {
             let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
             let suffix_array = testutil::build_suffix_array(&text);
             let fm_index =
-                MultiTextFMIndexBackend::new(&Text::new(&text), |sa| sample::sample(sa, 0));
+                FMIndexMultiDocsBackend::new(&Text::new(&text), |sa| sample::sample(sa, 0));
 
             for (i, &char_pos) in suffix_array.iter().enumerate() {
                 let text_id_expected =

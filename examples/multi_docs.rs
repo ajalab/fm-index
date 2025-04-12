@@ -1,7 +1,7 @@
-use fm_index::{Match, MatchWithTextId, MultiTextFMIndexWithLocate, Search, Text};
+use fm_index::{FMIndexMultiDocsWithLocate, Match, MatchWithTextId, Search, Text};
 
 fn main() {
-    // When using MultiTextFMIndex, the text is concatenated with an end marker \0.
+    // When using FMIndexMultiDocs, the text is concatenated with an end marker \0.
     let text = concat!(
         // 0
         "Twinkle, twinkle, little star,\n",
@@ -28,7 +28,7 @@ fn main() {
     .as_bytes();
     let text = Text::new(text);
 
-    let fm_index = MultiTextFMIndexWithLocate::new(&text, 2);
+    let fm_index = FMIndexMultiDocsWithLocate::new(&text, 2);
 
     // Count the number of occurrences.
     assert_eq!(4, fm_index.search("star").count());
