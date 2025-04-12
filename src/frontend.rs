@@ -324,7 +324,7 @@ macro_rules! impl_search_index_with_locate {
     };
 }
 
-macro_rules! impl_search_index_with_multi_texts {
+macro_rules! impl_search_index_with_multi_docs {
     ($t:ty, $s:ident, $st:ty) => {
         impl<C: Character> SearchIndexWithMultiTexts<C> for $t {
             fn search_prefix<K>(&self, pattern: K) -> impl Search<C>
@@ -496,7 +496,7 @@ impl_search_index!(
     FMIndexMultiDocsSearch,
     FMIndexMultiDocsSearch<C>
 );
-impl_search_index_with_multi_texts!(
+impl_search_index_with_multi_docs!(
     FMIndexMultiDocs<C>,
     FMIndexMultiDocsSearch,
     FMIndexMultiDocsSearch<C>
@@ -513,7 +513,7 @@ impl_search_index_with_locate!(
     FMIndexMultiDocsSearchWithLocate,
     FMIndexMultiDocsSearchWithLocate<C>
 );
-impl_search_index_with_multi_texts!(
+impl_search_index_with_multi_docs!(
     FMIndexMultiDocsWithLocate<C>,
     FMIndexMultiDocsSearchWithLocate,
     FMIndexMultiDocsSearchWithLocate<C>

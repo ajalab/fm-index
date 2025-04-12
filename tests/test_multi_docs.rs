@@ -13,7 +13,7 @@ fn test_search_count() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_text: true,
+        multi_docs: true,
     }
     .run(
         FMIndexMultiDocsWithLocate::new,
@@ -44,7 +44,7 @@ fn test_search_locate() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_text: true,
+        multi_docs: true,
     }
     .run(
         FMIndexMultiDocsWithLocate::new,
@@ -84,7 +84,7 @@ fn test_search_doc_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_text: true,
+        multi_docs: true,
     }
     .run(
         FMIndexMultiDocsWithLocate::new,
@@ -124,7 +124,7 @@ fn test_search_prefix_doc_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_text: true,
+        multi_docs: true,
     }
     .run(
         FMIndexMultiDocsWithLocate::new,
@@ -164,7 +164,7 @@ fn test_search_suffix_doc_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_text: true,
+        multi_docs: true,
     }
     .run(
         FMIndexMultiDocsWithLocate::new,
@@ -204,7 +204,7 @@ fn test_search_exact_doc_id() {
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
-        multi_text: true,
+        multi_docs: true,
     }
     .run(
         FMIndexMultiDocsWithLocate::new,

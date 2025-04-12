@@ -94,7 +94,7 @@ pub struct TestRunner {
     pub alphabet_size: u8,
     pub level_max: usize,
     pub pattern_size_max: usize,
-    pub multi_text: bool,
+    pub multi_docs: bool,
 }
 
 impl TestRunner {
@@ -106,7 +106,7 @@ impl TestRunner {
         let mut rng = StdRng::seed_from_u64(0);
 
         for _ in 0..self.texts {
-            let text = if self.multi_text {
+            let text = if self.multi_docs {
                 build_text(|| rng.gen::<u8>() % self.alphabet_size, self.text_size)
             } else {
                 build_text(|| rng.gen::<u8>() % self.alphabet_size + 1, self.text_size)
