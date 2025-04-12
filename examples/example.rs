@@ -1,5 +1,4 @@
-use fm_index::converter::RangeConverter;
-use fm_index::{FMIndexWithLocate, Match, MatchWithLocate, Search};
+use fm_index::{FMIndexWithLocate, Match, MatchWithLocate, Search, Text};
 
 fn main() {
     // Prepare a text string to search for patterns.
@@ -10,17 +9,14 @@ fn main() {
         "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
         "\0",
     ).as_bytes();
-
-    // Converter converts each character into packed representation.
-    // `' '` ~ `'~'` represents a range of ASCII printable characters.
-    let converter = RangeConverter::new(b' ', b'~');
+    let text = Text::new(text);
 
     // The sampling level determines how much is retained in order to support `locate`
     // queries. `0` retains the full information, but we don't need the whole array
     // since we can interpolate missing elements in a suffix array from others. A sampler
     // will _sieve_ a suffix array for this purpose. If you don't need `locate` queries
     // you can save the memory by not setting a sampling level.
-    let index = FMIndexWithLocate::new(text, converter, 2);
+    let index = FMIndexWithLocate::new(&text, 2);
 
     // Search for a pattern string.
     let pattern = "dolor";
@@ -34,7 +30,7 @@ fn main() {
     let positions = search
         .iter_matches()
         .map(|m| m.locate())
-        .collect::<Vec<u64>>();
+        .collect::<Vec<_>>();
     assert_eq!(positions, vec![246, 12, 300, 103]);
 
     // Extract preceding characters from a search position.

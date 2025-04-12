@@ -23,8 +23,7 @@
 //!
 //! # Example
 //! ```
-//! use fm_index::{Search, FMIndexWithLocate, MatchWithLocate, Match};
-//! use fm_index::converter::RangeConverter;
+//! use fm_index::{Search, FMIndexWithLocate, MatchWithLocate, Match, Text};
 //!
 //! // Prepare a text string to search for patterns.
 //! let text = concat!(
@@ -34,10 +33,7 @@
 //!     "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
 //!     "\0",
 //! ).as_bytes();
-//!
-//! // Converter converts each character into packed representation.
-//! // `' '` ~ `'~'` represents a range of ASCII printable characters.
-//! let converter = RangeConverter::new(b' ', b'~');
+//! let text = Text::new(text);
 //!
 //! // To perform locate queries, we need to use some storage.
 //! // the sampling level determines how much is retained in order to support `locate`
@@ -45,7 +41,7 @@
 //! // since we can interpolate missing elements in a suffix array from others. A sampler
 //! // will _sieve_ a suffix array for this purpose. If you don't need `locate` queries
 //! // you can save the memory by not setting a sampling level.
-//! let index = FMIndexWithLocate::new(text, converter, 2);
+//! let index = FMIndexWithLocate::new(&text, 2);
 //!
 //! // Search for a pattern string.
 //! let pattern = "dolor";
@@ -56,7 +52,7 @@
 //! assert_eq!(n, 4);
 //!
 //! // List the position of all occurrences.
-//! let positions = search.iter_matches().map(|m| m.locate()).collect::<Vec<u64>>();
+//! let positions = search.iter_matches().map(|m| m.locate()).collect::<Vec<usize>>();
 //! assert_eq!(positions, vec![246, 12, 300, 103]);
 //!
 //! // Extract preceding characters from a search position.
@@ -143,8 +139,6 @@
 #![allow(clippy::len_without_is_empty)]
 #![warn(missing_docs)]
 
-pub mod converter;
-
 mod backend;
 mod character;
 mod fm_index;
@@ -168,4 +162,4 @@ pub use frontend::{
     RLFMIndexMatchWithLocate, RLFMIndexSearch, RLFMIndexSearchWithLocate, RLFMIndexWithLocate,
     Search, SearchIndex, SearchIndexWithMultiTexts, SearchWithLocate,
 };
-pub use text::TextId;
+pub use text::{Text, TextId};

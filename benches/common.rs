@@ -1,9 +1,8 @@
-use fm_index::converter::{Converter, RangeConverter};
-
+use fm_index::Text;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 
-pub fn binary_text_set(len: usize, prob: f64) -> (Vec<u8>, impl Converter<u8>) {
+pub fn binary_text_set(len: usize, prob: f64) -> Text<u8, Vec<u8>> {
     let zero = b'0';
     let one = b'1';
     let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
@@ -12,8 +11,7 @@ pub fn binary_text_set(len: usize, prob: f64) -> (Vec<u8>, impl Converter<u8>) {
         .collect::<Vec<_>>();
     text.push(0);
 
-    let converter = RangeConverter::new(zero, one);
-    (text, converter)
+    Text::with_max_character(text, one)
 }
 
 #[allow(dead_code)] // False positive?

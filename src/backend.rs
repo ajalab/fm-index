@@ -1,33 +1,28 @@
 use crate::character::Character;
-use crate::converter::Converter;
 use crate::text::TextId;
 
 /// Trait for an FM-Index backend implementation
 pub(crate) trait SearchIndexBackend: Sized {
     /// A [`Character`] type.
-    type T: Character;
-    type C: Converter<Self::T>;
+    type C: Character;
 
     // We hide all the methods involved in implementation.
 
-    fn get_l(&self, i: u64) -> Self::T;
+    fn get_l(&self, i: usize) -> Self::C;
 
-    fn lf_map(&self, i: u64) -> u64;
+    fn lf_map(&self, i: usize) -> usize;
 
-    fn lf_map2(&self, c: Self::T, i: u64) -> u64;
+    fn lf_map2(&self, c: Self::C, i: usize) -> usize;
 
-    fn get_f(&self, i: u64) -> Self::T;
+    fn get_f(&self, i: usize) -> Self::C;
 
-    fn fl_map(&self, i: u64) -> Option<u64>;
+    fn fl_map(&self, i: usize) -> Option<usize>;
 
     /// The size of the text in the index
     ///
     /// Note that this includes an ending \0 (terminator) character
     /// so will be one more than the length of the text.
-    fn len(&self) -> u64;
-
-    /// Get the converter for this index.
-    fn get_converter(&self) -> &Self::C;
+    fn len(&self) -> usize;
 }
 
 /// Access the heap size of the structure.
@@ -41,14 +36,14 @@ pub trait HeapSize {
 
 /// A trait for an index that supports locate queries.
 pub(crate) trait HasPosition {
-    fn get_sa(&self, i: u64) -> u64;
+    fn get_sa(&self, i: usize) -> usize;
 }
 
 /// A trait for an index that contains multiple texts.
 pub(crate) trait HasMultiTexts {
     /// Returns the ID of the text that the character at the given position on the suffix array belongs to.
-    fn text_id(&self, i: u64) -> TextId;
+    fn text_id(&self, i: usize) -> TextId;
 
     /// Returns the number of texts in the index.
-    fn text_count(&self) -> u64;
+    fn text_count(&self) -> usize;
 }

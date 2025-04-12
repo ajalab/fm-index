@@ -15,14 +15,13 @@ pub struct SuffixOrderSampledArray {
 }
 
 impl SuffixOrderSampledArray {
-    pub(crate) fn get(&self, i: u64) -> Option<u64> {
-        debug_assert!(i < self.len as u64);
+    pub(crate) fn get(&self, i: usize) -> Option<usize> {
+        debug_assert!(i < self.len);
         if i & ((1 << self.level) - 1) == 0 {
             Some(
-                self.sa.get_bits_unchecked(
-                    (i as usize >> self.level) * self.word_size,
-                    self.word_size,
-                ),
+                self.sa
+                    .get_bits_unchecked((i >> self.level) * self.word_size, self.word_size)
+                    as usize,
             )
         } else {
             None
@@ -37,7 +36,7 @@ impl SuffixOrderSampledArray {
 impl fmt::Debug for SuffixOrderSampledArray {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for i in 0..self.len {
-            match self.get(i as u64) {
+            match self.get(i) {
                 Some(sa) => write!(f, "{}", sa)?,
                 None => write!(f, "?")?,
             }
@@ -46,7 +45,7 @@ impl fmt::Debug for SuffixOrderSampledArray {
     }
 }
 
-pub(crate) fn sample(sa: &[u64], level: usize) -> SuffixOrderSampledArray {
+pub(crate) fn sample(sa: &[usize], level: usize) -> SuffixOrderSampledArray {
     let n = sa.len();
     let word_size = (util::log2(n as u64) + 1) as usize;
     debug_assert!(n > 0);
@@ -60,7 +59,7 @@ pub(crate) fn sample(sa: &[u64], level: usize) -> SuffixOrderSampledArray {
     let mut sa_samples = BitVec::with_capacity(sa_samples_len);
     // fid::BitArray::with_word_size(word_size, sa_samples_len);
     for i in 0..sa_samples_len {
-        sa_samples.append_bits(sa[i << level], word_size);
+        sa_samples.append_bits(sa[i << level] as u64, word_size);
     }
     SuffixOrderSampledArray {
         level,
@@ -87,7 +86,7 @@ mod tests {
             (3, 25),
         ];
         for &(level, n) in cases.iter() {
-            let sa = (0..n).collect::<Vec<u64>>();
+            let sa = (0..n).collect::<Vec<usize>>();
             let ssa = sample(&sa, level);
             for i in 0..n {
                 let v = ssa.get(i);
