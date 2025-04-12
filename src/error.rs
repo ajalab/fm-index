@@ -1,7 +1,7 @@
 /// An error that can occur when constructing a search index.
 #[derive(Debug)]
 pub enum Error {
-    /// Failed to construct a suffix array from the given text.
+    /// The provided text is invalid.
     InvalidText(&'static str),
 }
 
