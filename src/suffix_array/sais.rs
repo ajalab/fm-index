@@ -122,6 +122,12 @@ where
         0 => Ok(vec![]),
         1 => Ok(vec![0]),
         _ => {
+            let first_char = text.text()[0];
+            if first_char.into_u64() == 0 {
+                return Err(Error::InvalidText(
+                    "the given text must not start with zero character".to_string(),
+                ));
+            }
             let last_non_zero_char = text.text().iter().rposition(|&c| c.into_u64() != 0);
             if last_non_zero_char != Some(text.text().len() - 2) {
                 return Err(Error::InvalidText(
@@ -408,6 +414,15 @@ mod tests {
     }
 
     #[test]
+    fn test_error_starting_with_zero() {
+        let text = b"\0starting_with_zero\0".to_vec();
+        assert!(matches!(
+            build_suffix_array(&Text::new(text)),
+            Err(Error::InvalidText(_))
+        ));
+    }
+
+    #[test]
     fn test_length_1() {
         let text = &[0u8];
         let sa_actual = build_suffix_array(&Text::new(text)).unwrap();
@@ -434,15 +449,6 @@ mod tests {
     #[test]
     fn test_nulls() {
         let text = b"mm\0ii\0s\0sii\0ssii\0ppii\0".to_vec();
-        let sa_actual = build_suffix_array(&Text::new(&text)).unwrap();
-        let sa_expected = build_expected_suffix_array(text);
-        assert_eq!(sa_actual, sa_expected);
-    }
-
-    #[test]
-    #[ignore]
-    fn test_starting_with_zero() {
-        let text = b"\0\0mm\0\0ii\0s\0\0\0sii\0ssii\0ppii\0".to_vec();
         let sa_actual = build_suffix_array(&Text::new(&text)).unwrap();
         let sa_expected = build_expected_suffix_array(text);
         assert_eq!(sa_actual, sa_expected);
