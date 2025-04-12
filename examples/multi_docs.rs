@@ -69,7 +69,7 @@ fn main() {
         succeeding_chars,
     );
 
-    // List the IDs of texts that have the prefix.
+    // List the IDs of documents that start with a given prefix.
     let mut doc_ids_with_prefix = fm_index
         .search_prefix("Twinkle")
         .iter_matches()
@@ -78,7 +78,7 @@ fn main() {
     doc_ids_with_prefix.sort();
     assert_eq!(vec![0], doc_ids_with_prefix);
 
-    // List the IDs of texts that have the suffix.
+    // List the IDs of documents that end with a given suffix.
     let mut doc_ids_with_suffix = fm_index
         .search_suffix("what you are!\n")
         .iter_matches()
