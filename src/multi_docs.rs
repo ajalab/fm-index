@@ -290,7 +290,7 @@ mod tests {
             let text_id_actual = fm_index.text_id(i);
             assert_eq!(
                 text_id_expected, text_id_actual,
-                "the text ID of a character at position {} ({} in suffix array) must be {:?}",
+                "the doc ID of a character at position {} ({} in suffix array) must be {:?}",
                 char_pos, i, text_id_expected
             );
         }
@@ -315,7 +315,7 @@ mod tests {
                 let text_id_actual = fm_index.text_id(i);
                 assert_eq!(
                     text_id_expected, text_id_actual,
-                    "the text ID of a character at position {} ({} in suffix array) must be {:?}. text={:?}, suffix_array={:?}",
+                    "the doc ID of a character at position {} ({} in suffix array) must be {:?}. text={:?}, suffix_array={:?}",
                     char_pos, i, text_id_expected, text, suffix_array,
                 );
             }

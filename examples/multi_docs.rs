@@ -33,7 +33,7 @@ fn main() {
     // Count the number of occurrences.
     assert_eq!(4, fm_index.search("star").count());
 
-    // List the text IDs of all occurrences.
+    // List the document IDs of all occurrences.
     let mut text_ids = fm_index
         .search("How I wonder")
         .iter_matches()

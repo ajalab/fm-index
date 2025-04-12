@@ -97,7 +97,7 @@ pub trait MatchWithLocate<'a, C>: Match<'a, C> {
     fn locate(&self) -> usize;
 }
 
-/// A match in the text that contains its text ID on the text.
+/// A match in the text that contains the ID of the document where the pattern is found.
 pub trait MatchWithDocId<'a, C>: Match<'a, C> {
     /// Get the ID of the text that the character at the matched position belongs to.
     fn text_id(&self) -> DocId;
