@@ -62,11 +62,11 @@ where
         let mut sa_idx_first_text = 0;
         while let Some(p) = bw.select_u64(end_marker_rank_l, 0) {
             let end_marker_idx = modular_sub(sa[p], 1, sa.len());
-            let text_id = end_marker_flags.rank1(end_marker_idx);
-            if text_id == end_marker_count - 1 {
+            let doc_id = end_marker_flags.rank1(end_marker_idx);
+            if doc_id == end_marker_count - 1 {
                 sa_idx_first_text = p;
             }
-            doc[end_marker_rank_l] = text_id;
+            doc[end_marker_rank_l] = doc_id;
 
             end_marker_rank_l += 1;
         }
@@ -210,12 +210,12 @@ impl<C, S> HasMultiTexts for FMIndexMultiDocsBackend<C, S>
 where
     C: Character,
 {
-    fn text_id(&self, mut i: usize) -> DocId {
+    fn doc_id(&self, mut i: usize) -> DocId {
         loop {
             if self.get_l(i).into_u64() == 0 {
-                let text_id_prev = self.doc[self.bw.rank_u64_unchecked(i, 0)];
-                let text_id = modular_add(text_id_prev, 1, self.doc.len());
-                return DocId::from(text_id);
+                let doc_id_prev = self.doc[self.bw.rank_u64_unchecked(i, 0)];
+                let doc_id = modular_add(doc_id_prev, 1, self.doc.len());
+                return DocId::from(doc_id);
             } else {
                 i = self.lf_map(i);
             }
@@ -279,25 +279,24 @@ mod tests {
     }
 
     #[test]
-    fn test_get_text_id() {
+    fn test_get_doc_id() {
         let text = "foo\0bar\0baz\0".as_bytes();
         let suffix_array = testutil::build_suffix_array(text);
         let fm_index = FMIndexMultiDocsBackend::new(&Text::new(text), |sa| sample::sample(sa, 0));
 
         for (i, &char_pos) in suffix_array.iter().enumerate() {
-            let text_id_expected =
-                DocId::from(text[..char_pos].iter().filter(|&&c| c == 0).count());
-            let text_id_actual = fm_index.text_id(i);
+            let doc_id_expected = DocId::from(text[..char_pos].iter().filter(|&&c| c == 0).count());
+            let doc_id_actual = fm_index.doc_id(i);
             assert_eq!(
-                text_id_expected, text_id_actual,
+                doc_id_expected, doc_id_actual,
                 "the doc ID of a character at position {} ({} in suffix array) must be {:?}",
-                char_pos, i, text_id_expected
+                char_pos, i, doc_id_expected
             );
         }
     }
 
     #[test]
-    fn test_get_text_id_random() {
+    fn test_get_doc_id_random() {
         let text_size = 512;
         let attempts = 100;
         let alphabet_size = 8;
@@ -310,13 +309,13 @@ mod tests {
                 FMIndexMultiDocsBackend::new(&Text::new(&text), |sa| sample::sample(sa, 0));
 
             for (i, &char_pos) in suffix_array.iter().enumerate() {
-                let text_id_expected =
+                let doc_id_expected =
                     DocId::from(text[..(char_pos)].iter().filter(|&&c| c == 0).count());
-                let text_id_actual = fm_index.text_id(i);
+                let doc_id_actual = fm_index.doc_id(i);
                 assert_eq!(
-                    text_id_expected, text_id_actual,
+                    doc_id_expected, doc_id_actual,
                     "the doc ID of a character at position {} ({} in suffix array) must be {:?}. text={:?}, suffix_array={:?}",
-                    char_pos, i, text_id_expected, text, suffix_array,
+                    char_pos, i, doc_id_expected, text, suffix_array,
                 );
             }
         }
