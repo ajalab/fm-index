@@ -45,5 +45,5 @@ pub(crate) trait HasMultiPieces {
     fn piece_id(&self, i: usize) -> PieceId;
 
     /// Returns the number of pieces in the index.
-    fn docs_count(&self) -> usize;
+    fn pieces_count(&self) -> usize;
 }

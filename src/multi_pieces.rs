@@ -222,7 +222,7 @@ where
         }
     }
 
-    fn docs_count(&self) -> usize {
+    fn pieces_count(&self) -> usize {
         self.doc.len()
     }
 }

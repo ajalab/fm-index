@@ -69,7 +69,7 @@ where
     where
         K: AsRef<[B::C]>,
     {
-        SearchWrapper::new(&self.0, 0, self.0.docs_count(), false).search(pattern)
+        SearchWrapper::new(&self.0, 0, self.0.pieces_count(), false).search(pattern)
     }
 
     /// Search for a pattern that is an exact match of a text.
@@ -77,7 +77,7 @@ where
     where
         K: AsRef<[B::C]>,
     {
-        SearchWrapper::new(&self.0, 0, self.0.docs_count(), true).search(pattern)
+        SearchWrapper::new(&self.0, 0, self.0.pieces_count(), true).search(pattern)
     }
 }
 
