@@ -1,9 +1,30 @@
 mod testutil;
-use fm_index::{FMIndexWithLocate, MatchWithLocate, Search};
+use fm_index::{FMIndexWithLocate, MatchWithLocate, Search, Text};
 use testutil::TestRunner;
 
 #[test]
-fn test_search_count() {
+fn test_small_search_count() {
+    let text = Text::new("a\0".as_bytes());
+    let fm_index = FMIndexWithLocate::new(&text, 2);
+
+    assert_eq!(1, fm_index.search("a").count());
+}
+
+#[test]
+fn test_small_search_locate() {
+    let text = Text::new("a\0".as_bytes());
+    let fm_index = FMIndexWithLocate::new(&text, 2);
+
+    let positions = fm_index
+        .search("a")
+        .iter_matches()
+        .map(|m| m.locate())
+        .collect::<Vec<_>>();
+    assert_eq!(vec![0], positions);
+}
+
+#[test]
+fn test_random_search_count() {
     let text_size_max = 1024;
 
     TestRunner {
@@ -31,7 +52,7 @@ fn test_search_count() {
     });
 }
 #[test]
-fn test_search_locate() {
+fn test_random_search_locate() {
     let text_size_max = 100;
 
     TestRunner {
