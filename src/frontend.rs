@@ -12,7 +12,6 @@
 use crate::character::Character;
 use crate::error::Error;
 use crate::fm_index::FMIndexBackend;
-use crate::heap_size::HeapSize;
 use crate::multi_pieces::FMIndexMultiPiecesBackend;
 use crate::piece::PieceId;
 use crate::rlfmi::RLFMIndexBackend;
@@ -38,6 +37,11 @@ pub trait SearchIndex<C> {
     /// Note that this includes an ending \0 (terminator) character
     /// so will be one more than the length of the text.
     fn len(&self) -> usize;
+
+    /// The size of the data used by this structure on the heap, in bytes.
+    ///
+    /// This does not include non-used pre-allocated space.
+    fn heap_size(&self) -> usize;
 }
 
 /// Trait for searching in an index that supports multiple texts.
@@ -275,12 +279,12 @@ macro_rules! impl_search_index {
             fn len(&self) -> usize {
                 self.0.len()
             }
-        }
-        impl<C: Character> HeapSize for $t {
+
             fn heap_size(&self) -> usize {
                 self.0.heap_size()
             }
         }
+
         // inherent
         impl<C: Character> $t {
             /// Search for a pattern in the text.
@@ -311,12 +315,12 @@ macro_rules! impl_search_index_with_locate {
             fn len(&self) -> usize {
                 self.0.len()
             }
-        }
-        impl<C: Character> HeapSize for $t {
+
             fn heap_size(&self) -> usize {
                 self.0.heap_size()
             }
         }
+
         // inherent
         impl<C: Character> $t {
             /// Search for a pattern in the text.
