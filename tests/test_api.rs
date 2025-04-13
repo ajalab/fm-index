@@ -6,8 +6,8 @@ fn len<T: SearchIndex<u8>>(index: &T) -> usize {
     index.len()
 }
 
-fn size<T: SearchIndex<u8>>(_: &T) -> usize {
-    todo!("implement size function");
+fn size<T: SearchIndex<u8>>(index: &T) -> usize {
+    index.heap_size()
 }
 
 #[test]
