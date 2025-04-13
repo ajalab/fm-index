@@ -1,7 +1,7 @@
 use crate::backend::{HasPosition, HeapSize, SearchIndexBackend};
 use crate::character::Character;
 use crate::suffix_array::sais;
-use crate::suffix_array::sample::SuffixOrderSampledArray;
+use crate::suffix_array::sample::SOSampledSuffixArray;
 use crate::text::Text;
 
 use serde::{Deserialize, Serialize};
@@ -103,7 +103,7 @@ where
     }
 }
 
-impl<C> HeapSize for RLFMIndexBackend<C, SuffixOrderSampledArray>
+impl<C> HeapSize for RLFMIndexBackend<C, SOSampledSuffixArray>
 where
     C: Character,
 {
@@ -176,7 +176,7 @@ where
     }
 }
 
-impl<C> HasPosition for RLFMIndexBackend<C, SuffixOrderSampledArray>
+impl<C> HasPosition for RLFMIndexBackend<C, SOSampledSuffixArray>
 where
     C: Character,
 {

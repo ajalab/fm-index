@@ -5,19 +5,22 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 use vers_vecs::BitVec;
 
-/// A sampled suffix array, stored within the index.
+/// A suffix array sampled by the _suffix order_ (SO) sampling strategy.
+///
+/// For instance, if the suffix array is `[0, 1, 2, 3, 4, 5, 6, 7]` and the sampling level is `2`,
+/// the sampled suffix array will be `[0, 4]`.
 #[derive(Serialize, Deserialize)]
-pub struct SuffixOrderSampledArray {
+pub struct SOSampledSuffixArray {
     level: usize,
     word_size: usize,
     sa: BitVec,
     len: usize,
 }
 
-impl SuffixOrderSampledArray {
-    pub(crate) fn sample(sa: &[usize], mut level: usize) -> SuffixOrderSampledArray {
+impl SOSampledSuffixArray {
+    pub(crate) fn sample(sa: &[usize], mut level: usize) -> SOSampledSuffixArray {
         if sa.is_empty() {
-            return SuffixOrderSampledArray::default();
+            return SOSampledSuffixArray::default();
         }
 
         let n = sa.len();
@@ -32,7 +35,7 @@ impl SuffixOrderSampledArray {
         for i in 0..sa_samples_len {
             sa_samples.append_bits(sa[i << level] as u64, word_size);
         }
-        SuffixOrderSampledArray {
+        SOSampledSuffixArray {
             level,
             word_size,
             sa: sa_samples,
@@ -61,7 +64,7 @@ impl SuffixOrderSampledArray {
     }
 }
 
-impl fmt::Debug for SuffixOrderSampledArray {
+impl fmt::Debug for SOSampledSuffixArray {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for i in 0..self.len {
             match self.get(i) {
@@ -73,9 +76,9 @@ impl fmt::Debug for SuffixOrderSampledArray {
     }
 }
 
-impl Default for SuffixOrderSampledArray {
+impl Default for SOSampledSuffixArray {
     fn default() -> Self {
-        SuffixOrderSampledArray {
+        SOSampledSuffixArray {
             level: 0,
             word_size: 0,
             sa: BitVec::new(),
@@ -90,7 +93,7 @@ mod tests {
 
     #[test]
     fn test_empty() {
-        let ssa = SuffixOrderSampledArray::sample(&[], 2);
+        let ssa = SOSampledSuffixArray::sample(&[], 2);
         assert_eq!(ssa.get(0), None);
     }
 
@@ -108,7 +111,7 @@ mod tests {
         ];
         for &(level, n) in cases.iter() {
             let sa = (0..n).collect::<Vec<usize>>();
-            let ssa = SuffixOrderSampledArray::sample(&sa, level);
+            let ssa = SOSampledSuffixArray::sample(&sa, level);
             for i in 0..n {
                 let v = ssa.get(i);
                 if i & ((1 << level) - 1) == 0 {
@@ -123,7 +126,7 @@ mod tests {
     #[test]
     fn test_not_sampled() {
         let sa = (0..10).collect::<Vec<usize>>();
-        let ssa = SuffixOrderSampledArray::sample(&sa, 4);
+        let ssa = SOSampledSuffixArray::sample(&sa, 4);
         for i in 0..10 {
             let v = ssa.get(i);
             assert_eq!(v, Some(i), "ssa[{}] should be Some({})", i, i);

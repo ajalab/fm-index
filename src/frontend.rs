@@ -15,7 +15,7 @@ use crate::fm_index::FMIndexBackend;
 use crate::multi_pieces::FMIndexMultiPiecesBackend;
 use crate::piece::PieceId;
 use crate::rlfmi::RLFMIndexBackend;
-use crate::suffix_array::sample::SuffixOrderSampledArray;
+use crate::suffix_array::sample::SOSampledSuffixArray;
 use crate::text::Text;
 use crate::wrapper::{MatchWrapper, SearchIndexWrapper, SearchWrapper};
 
@@ -117,15 +117,15 @@ pub struct FMIndexMatch<'a, C: Character>(MatchWrapper<'a, FMIndexBackend<C, ()>
 ///
 /// This is an FM-Index which uses additional storage to support locate queries.
 pub struct FMIndexWithLocate<C: Character>(
-    SearchIndexWrapper<FMIndexBackend<C, SuffixOrderSampledArray>>,
+    SearchIndexWrapper<FMIndexBackend<C, SOSampledSuffixArray>>,
 );
 /// Search result for FMIndex with locate support.
 pub struct FMIndexSearchWithLocate<'a, C: Character>(
-    SearchWrapper<'a, FMIndexBackend<C, SuffixOrderSampledArray>>,
+    SearchWrapper<'a, FMIndexBackend<C, SOSampledSuffixArray>>,
 );
 /// Match in the text for FMIndex with locate support.
 pub struct FMIndexMatchWithLocate<'a, C: Character>(
-    MatchWrapper<'a, FMIndexBackend<C, SuffixOrderSampledArray>>,
+    MatchWrapper<'a, FMIndexBackend<C, SOSampledSuffixArray>>,
 );
 
 /// RLFMIndex, count only.
@@ -142,15 +142,15 @@ pub struct RLFMIndexMatch<'a, C: Character>(MatchWrapper<'a, RLFMIndexBackend<C,
 /// This is a version of the FM-Index that uses less space, but is also less efficient.
 /// It uses additional storage to support locate queries.
 pub struct RLFMIndexWithLocate<C: Character>(
-    SearchIndexWrapper<RLFMIndexBackend<C, SuffixOrderSampledArray>>,
+    SearchIndexWrapper<RLFMIndexBackend<C, SOSampledSuffixArray>>,
 );
 /// Search result for RLFMIndex with locate support.
 pub struct RLFMIndexSearchWithLocate<'a, C: Character>(
-    SearchWrapper<'a, RLFMIndexBackend<C, SuffixOrderSampledArray>>,
+    SearchWrapper<'a, RLFMIndexBackend<C, SOSampledSuffixArray>>,
 );
 /// Match in the text for RLFMIndex with locate support.
 pub struct RLFMIndexMatchWithLocate<'a, C: Character>(
-    MatchWrapper<'a, RLFMIndexBackend<C, SuffixOrderSampledArray>>,
+    MatchWrapper<'a, RLFMIndexBackend<C, SOSampledSuffixArray>>,
 );
 
 /// MultiText index, count only.
@@ -171,15 +171,15 @@ pub struct FMIndexMultiPiecesMatch<'a, C: Character>(
 /// This is a multi-text version of the FM-Index. It allows \0 separated strings.
 /// It uses additional storage to support locate queries.
 pub struct FMIndexMultiPiecesWithLocate<C: Character>(
-    SearchIndexWrapper<FMIndexMultiPiecesBackend<C, SuffixOrderSampledArray>>,
+    SearchIndexWrapper<FMIndexMultiPiecesBackend<C, SOSampledSuffixArray>>,
 );
 /// Search result for MultiText index with locate support.
 pub struct FMIndexMultiPiecesSearchWithLocate<'a, C: Character>(
-    SearchWrapper<'a, FMIndexMultiPiecesBackend<C, SuffixOrderSampledArray>>,
+    SearchWrapper<'a, FMIndexMultiPiecesBackend<C, SOSampledSuffixArray>>,
 );
 /// Match in the text for MultiText index with locate support.
 pub struct FMIndexMultiPiecesMatchWithLocate<'a, C: Character>(
-    MatchWrapper<'a, FMIndexMultiPiecesBackend<C, SuffixOrderSampledArray>>,
+    MatchWrapper<'a, FMIndexMultiPiecesBackend<C, SOSampledSuffixArray>>,
 );
 
 impl<C: Character> FMIndex<C> {
@@ -199,7 +199,7 @@ impl<C: Character> FMIndexWithLocate<C> {
     /// and so on.
     pub fn new<T: AsRef<[C]>>(text: &Text<C, T>, level: usize) -> Self {
         FMIndexWithLocate(SearchIndexWrapper::new(FMIndexBackend::new(text, |sa| {
-            SuffixOrderSampledArray::sample(sa, level)
+            SOSampledSuffixArray::sample(sa, level)
         })))
     }
 }
@@ -221,7 +221,7 @@ impl<C: Character> RLFMIndexWithLocate<C> {
     /// and so on.
     pub fn new<T: AsRef<[C]>>(text: &Text<C, T>, level: usize) -> Self {
         RLFMIndexWithLocate(SearchIndexWrapper::new(RLFMIndexBackend::new(text, |sa| {
-            SuffixOrderSampledArray::sample(sa, level)
+            SOSampledSuffixArray::sample(sa, level)
         })))
     }
 }
@@ -247,7 +247,7 @@ impl<C: Character> FMIndexMultiPiecesWithLocate<C> {
     pub fn new<T: AsRef<[C]>>(text: &Text<C, T>, level: usize) -> Self {
         FMIndexMultiPiecesWithLocate(SearchIndexWrapper::new(FMIndexMultiPiecesBackend::new(
             text,
-            |sa| SuffixOrderSampledArray::sample(sa, level),
+            |sa| SOSampledSuffixArray::sample(sa, level),
         )))
     }
 }

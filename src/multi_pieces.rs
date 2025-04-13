@@ -4,7 +4,7 @@ use crate::backend::{HasMultiPieces, HasPosition, SearchIndexBackend};
 use crate::character::Character;
 use crate::piece::PieceId;
 use crate::suffix_array::sais;
-use crate::suffix_array::sample::SuffixOrderSampledArray;
+use crate::suffix_array::sample::SOSampledSuffixArray;
 use crate::text::Text;
 use crate::HeapSize;
 
@@ -101,7 +101,7 @@ where
     }
 }
 
-impl<C> HeapSize for FMIndexMultiPiecesBackend<C, SuffixOrderSampledArray>
+impl<C> HeapSize for FMIndexMultiPiecesBackend<C, SOSampledSuffixArray>
 where
     C: Character,
 {
@@ -186,7 +186,7 @@ where
     }
 }
 
-impl<C> HasPosition for FMIndexMultiPiecesBackend<C, SuffixOrderSampledArray>
+impl<C> HasPosition for FMIndexMultiPiecesBackend<C, SOSampledSuffixArray>
 where
     C: Character,
 {
@@ -248,7 +248,7 @@ fn modular_sub<T: Sub<Output = T> + Ord + num_traits::Zero>(a: T, b: T, m: T) ->
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::suffix_array::sample::SuffixOrderSampledArray;
+    use crate::suffix_array::sample::SOSampledSuffixArray;
     use crate::testutil;
     use rand::{rngs::StdRng, Rng, SeedableRng};
 
@@ -264,7 +264,7 @@ mod tests {
             let suffix_array = testutil::build_suffix_array(&text);
             let inv_suffix_array = testutil::build_inv_suffix_array(&suffix_array);
             let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(text), |sa| {
-                SuffixOrderSampledArray::sample(sa, 0)
+                SOSampledSuffixArray::sample(sa, 0)
             });
 
             let mut lf_map_expected = vec![0; text_size];
@@ -284,7 +284,7 @@ mod tests {
         let text = "foo\0bar\0baz\0".as_bytes();
         let suffix_array = testutil::build_suffix_array(text);
         let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(text), |sa| {
-            SuffixOrderSampledArray::sample(sa, 0)
+            SOSampledSuffixArray::sample(sa, 0)
         });
 
         for (i, &char_pos) in suffix_array.iter().enumerate() {
@@ -310,7 +310,7 @@ mod tests {
             let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
             let suffix_array = testutil::build_suffix_array(&text);
             let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(&text), |sa| {
-                SuffixOrderSampledArray::sample(sa, 0)
+                SOSampledSuffixArray::sample(sa, 0)
             });
 
             for (i, &char_pos) in suffix_array.iter().enumerate() {
