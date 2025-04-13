@@ -15,6 +15,7 @@ use crate::fm_index::FMIndexBackend;
 use crate::multi_pieces::FMIndexMultiPiecesBackend;
 use crate::piece::PieceId;
 use crate::rlfmi::RLFMIndexBackend;
+use crate::suffix_array::discard::DiscardedSuffixArray;
 use crate::suffix_array::sample::SOSampledSuffixArray;
 use crate::text::Text;
 use crate::wrapper::{MatchWrapper, SearchIndexWrapper, SearchWrapper};
@@ -107,11 +108,15 @@ pub trait MatchWithPieceId<'a, C>: Match<'a, C> {
 ///
 /// The FM-Index is both a search index as well as compact representation of
 /// the text.
-pub struct FMIndex<C: Character>(SearchIndexWrapper<FMIndexBackend<C, ()>>);
+pub struct FMIndex<C: Character>(SearchIndexWrapper<FMIndexBackend<C, DiscardedSuffixArray>>);
 /// Search result for FMIndex, count only.
-pub struct FMIndexSearch<'a, C: Character>(SearchWrapper<'a, FMIndexBackend<C, ()>>);
+pub struct FMIndexSearch<'a, C: Character>(
+    SearchWrapper<'a, FMIndexBackend<C, DiscardedSuffixArray>>,
+);
 /// Match in the text for FMIndex.
-pub struct FMIndexMatch<'a, C: Character>(MatchWrapper<'a, FMIndexBackend<C, ()>>);
+pub struct FMIndexMatch<'a, C: Character>(
+    MatchWrapper<'a, FMIndexBackend<C, DiscardedSuffixArray>>,
+);
 
 /// FMIndex with locate support.
 ///
@@ -131,11 +136,15 @@ pub struct FMIndexMatchWithLocate<'a, C: Character>(
 /// RLFMIndex, count only.
 ///
 /// This is a version of the FM-Index that uses less space, but is also less efficient.
-pub struct RLFMIndex<C: Character>(SearchIndexWrapper<RLFMIndexBackend<C, ()>>);
+pub struct RLFMIndex<C: Character>(SearchIndexWrapper<RLFMIndexBackend<C, DiscardedSuffixArray>>);
 /// Search result for RLFMIndex, count only.
-pub struct RLFMIndexSearch<'a, C: Character>(SearchWrapper<'a, RLFMIndexBackend<C, ()>>);
+pub struct RLFMIndexSearch<'a, C: Character>(
+    SearchWrapper<'a, RLFMIndexBackend<C, DiscardedSuffixArray>>,
+);
 /// Match in the text for RLFMIndex.
-pub struct RLFMIndexMatch<'a, C: Character>(MatchWrapper<'a, RLFMIndexBackend<C, ()>>);
+pub struct RLFMIndexMatch<'a, C: Character>(
+    MatchWrapper<'a, RLFMIndexBackend<C, DiscardedSuffixArray>>,
+);
 
 /// RLFMIndex with locate support.
 ///
@@ -156,14 +165,16 @@ pub struct RLFMIndexMatchWithLocate<'a, C: Character>(
 /// MultiText index, count only.
 ///
 /// This is a multi-text version of the FM-Index. It allows \0 separated strings.
-pub struct FMIndexMultiPieces<C: Character>(SearchIndexWrapper<FMIndexMultiPiecesBackend<C, ()>>);
+pub struct FMIndexMultiPieces<C: Character>(
+    SearchIndexWrapper<FMIndexMultiPiecesBackend<C, DiscardedSuffixArray>>,
+);
 /// Search result for MultiText index, count only.
 pub struct FMIndexMultiPiecesSearch<'a, C: Character>(
-    SearchWrapper<'a, FMIndexMultiPiecesBackend<C, ()>>,
+    SearchWrapper<'a, FMIndexMultiPiecesBackend<C, DiscardedSuffixArray>>,
 );
 /// Match in the text for MultiText index.
 pub struct FMIndexMultiPiecesMatch<'a, C: Character>(
-    MatchWrapper<'a, FMIndexMultiPiecesBackend<C, ()>>,
+    MatchWrapper<'a, FMIndexMultiPiecesBackend<C, DiscardedSuffixArray>>,
 );
 
 /// MultiText index with locate support.
@@ -185,7 +196,9 @@ pub struct FMIndexMultiPiecesMatchWithLocate<'a, C: Character>(
 impl<C: Character> FMIndex<C> {
     /// Create a new FMIndex without locate support.
     pub fn new<T: AsRef<[C]>>(text: &Text<C, T>) -> Self {
-        FMIndex(SearchIndexWrapper::new(FMIndexBackend::new(text, |_| ())))
+        FMIndex(SearchIndexWrapper::new(FMIndexBackend::new(text, |_| {
+            DiscardedSuffixArray {}
+        })))
     }
 }
 
@@ -207,7 +220,9 @@ impl<C: Character> FMIndexWithLocate<C> {
 impl<C: Character> RLFMIndex<C> {
     /// Create a new RLFMIndex without locate support.
     pub fn new<T: AsRef<[C]>>(text: &Text<C, T>) -> Self {
-        RLFMIndex(SearchIndexWrapper::new(RLFMIndexBackend::new(text, |_| ())))
+        RLFMIndex(SearchIndexWrapper::new(RLFMIndexBackend::new(text, |_| {
+            DiscardedSuffixArray {}
+        })))
     }
 }
 
@@ -231,7 +246,7 @@ impl<C: Character> FMIndexMultiPieces<C> {
     pub fn new<T: AsRef<[C]>>(text: &Text<C, T>) -> Self {
         FMIndexMultiPieces(SearchIndexWrapper::new(FMIndexMultiPiecesBackend::new(
             text,
-            |_| (),
+            |_| DiscardedSuffixArray {},
         )))
     }
 }
