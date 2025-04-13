@@ -45,16 +45,25 @@ impl fmt::Debug for SuffixOrderSampledArray {
     }
 }
 
-pub(crate) fn sample(sa: &[usize], level: usize) -> SuffixOrderSampledArray {
+impl Default for SuffixOrderSampledArray {
+    fn default() -> Self {
+        SuffixOrderSampledArray {
+            level: 0,
+            word_size: 0,
+            sa: BitVec::new(),
+            len: 0,
+        }
+    }
+}
+
+pub(crate) fn sample(sa: &[usize], mut level: usize) -> SuffixOrderSampledArray {
     let n = sa.len();
-    let word_size = (util::log2(n as u64) + 1) as usize;
-    debug_assert!(n > 0);
-    debug_assert!(
-        n > (1 << level),
-        "sampling level L must satisfy 2^L < text_len (L = {}, text_len = {})",
-        level,
-        n,
-    );
+    let word_size = (util::log2_usize(n) + 1) as usize;
+    if n <= 1 << level {
+        // If the sampling level is too high, we don't sample the suffix array at all.
+        level = 0;
+    }
+
     let sa_samples_len = ((n - 1) >> level) + 1;
     let mut sa_samples = BitVec::with_capacity(sa_samples_len);
     // fid::BitArray::with_word_size(word_size, sa_samples_len);
@@ -96,6 +105,16 @@ mod tests {
                     assert_eq!(v, None, "ssa[{}] should be None", i);
                 }
             }
+        }
+    }
+
+    #[test]
+    fn test_not_sampled() {
+        let sa = (0..10).collect::<Vec<usize>>();
+        let ssa = sample(&sa, 4);
+        for i in 0..10 {
+            let v = ssa.get(i);
+            assert_eq!(v, Some(i), "ssa[{}] should be Some({})", i, i);
         }
     }
 }
