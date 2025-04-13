@@ -15,6 +15,31 @@ pub struct SuffixOrderSampledArray {
 }
 
 impl SuffixOrderSampledArray {
+    pub(crate) fn sample(sa: &[usize], mut level: usize) -> SuffixOrderSampledArray {
+        if sa.is_empty() {
+            return SuffixOrderSampledArray::default();
+        }
+
+        let n = sa.len();
+        let word_size = (util::log2_usize(n) + 1) as usize;
+        if n <= 1 << level {
+            // If the sampling level is too high, we don't sample the suffix array at all.
+            level = 0;
+        }
+
+        let sa_samples_len = ((n - 1) >> level) + 1;
+        let mut sa_samples = BitVec::with_capacity(sa_samples_len);
+        for i in 0..sa_samples_len {
+            sa_samples.append_bits(sa[i << level] as u64, word_size);
+        }
+        SuffixOrderSampledArray {
+            level,
+            word_size,
+            sa: sa_samples,
+            len: sa.len(),
+        }
+    }
+
     pub(crate) fn get(&self, i: usize) -> Option<usize> {
         if i >= self.len {
             return None;
@@ -59,38 +84,13 @@ impl Default for SuffixOrderSampledArray {
     }
 }
 
-pub(crate) fn sample(sa: &[usize], mut level: usize) -> SuffixOrderSampledArray {
-    if sa.is_empty() {
-        return SuffixOrderSampledArray::default();
-    }
-
-    let n = sa.len();
-    let word_size = (util::log2_usize(n) + 1) as usize;
-    if n <= 1 << level {
-        // If the sampling level is too high, we don't sample the suffix array at all.
-        level = 0;
-    }
-
-    let sa_samples_len = ((n - 1) >> level) + 1;
-    let mut sa_samples = BitVec::with_capacity(sa_samples_len);
-    for i in 0..sa_samples_len {
-        sa_samples.append_bits(sa[i << level] as u64, word_size);
-    }
-    SuffixOrderSampledArray {
-        level,
-        word_size,
-        sa: sa_samples,
-        len: sa.len(),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_empty() {
-        let ssa = sample(&vec![], 2);
+        let ssa = SuffixOrderSampledArray::sample(&vec![], 2);
         assert_eq!(ssa.get(0), None);
     }
 
@@ -108,7 +108,7 @@ mod tests {
         ];
         for &(level, n) in cases.iter() {
             let sa = (0..n).collect::<Vec<usize>>();
-            let ssa = sample(&sa, level);
+            let ssa = SuffixOrderSampledArray::sample(&sa, level);
             for i in 0..n {
                 let v = ssa.get(i);
                 if i & ((1 << level) - 1) == 0 {
@@ -123,7 +123,7 @@ mod tests {
     #[test]
     fn test_not_sampled() {
         let sa = (0..10).collect::<Vec<usize>>();
-        let ssa = sample(&sa, 4);
+        let ssa = SuffixOrderSampledArray::sample(&sa, 4);
         for i in 0..10 {
             let v = ssa.get(i);
             assert_eq!(v, Some(i), "ssa[{}] should be Some({})", i, i);

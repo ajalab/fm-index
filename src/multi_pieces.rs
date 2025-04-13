@@ -248,7 +248,7 @@ fn modular_sub<T: Sub<Output = T> + Ord + num_traits::Zero>(a: T, b: T, m: T) ->
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::suffix_array::sample;
+    use crate::suffix_array::sample::SuffixOrderSampledArray;
     use crate::testutil;
     use rand::{rngs::StdRng, Rng, SeedableRng};
 
@@ -263,8 +263,9 @@ mod tests {
             let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
             let suffix_array = testutil::build_suffix_array(&text);
             let inv_suffix_array = testutil::build_inv_suffix_array(&suffix_array);
-            let fm_index =
-                FMIndexMultiPiecesBackend::new(&Text::new(text), |sa| sample::sample(sa, 0));
+            let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(text), |sa| {
+                SuffixOrderSampledArray::sample(sa, 0)
+            });
 
             let mut lf_map_expected = vec![0; text_size];
             let mut lf_map_actual = vec![0; text_size];
@@ -282,7 +283,9 @@ mod tests {
     fn test_get_piece_id() {
         let text = "foo\0bar\0baz\0".as_bytes();
         let suffix_array = testutil::build_suffix_array(text);
-        let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(text), |sa| sample::sample(sa, 0));
+        let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(text), |sa| {
+            SuffixOrderSampledArray::sample(sa, 0)
+        });
 
         for (i, &char_pos) in suffix_array.iter().enumerate() {
             let piece_id_expected =
@@ -306,8 +309,9 @@ mod tests {
         for _ in 0..attempts {
             let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
             let suffix_array = testutil::build_suffix_array(&text);
-            let fm_index =
-                FMIndexMultiPiecesBackend::new(&Text::new(&text), |sa| sample::sample(sa, 0));
+            let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(&text), |sa| {
+                SuffixOrderSampledArray::sample(sa, 0)
+            });
 
             for (i, &char_pos) in suffix_array.iter().enumerate() {
                 let piece_id_expected =

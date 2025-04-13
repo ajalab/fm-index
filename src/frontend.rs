@@ -15,7 +15,7 @@ use crate::fm_index::FMIndexBackend;
 use crate::multi_pieces::FMIndexMultiPiecesBackend;
 use crate::piece::PieceId;
 use crate::rlfmi::RLFMIndexBackend;
-use crate::suffix_array::sample::{self, SuffixOrderSampledArray};
+use crate::suffix_array::sample::SuffixOrderSampledArray;
 use crate::text::Text;
 use crate::wrapper::{MatchWrapper, SearchIndexWrapper, SearchWrapper};
 
@@ -199,7 +199,7 @@ impl<C: Character> FMIndexWithLocate<C> {
     /// and so on.
     pub fn new<T: AsRef<[C]>>(text: &Text<C, T>, level: usize) -> Self {
         FMIndexWithLocate(SearchIndexWrapper::new(FMIndexBackend::new(text, |sa| {
-            sample::sample(sa, level)
+            SuffixOrderSampledArray::sample(sa, level)
         })))
     }
 }
@@ -221,7 +221,7 @@ impl<C: Character> RLFMIndexWithLocate<C> {
     /// and so on.
     pub fn new<T: AsRef<[C]>>(text: &Text<C, T>, level: usize) -> Self {
         RLFMIndexWithLocate(SearchIndexWrapper::new(RLFMIndexBackend::new(text, |sa| {
-            sample::sample(sa, level)
+            SuffixOrderSampledArray::sample(sa, level)
         })))
     }
 }
@@ -247,7 +247,7 @@ impl<C: Character> FMIndexMultiPiecesWithLocate<C> {
     pub fn new<T: AsRef<[C]>>(text: &Text<C, T>, level: usize) -> Self {
         FMIndexMultiPiecesWithLocate(SearchIndexWrapper::new(FMIndexMultiPiecesBackend::new(
             text,
-            |sa| sample::sample(sa, level),
+            |sa| SuffixOrderSampledArray::sample(sa, level),
         )))
     }
 }
