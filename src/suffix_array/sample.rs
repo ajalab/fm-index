@@ -58,10 +58,6 @@ impl SOSampledSuffixArray {
             None
         }
     }
-
-    pub(crate) fn size(&self) -> usize {
-        self.sa.heap_size()
-    }
 }
 
 impl fmt::Debug for SOSampledSuffixArray {

@@ -96,24 +96,15 @@ where
     }
 }
 
-impl<C> HeapSize for FMIndexMultiPiecesBackend<C, ()>
+impl<C, S> HeapSize for FMIndexMultiPiecesBackend<C, S>
 where
-    C: Character,
-{
-    fn heap_size(&self) -> usize {
-        self.bw.heap_size() + self.cs.capacity() * std::mem::size_of::<u64>()
-    }
-}
-
-impl<C> HeapSize for FMIndexMultiPiecesBackend<C, SOSampledSuffixArray>
-where
-    C: Character,
+    S: HeapSize,
 {
     fn heap_size(&self) -> usize {
         self.bw.heap_size()
             + self.cs.capacity() * std::mem::size_of::<u64>()
-            + self.suffix_array.size()
             + self.doc.capacity() * std::mem::size_of::<usize>()
+            + self.suffix_array.heap_size()
     }
 }
 
