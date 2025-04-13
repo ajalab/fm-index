@@ -5,6 +5,8 @@ use rand::{Rng, SeedableRng};
 
 /// Build a text for tests using a generator function `gen`.
 pub fn build_text<T: Zero + Clone, F: FnMut() -> T>(mut gen: F, len: usize) -> Vec<T> {
+    debug_assert!(len > 0, "Text length must be greater than 0");
+
     let mut text = vec![T::zero(); len];
 
     let mut prev_zero = true;
@@ -90,7 +92,7 @@ pub struct NaiveSearchIndexMatch {
 pub struct TestRunner {
     pub texts: usize,
     pub patterns: usize,
-    pub text_size: usize,
+    pub text_size_max: usize,
     pub alphabet_size: u8,
     pub level_max: usize,
     pub pattern_size_max: usize,
@@ -106,17 +108,23 @@ impl TestRunner {
         let mut rng = StdRng::seed_from_u64(0);
 
         for _ in 0..self.texts {
+            let text_size = rng.gen::<usize>() % (self.text_size_max) + 1;
             let text = if self.multi_pieces {
-                build_text(|| rng.gen::<u8>() % self.alphabet_size, self.text_size)
+                build_text(|| rng.gen::<u8>() % self.alphabet_size, text_size)
             } else {
-                build_text(|| rng.gen::<u8>() % self.alphabet_size + 1, self.text_size)
+                build_text(|| rng.gen::<u8>() % self.alphabet_size + 1, text_size)
             };
             let text = Text::new(text);
             let level = rng.gen::<usize>() % (self.level_max + 1);
             let fm_index = build_index(&text, level);
 
             for _ in 0..self.patterns {
-                let pattern_size = rng.gen::<usize>() % (self.pattern_size_max - 1) + 1;
+                let pattern_size_max = if self.pattern_size_max > text_size {
+                    text_size
+                } else {
+                    self.pattern_size_max
+                };
+                let pattern_size = rng.gen::<usize>() % (pattern_size_max - 1) + 1;
                 let pattern = (0..pattern_size)
                     .map(|_| rng.gen::<u8>() % (self.alphabet_size - 1) + 1)
                     .collect::<Vec<_>>();

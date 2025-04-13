@@ -21,7 +21,7 @@ impl SuffixOrderSampledArray {
         }
 
         let n = sa.len();
-        let word_size = (util::log2_usize(n) + 1) as usize;
+        let word_size = util::log2_usize(n) + 1;
         if n <= 1 << level {
             // If the sampling level is too high, we don't sample the suffix array at all.
             level = 0;
@@ -90,7 +90,7 @@ mod tests {
 
     #[test]
     fn test_empty() {
-        let ssa = SuffixOrderSampledArray::sample(&vec![], 2);
+        let ssa = SuffixOrderSampledArray::sample(&[], 2);
         assert_eq!(ssa.get(0), None);
     }
 

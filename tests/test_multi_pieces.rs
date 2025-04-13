@@ -4,12 +4,12 @@ use testutil::TestRunner;
 
 #[test]
 fn test_search_count() {
-    let text_size = 1024;
+    let text_size_max = 1024;
 
     TestRunner {
         texts: 100,
         patterns: 100,
-        text_size,
+        text_size_max,
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
@@ -35,12 +35,12 @@ fn test_search_count() {
 }
 #[test]
 fn test_search_locate() {
-    let text_size = 1024;
+    let text_size_max = 1024;
 
     TestRunner {
         texts: 100,
         patterns: 100,
-        text_size,
+        text_size_max,
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
@@ -75,12 +75,12 @@ fn test_search_locate() {
 
 #[test]
 fn test_search_piece_id() {
-    let text_size = 1024;
+    let text_size_max = 1024;
 
     TestRunner {
         texts: 100,
         patterns: 100,
-        text_size,
+        text_size_max,
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
@@ -115,12 +115,12 @@ fn test_search_piece_id() {
 
 #[test]
 fn test_search_prefix_piece_id() {
-    let text_size = 1024;
+    let text_size_max = 1024;
 
     TestRunner {
         texts: 100,
         patterns: 100,
-        text_size,
+        text_size_max,
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
@@ -155,12 +155,12 @@ fn test_search_prefix_piece_id() {
 
 #[test]
 fn test_search_suffix_piece_id() {
-    let text_size = 1024;
+    let text_size_max = 1024;
 
     TestRunner {
         texts: 100,
         patterns: 100,
-        text_size,
+        text_size_max,
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
@@ -195,12 +195,12 @@ fn test_search_suffix_piece_id() {
 
 #[test]
 fn test_search_exact_piece_id() {
-    let text_size = 1024;
+    let text_size_max = 1024;
 
     TestRunner {
         texts: 100,
         patterns: 100,
-        text_size,
+        text_size_max,
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
