@@ -1,15 +1,53 @@
 mod testutil;
-use fm_index::{FMIndexMultiPiecesWithLocate, MatchWithLocate, MatchWithPieceId, Search};
+use fm_index::{
+    FMIndexMultiPiecesWithLocate, MatchWithLocate, MatchWithPieceId, PieceId, Search, Text,
+};
 use testutil::TestRunner;
 
 #[test]
-fn test_search_count() {
-    let text_size = 1024;
+fn test_small_search_count() {
+    let text = Text::new("a\0".as_bytes());
+    let fm_index = FMIndexMultiPiecesWithLocate::new(&text, 2);
+
+    assert_eq!(1, fm_index.search("a").count());
+}
+
+#[test]
+fn test_small_search_locate() {
+    let text = Text::new("a\0".as_bytes());
+    let fm_index = FMIndexMultiPiecesWithLocate::new(&text, 2);
+
+    let positions = fm_index
+        .search("a")
+        .iter_matches()
+        .map(|m| m.locate())
+        .collect::<Vec<_>>();
+
+    assert_eq!(vec![0], positions);
+}
+
+#[test]
+fn test_small_search_piece_id() {
+    let text = Text::new("a\0".as_bytes());
+    let fm_index = FMIndexMultiPiecesWithLocate::new(&text, 2);
+
+    let positions = fm_index
+        .search("a")
+        .iter_matches()
+        .map(|m| m.piece_id())
+        .collect::<Vec<_>>();
+
+    assert_eq!(vec![PieceId::from(0)], positions);
+}
+
+#[test]
+fn test_random_search_count() {
+    let text_size_max = 1024;
 
     TestRunner {
         texts: 100,
         patterns: 100,
-        text_size,
+        text_size_max,
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
@@ -34,13 +72,13 @@ fn test_search_count() {
     );
 }
 #[test]
-fn test_search_locate() {
-    let text_size = 1024;
+fn test_random_search_locate() {
+    let text_size_max = 1024;
 
     TestRunner {
         texts: 100,
         patterns: 100,
-        text_size,
+        text_size_max,
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
@@ -74,13 +112,13 @@ fn test_search_locate() {
 }
 
 #[test]
-fn test_search_piece_id() {
-    let text_size = 1024;
+fn test_random_search_piece_id() {
+    let text_size_max = 1024;
 
     TestRunner {
         texts: 100,
         patterns: 100,
-        text_size,
+        text_size_max,
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
@@ -114,13 +152,13 @@ fn test_search_piece_id() {
 }
 
 #[test]
-fn test_search_prefix_piece_id() {
-    let text_size = 1024;
+fn test_random_search_prefix_piece_id() {
+    let text_size_max = 1024;
 
     TestRunner {
         texts: 100,
         patterns: 100,
-        text_size,
+        text_size_max,
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
@@ -154,13 +192,13 @@ fn test_search_prefix_piece_id() {
 }
 
 #[test]
-fn test_search_suffix_piece_id() {
-    let text_size = 1024;
+fn test_random_search_suffix_piece_id() {
+    let text_size_max = 1024;
 
     TestRunner {
         texts: 100,
         patterns: 100,
-        text_size,
+        text_size_max,
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
@@ -194,13 +232,13 @@ fn test_search_suffix_piece_id() {
 }
 
 #[test]
-fn test_search_exact_piece_id() {
-    let text_size = 1024;
+fn test_random_search_exact_piece_id() {
+    let text_size_max = 1024;
 
     TestRunner {
         texts: 100,
         patterns: 100,
-        text_size,
+        text_size_max,
         alphabet_size: 8,
         level_max: 3,
         pattern_size_max: 10,
