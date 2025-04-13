@@ -3,8 +3,9 @@
 // This makes the implementation of the frontend more regular.
 
 use crate::backend::{HasMultiPieces, HasPosition, SearchIndexBackend};
+use crate::heap_size::HeapSize;
 use crate::piece::PieceId;
-use crate::{Character, HeapSize};
+use crate::Character;
 
 pub(crate) struct SearchIndexWrapper<B>(B)
 where

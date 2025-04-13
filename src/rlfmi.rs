@@ -1,6 +1,7 @@
-use crate::backend::{HasPosition, HeapSize, SearchIndexBackend};
+use crate::backend::{HasPosition, SearchIndexBackend};
 use crate::character::Character;
 use crate::error::Error;
+use crate::heap_size::HeapSize;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::SOSampledSuffixArray;
 use crate::text::Text;

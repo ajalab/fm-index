@@ -9,10 +9,10 @@
 // the behavior. This module only exists so we can avoid exposing implementation
 // traits.
 
-use crate::backend::HeapSize;
 use crate::character::Character;
 use crate::error::Error;
 use crate::fm_index::FMIndexBackend;
+use crate::heap_size::HeapSize;
 use crate::multi_pieces::FMIndexMultiPiecesBackend;
 use crate::piece::PieceId;
 use crate::rlfmi::RLFMIndexBackend;

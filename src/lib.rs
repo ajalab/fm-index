@@ -144,6 +144,7 @@ mod character;
 mod error;
 mod fm_index;
 mod frontend;
+mod heap_size;
 mod multi_pieces;
 mod piece;
 mod rlfmi;
@@ -154,7 +155,6 @@ mod text;
 mod util;
 mod wrapper;
 
-pub use backend::HeapSize;
 pub use character::Character;
 pub use error::Error;
 pub use frontend::{

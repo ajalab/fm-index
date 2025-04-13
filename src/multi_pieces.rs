@@ -3,11 +3,11 @@ use std::ops::{Rem, Sub};
 use crate::backend::{HasMultiPieces, HasPosition, SearchIndexBackend};
 use crate::character::Character;
 use crate::error::Error;
+use crate::heap_size::HeapSize;
 use crate::piece::PieceId;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::SOSampledSuffixArray;
 use crate::text::Text;
-use crate::HeapSize;
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::{BitVec, RsVec, WaveletMatrix};
