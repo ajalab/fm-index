@@ -1,15 +1,13 @@
 // tests that exercise the public API, especially the traits
 
-use fm_index::{
-    FMIndex, FMIndexWithLocate, HeapSize, RLFMIndex, RLFMIndexWithLocate, SearchIndex, Text,
-};
+use fm_index::{FMIndex, FMIndexWithLocate, RLFMIndex, RLFMIndexWithLocate, SearchIndex, Text};
 
 fn len<T: SearchIndex<u8>>(index: &T) -> usize {
     index.len()
 }
 
-fn size<T: HeapSize>(t: &T) -> usize {
-    t.heap_size()
+fn size<T: SearchIndex<u8>>(_: &T) -> usize {
+    todo!("implement size function");
 }
 
 #[test]

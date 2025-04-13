@@ -1,4 +1,4 @@
-use crate::backend::HeapSize;
+use crate::heap_size::HeapSize;
 
 pub struct DiscardedSuffixArray {}
 

@@ -1,5 +1,5 @@
 //! Sampled suffix arrays to perform locate queries.
-use crate::backend::HeapSize;
+use crate::heap_size::HeapSize;
 use crate::util;
 use serde::{Deserialize, Serialize};
 use std::fmt;
