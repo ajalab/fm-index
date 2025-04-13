@@ -1,8 +1,8 @@
 //! Sampled suffix arrays to perform locate queries.
+use crate::backend::HeapSize;
 use crate::util;
-use std::fmt;
-
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use vers_vecs::BitVec;
 
 /// A suffix array sampled by the _suffix order_ (SO) sampling strategy.
@@ -84,6 +84,12 @@ impl Default for SOSampledSuffixArray {
             sa: BitVec::new(),
             len: 0,
         }
+    }
+}
+
+impl HeapSize for SOSampledSuffixArray {
+    fn heap_size(&self) -> usize {
+        self.sa.heap_size()
     }
 }
 
