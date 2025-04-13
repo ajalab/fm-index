@@ -66,7 +66,6 @@ pub(crate) fn sample(sa: &[usize], mut level: usize) -> SuffixOrderSampledArray 
 
     let sa_samples_len = ((n - 1) >> level) + 1;
     let mut sa_samples = BitVec::with_capacity(sa_samples_len);
-    // fid::BitArray::with_word_size(word_size, sa_samples_len);
     for i in 0..sa_samples_len {
         sa_samples.append_bits(sa[i << level] as u64, word_size);
     }
