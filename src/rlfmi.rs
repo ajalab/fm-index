@@ -100,7 +100,7 @@ where
         self.s.heap_size()
             + self.b.heap_size()
             + self.bp.heap_size()
-            + self.cs.capacity() * std::mem::size_of::<u64>()
+            + self.cs.len() * std::mem::size_of::<u64>()
             + self.suffix_array.heap_size()
     }
 }
