@@ -16,7 +16,10 @@ pub struct SuffixOrderSampledArray {
 
 impl SuffixOrderSampledArray {
     pub(crate) fn get(&self, i: usize) -> Option<usize> {
-        debug_assert!(i < self.len);
+        if i >= self.len {
+            return None;
+        }
+
         if i & ((1 << self.level) - 1) == 0 {
             Some(
                 self.sa
@@ -57,6 +60,10 @@ impl Default for SuffixOrderSampledArray {
 }
 
 pub(crate) fn sample(sa: &[usize], mut level: usize) -> SuffixOrderSampledArray {
+    if sa.is_empty() {
+        return SuffixOrderSampledArray::default();
+    }
+
     let n = sa.len();
     let word_size = (util::log2_usize(n) + 1) as usize;
     if n <= 1 << level {
@@ -80,6 +87,12 @@ pub(crate) fn sample(sa: &[usize], mut level: usize) -> SuffixOrderSampledArray 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_empty() {
+        let ssa = sample(&vec![], 2);
+        assert_eq!(ssa.get(0), None);
+    }
 
     #[test]
     fn test_regular() {
