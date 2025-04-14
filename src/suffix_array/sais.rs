@@ -3,6 +3,7 @@
 //!    IEEE Transactions on Computers, 60(10), 1471–1484. <https://doi.org/10.1109/tc.2010.188>
 use vers_vecs::BitVec;
 
+use crate::error::Error;
 use crate::{text::Text, Character};
 
 pub fn count_chars<C, T>(text: &Text<C, T>) -> Vec<usize>
@@ -111,26 +112,35 @@ where
 }
 
 /// Build a suffix array from the given [`text`] using SA-IS algorithm.
-pub fn build_suffix_array<C, T>(text: &Text<C, T>) -> Vec<usize>
+pub fn build_suffix_array<C, T>(text: &Text<C, T>) -> Result<Vec<usize>, Error>
 where
     C: Character,
     T: AsRef<[C]>,
 {
     let n = text.text().len();
-    match n {
-        0 => vec![],
-        1 => vec![0],
-        _ => {
-            debug_assert_eq!(
-                text.text().iter().rposition(|&c| c.into_u64() != 0),
-                Some(text.text().len() - 2),
-                "the given text must end with a single 0.",
-            );
-            let mut sa = vec![usize::MAX; n];
-            sais_sub(text, &mut sa);
-            sa
-        }
+    if n == 0 {
+        return Ok(vec![]);
     }
+    if n == 1 {
+        return Ok(vec![0]);
+    }
+
+    let first_char = text.text()[0];
+    if first_char.into_u64() == 0 {
+        return Err(Error::InvalidText(
+            "the given text must not start with zero character",
+        ));
+    }
+    let last_non_zero_char = text.text().iter().rposition(|&c| c.into_u64() != 0);
+    if last_non_zero_char != Some(text.text().len() - 2) {
+        return Err(Error::InvalidText(
+            "the given text must end with exactly one zero character",
+        ));
+    }
+
+    let mut sa = vec![usize::MAX; n];
+    sais_sub(text, &mut sa);
+    Ok(sa)
 }
 
 #[allow(clippy::cognitive_complexity)]
@@ -388,30 +398,36 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    fn test_panic_no_trailing_zero() {
+    fn test_error_no_trailing_zero() {
         let text = "nozero".to_string().into_bytes();
-        build_suffix_array(&Text::new(text));
+        assert!(matches!(
+            build_suffix_array(&Text::new(text)),
+            Err(Error::InvalidText(_))
+        ));
     }
 
     #[test]
-    #[should_panic]
-    fn test_panic_too_many_trailing_zero() {
+    fn test_error_too_many_trailing_zero() {
         let text = "toomanyzeros\0\0".to_string().into_bytes();
-        build_suffix_array(&Text::new(text));
+        assert!(matches!(
+            build_suffix_array(&Text::new(text)),
+            Err(Error::InvalidText(_))
+        ));
     }
 
     #[test]
-    #[should_panic]
-    fn test_panic_consecutive_nulls() {
-        let text = b"mm\0\0ii\0s\0\0\0sii\0ssii\0ppii\0".to_vec();
-        build_suffix_array(&Text::new(text));
+    fn test_error_starting_with_zero() {
+        let text = b"\0starting_with_zero\0".to_vec();
+        assert!(matches!(
+            build_suffix_array(&Text::new(text)),
+            Err(Error::InvalidText(_))
+        ));
     }
 
     #[test]
     fn test_length_1() {
         let text = &[0u8];
-        let sa_actual = build_suffix_array(&Text::new(text));
+        let sa_actual = build_suffix_array(&Text::new(text)).unwrap();
         let sa_expected = build_expected_suffix_array(text);
         assert_eq!(sa_actual, sa_expected);
     }
@@ -419,7 +435,7 @@ mod tests {
     #[test]
     fn test_length_2() {
         let text = &[3u8, 0];
-        let sa_actual = build_suffix_array(&Text::new(text));
+        let sa_actual = build_suffix_array(&Text::new(text)).unwrap();
         let sa_expected = build_expected_suffix_array(text);
         assert_eq!(sa_actual, sa_expected);
     }
@@ -427,7 +443,7 @@ mod tests {
     #[test]
     fn test_length_4() {
         let text = &[3u8, 2, 1, 0];
-        let sa_actual = build_suffix_array(&Text::new(text));
+        let sa_actual = build_suffix_array(&Text::new(text)).unwrap();
         let sa_expected = build_expected_suffix_array(text);
         assert_eq!(sa_actual, sa_expected);
     }
@@ -435,16 +451,7 @@ mod tests {
     #[test]
     fn test_nulls() {
         let text = b"mm\0ii\0s\0sii\0ssii\0ppii\0".to_vec();
-        let sa_actual = build_suffix_array(&Text::new(&text));
-        let sa_expected = build_expected_suffix_array(text);
-        assert_eq!(sa_actual, sa_expected);
-    }
-
-    #[test]
-    #[ignore]
-    fn test_starting_with_zero() {
-        let text = b"\0\0mm\0\0ii\0s\0\0\0sii\0ssii\0ppii\0".to_vec();
-        let sa_actual = build_suffix_array(&Text::new(&text));
+        let sa_actual = build_suffix_array(&Text::new(&text)).unwrap();
         let sa_expected = build_expected_suffix_array(text);
         assert_eq!(sa_actual, sa_expected);
     }
@@ -453,7 +460,7 @@ mod tests {
     fn test_small() {
         let mut text = "mmiissiissiippii".to_string().into_bytes();
         text.push(0);
-        let sa_actual = build_suffix_array(&Text::new(&text));
+        let sa_actual = build_suffix_array(&Text::new(&text)).unwrap();
         let sa_expected = build_expected_suffix_array(&text);
         assert_eq!(sa_actual, sa_expected, "text: {:?}", text);
     }
@@ -465,7 +472,7 @@ mod tests {
 
         for _ in 0..1000 {
             let text = build_text(|| rng.gen::<u8>() % (b'z' - b'a') + b'a', len);
-            let sa_actual = build_suffix_array(&Text::new(&text));
+            let sa_actual = build_suffix_array(&Text::new(&text)).unwrap();
             let sa_expected = build_expected_suffix_array(&text);
             assert_eq!(sa_actual, sa_expected, "text: {:?}", text);
         }
@@ -479,7 +486,7 @@ mod tests {
 
         for _ in 0..1000 {
             let text = build_text(|| if rng.gen_bool(prob) { b'a' } else { b'b' }, len);
-            let sa_actual = build_suffix_array(&Text::new(&text));
+            let sa_actual = build_suffix_array(&Text::new(&text)).unwrap();
             let sa_expected = build_expected_suffix_array(&text);
             assert_eq!(sa_actual, sa_expected, "text: {:?}", text);
         }
@@ -492,7 +499,7 @@ mod tests {
 
         for _ in 0..1000 {
             let text = build_text(|| rng.gen::<u8>() % 2, len);
-            let sa_actual = build_suffix_array(&Text::new(&text));
+            let sa_actual = build_suffix_array(&Text::new(&text)).unwrap();
             let sa_expected = build_expected_suffix_array(&text);
             assert_eq!(sa_actual, sa_expected, "text: {:?}", text);
         }
@@ -505,7 +512,7 @@ mod tests {
 
         for _ in 0..1000 {
             let text = build_text(|| rng.gen::<u8>(), len);
-            let sa_actual = build_suffix_array(&Text::new(&text));
+            let sa_actual = build_suffix_array(&Text::new(&text)).unwrap();
             let sa_expected = build_expected_suffix_array(&text);
             assert_eq!(sa_actual, sa_expected, "text: {:?}", text);
         }

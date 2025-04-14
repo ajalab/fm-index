@@ -7,7 +7,7 @@ use testutil::TestRunner;
 #[test]
 fn test_small_search_count() {
     let text = Text::new("a\0".as_bytes());
-    let fm_index = FMIndexMultiPiecesWithLocate::new(&text, 2);
+    let fm_index = FMIndexMultiPiecesWithLocate::new(&text, 2).unwrap();
 
     assert_eq!(1, fm_index.search("a").count());
 }
@@ -15,7 +15,7 @@ fn test_small_search_count() {
 #[test]
 fn test_small_search_locate() {
     let text = Text::new("a\0".as_bytes());
-    let fm_index = FMIndexMultiPiecesWithLocate::new(&text, 2);
+    let fm_index = FMIndexMultiPiecesWithLocate::new(&text, 2).unwrap();
 
     let positions = fm_index
         .search("a")
@@ -29,7 +29,7 @@ fn test_small_search_locate() {
 #[test]
 fn test_small_search_piece_id() {
     let text = Text::new("a\0".as_bytes());
-    let fm_index = FMIndexMultiPiecesWithLocate::new(&text, 2);
+    let fm_index = FMIndexMultiPiecesWithLocate::new(&text, 2).unwrap();
 
     let positions = fm_index
         .search("a")

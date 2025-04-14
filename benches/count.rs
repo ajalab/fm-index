@@ -8,13 +8,13 @@ mod common;
 fn prepare_fmindex(len: usize, prob: f64, m: usize) -> (impl SearchIndex<u8>, Vec<String>) {
     let text = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
-    (FMIndex::new(&text), patterns)
+    (FMIndex::new(&text).unwrap(), patterns)
 }
 
 fn prepare_rlfmindex(len: usize, prob: f64, m: usize) -> (impl SearchIndex<u8>, Vec<String>) {
     let text = common::binary_text_set(len, prob);
     let patterns = common::binary_patterns(m);
-    (RLFMIndex::new(&text), patterns)
+    (RLFMIndex::new(&text).unwrap(), patterns)
 }
 
 pub fn bench(c: &mut Criterion) {

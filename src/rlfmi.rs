@@ -1,5 +1,6 @@
 use crate::backend::{HasPosition, HeapSize, SearchIndexBackend};
 use crate::character::Character;
+use crate::error::Error;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::SOSampledSuffixArray;
 use crate::text::Text;
@@ -25,13 +26,16 @@ impl<C, S> RLFMIndexBackend<C, S>
 where
     C: Character,
 {
-    pub(crate) fn new<T>(text: &Text<C, T>, get_sample: impl Fn(&[usize]) -> S) -> Self
+    pub(crate) fn new<T>(
+        text: &Text<C, T>,
+        get_sample: impl Fn(&[usize]) -> S,
+    ) -> Result<Self, Error>
     where
         T: AsRef<[C]>,
     {
         let n = text.text().len();
         let m = text.max_character().into_usize() + 1;
-        let sa = sais::build_suffix_array(text);
+        let sa = sais::build_suffix_array(text)?;
 
         let mut c0 = C::from_u64(0);
         // sequence of run heads
@@ -79,7 +83,7 @@ where
 
         let b = RsVec::from_bit_vec(b);
         let bp = RsVec::from_bit_vec(bp);
-        RLFMIndexBackend {
+        Ok(RLFMIndexBackend {
             suffix_array: get_sample(&sa),
             s,
             b,
@@ -87,7 +91,7 @@ where
             cs,
             len: n,
             _c: std::marker::PhantomData::<C>,
-        }
+        })
     }
 }
 
@@ -204,7 +208,7 @@ mod tests {
     #[test]
     fn test_s() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ()).unwrap();
         let ans = "ipsm\0pisi".as_bytes();
         for (i, a) in ans.iter().enumerate() {
             let l: u8 = rlfmi.s.get_u64_unchecked(i) as u8;
@@ -215,7 +219,7 @@ mod tests {
     #[test]
     fn test_b() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ()).unwrap();
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0];
         // l:      ipssm$pissii
@@ -238,7 +242,7 @@ mod tests {
     #[test]
     fn test_bp() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ()).unwrap();
         let n = rlfmi.len();
         let ans = vec![1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0];
         assert_eq!({ n }, rlfmi.bp.len());
@@ -255,7 +259,7 @@ mod tests {
     #[test]
     fn test_cs() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ()).unwrap();
         let ans = vec![(b'\0', 0), (b'i', 1), (b'm', 4), (b'p', 5), (b's', 7)];
         for (c, a) in ans {
             assert_eq!(rlfmi.cs[c as usize], a);
@@ -265,7 +269,7 @@ mod tests {
     #[test]
     fn test_get_l() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ()).unwrap();
         let ans = "ipssm\0pissii".to_string().into_bytes();
 
         for (i, a) in ans.into_iter().enumerate() {
@@ -278,7 +282,7 @@ mod tests {
     fn test_lf_map() {
         let text = "mississippi\0".as_bytes();
         let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
-        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ()).unwrap();
 
         let mut i = 0;
         for a in ans {
@@ -298,7 +302,7 @@ mod tests {
             (b'p', (6, 8)),
             (b's', (8, 12)),
         ];
-        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ()).unwrap();
         let n = rlfmi.len();
 
         for (c, r) in ans {
@@ -324,7 +328,7 @@ mod tests {
             ("si", (8, 10)),
             ("ssi", (10, 12)),
         ];
-        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ()).unwrap();
 
         let wrapper = SearchIndexWrapper::new(rlfmi);
 
@@ -338,7 +342,7 @@ mod tests {
         let text = "mississippi\0".as_bytes();
         let mut ans = text.to_vec();
         ans.sort();
-        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ()).unwrap();
 
         for (i, a) in ans.into_iter().enumerate() {
             let f = rlfmi.get_f(i);
@@ -349,7 +353,7 @@ mod tests {
     #[test]
     fn test_fl_map() {
         let text = "mississippi\0".as_bytes();
-        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ());
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ()).unwrap();
         let cases = vec![5usize, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
             let actual = rlfmi.fl_map(i).unwrap();

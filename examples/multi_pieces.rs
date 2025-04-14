@@ -28,7 +28,7 @@ fn main() {
     .as_bytes();
     let text = Text::new(text);
 
-    let fm_index = FMIndexMultiPiecesWithLocate::new(&text, 2);
+    let fm_index = FMIndexMultiPiecesWithLocate::new(&text, 2).unwrap();
 
     // Count the number of occurrences.
     assert_eq!(4, fm_index.search("star").count());
