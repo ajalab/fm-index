@@ -102,7 +102,7 @@ where
 {
     fn heap_size(&self) -> usize {
         self.bw.heap_size()
-            + self.cs.len() * std::mem::size_of::<u64>()
+            + self.cs.len() * std::mem::size_of::<usize>()
             + self.doc.len() * std::mem::size_of::<usize>()
             + self.suffix_array.heap_size()
     }
