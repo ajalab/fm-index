@@ -162,7 +162,7 @@ pub use frontend::{
     FMIndexSearchWithLocate, FMIndexWithLocate, Match, MatchWithLocate, MatchWithPieceId,
     RLFMIndex, RLFMIndexMatch, RLFMIndexMatchWithLocate, RLFMIndexSearch,
     RLFMIndexSearchWithLocate, RLFMIndexWithLocate, Search, SearchIndex,
-    SearchIndexWithMultiPieces, SearchWithLocate,
+    SearchIndexWithMultiPieces,
 };
 pub use piece::PieceId;
 pub use text::Text;

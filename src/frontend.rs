@@ -76,12 +76,6 @@ pub trait Search<'a, C> {
     fn iter_matches(&'a self) -> impl Iterator<Item = Self::Match> + 'a;
 }
 
-/// The result of a search that also has locate support.
-pub trait SearchWithLocate<'a, C>: Search<'a, C> {
-    /// List the position of all occurrences.
-    fn locate(&self) -> Vec<u64>;
-}
-
 /// A match in the text.
 pub trait Match<'a, C> {
     /// Iterate over the characters of the match.
