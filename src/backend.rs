@@ -25,15 +25,6 @@ pub(crate) trait SearchIndexBackend: Sized {
     fn len(&self) -> usize;
 }
 
-/// Access the heap size of the structure.
-///
-/// This can be useful if you want to fine-tune the memory usage of your
-/// application.
-pub trait HeapSize {
-    /// The size on the heap of this structure, in bytes.
-    fn heap_size(&self) -> usize;
-}
-
 /// A trait for an index that supports locate queries.
 pub(crate) trait HasPosition {
     fn get_sa(&self, i: usize) -> usize;

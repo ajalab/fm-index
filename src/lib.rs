@@ -143,6 +143,7 @@ mod backend;
 mod character;
 mod fm_index;
 mod frontend;
+mod heap_size;
 mod multi_pieces;
 mod piece;
 mod rlfmi;
@@ -153,7 +154,6 @@ mod text;
 mod util;
 mod wrapper;
 
-pub use backend::HeapSize;
 pub use character::Character;
 pub use frontend::{
     FMIndex, FMIndexMatch, FMIndexMatchWithLocate, FMIndexMultiPieces, FMIndexMultiPiecesMatch,
