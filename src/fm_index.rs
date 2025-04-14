@@ -154,29 +154,29 @@ mod tests {
     use crate::suffix_array::sample::SOSampledSuffixArray;
 
     #[test]
-    fn test_lf_map() -> Result<(), Error> {
+    fn test_lf_map() {
         let text = "mississippi\0".as_bytes();
         let ans = vec![1, 6, 7, 2, 8, 10, 3, 9, 11, 4, 5, 0];
         let fm_index =
-            FMIndexBackend::new(&Text::new(text), |sa| SOSampledSuffixArray::sample(sa, 2))?;
+            FMIndexBackend::new(&Text::new(text), |sa| SOSampledSuffixArray::sample(sa, 2))
+                .unwrap();
         let mut i = 0;
         for a in ans {
             i = fm_index.lf_map(i);
             assert_eq!(i, a);
         }
-        Ok(())
     }
 
     #[test]
-    fn test_fl_map() -> Result<(), Error> {
+    fn test_fl_map() {
         let text = "mississippi\0".as_bytes();
         let fm_index =
-            FMIndexBackend::new(&Text::new(text), |sa| SOSampledSuffixArray::sample(sa, 2))?;
+            FMIndexBackend::new(&Text::new(text), |sa| SOSampledSuffixArray::sample(sa, 2))
+                .unwrap();
         let cases = vec![5usize, 0, 7, 10, 11, 4, 1, 6, 2, 3, 8, 9];
         for (i, expected) in cases.into_iter().enumerate() {
             let actual = fm_index.fl_map(i).unwrap();
             assert_eq!(actual, expected);
         }
-        Ok(())
     }
 }

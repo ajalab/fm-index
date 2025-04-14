@@ -257,7 +257,7 @@ mod tests {
     use rand::{rngs::StdRng, Rng, SeedableRng};
 
     #[test]
-    fn test_lf_map_random() -> Result<(), Error> {
+    fn test_lf_map_random() {
         let text_size = 512;
         let attempts = 100;
         let alphabet_size = 8;
@@ -269,7 +269,8 @@ mod tests {
             let inv_suffix_array = testutil::build_inv_suffix_array(&suffix_array);
             let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(text), |sa| {
                 SOSampledSuffixArray::sample(sa, 0)
-            })?;
+            })
+            .unwrap();
 
             let mut lf_map_expected = vec![0; text_size];
             let mut lf_map_actual = vec![0; text_size];
@@ -281,16 +282,16 @@ mod tests {
 
             assert_eq!(lf_map_expected, lf_map_actual);
         }
-        Ok(())
     }
 
     #[test]
-    fn test_get_piece_id() -> Result<(), Error> {
+    fn test_get_piece_id() {
         let text = "foo\0bar\0baz\0".as_bytes();
         let suffix_array = testutil::build_suffix_array(text);
         let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(text), |sa| {
             SOSampledSuffixArray::sample(sa, 0)
-        })?;
+        })
+        .unwrap();
 
         for (i, &char_pos) in suffix_array.iter().enumerate() {
             let piece_id_expected =
@@ -302,11 +303,10 @@ mod tests {
                 char_pos, i, piece_id_expected
             );
         }
-        Ok(())
     }
 
     #[test]
-    fn test_get_piece_id_random() -> Result<(), Error> {
+    fn test_get_piece_id_random() {
         let text_size = 512;
         let attempts = 100;
         let alphabet_size = 8;
@@ -317,7 +317,8 @@ mod tests {
             let suffix_array = testutil::build_suffix_array(&text);
             let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(&text), |sa| {
                 SOSampledSuffixArray::sample(sa, 0)
-            })?;
+            })
+            .unwrap();
 
             for (i, &char_pos) in suffix_array.iter().enumerate() {
                 let piece_id_expected =
@@ -330,6 +331,5 @@ mod tests {
                 );
             }
         }
-        Ok(())
     }
 }
