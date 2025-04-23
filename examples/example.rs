@@ -16,7 +16,7 @@ fn main() {
     // since we can interpolate missing elements in a suffix array from others. A sampler
     // will _sieve_ a suffix array for this purpose. If you don't need `locate` queries
     // you can save the memory by not setting a sampling level.
-    let index = FMIndexWithLocate::new(&text, 2);
+    let index = FMIndexWithLocate::new(&text, 2).unwrap();
 
     // Search for a pattern string.
     let pattern = "dolor";

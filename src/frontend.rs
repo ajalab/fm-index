@@ -11,6 +11,7 @@
 
 use crate::backend::HeapSize;
 use crate::character::Character;
+use crate::error::Error;
 use crate::fm_index::FMIndexBackend;
 use crate::multi_pieces::FMIndexMultiPiecesBackend;
 use crate::piece::PieceId;
@@ -178,8 +179,11 @@ pub struct FMIndexMultiPiecesMatchWithLocate<'a, C: Character>(
 
 impl<C: Character> FMIndex<C> {
     /// Create a new FMIndex without locate support.
-    pub fn new<T: AsRef<[C]>>(text: &Text<C, T>) -> Self {
-        FMIndex(SearchIndexWrapper::new(FMIndexBackend::new(text, |_| ())))
+    pub fn new<T: AsRef<[C]>>(text: &Text<C, T>) -> Result<Self, Error> {
+        Ok(FMIndex(SearchIndexWrapper::new(FMIndexBackend::new(
+            text,
+            |_| (),
+        )?)))
     }
 }
 
@@ -191,17 +195,20 @@ impl<C: Character> FMIndexWithLocate<C> {
     /// 0 means no sampling, and a level of 1 means half of the suffix array is
     /// sampled, a level of 2 means a quarter of the suffix array is sampled,
     /// and so on.
-    pub fn new<T: AsRef<[C]>>(text: &Text<C, T>, level: usize) -> Self {
-        FMIndexWithLocate(SearchIndexWrapper::new(FMIndexBackend::new(text, |sa| {
-            SOSampledSuffixArray::sample(sa, level)
-        })))
+    pub fn new<T: AsRef<[C]>>(text: &Text<C, T>, level: usize) -> Result<Self, Error> {
+        Ok(FMIndexWithLocate(SearchIndexWrapper::new(
+            FMIndexBackend::new(text, |sa| SOSampledSuffixArray::sample(sa, level))?,
+        )))
     }
 }
 
 impl<C: Character> RLFMIndex<C> {
     /// Create a new RLFMIndex without locate support.
-    pub fn new<T: AsRef<[C]>>(text: &Text<C, T>) -> Self {
-        RLFMIndex(SearchIndexWrapper::new(RLFMIndexBackend::new(text, |_| ())))
+    pub fn new<T: AsRef<[C]>>(text: &Text<C, T>) -> Result<Self, Error> {
+        Ok(RLFMIndex(SearchIndexWrapper::new(RLFMIndexBackend::new(
+            text,
+            |_| (),
+        )?)))
     }
 }
 
@@ -213,19 +220,18 @@ impl<C: Character> RLFMIndexWithLocate<C> {
     /// 0 means no sampling, and a level of 1 means half of the suffix array is
     /// sampled, a level of 2 means a quarter of the suffix array is sampled,
     /// and so on.
-    pub fn new<T: AsRef<[C]>>(text: &Text<C, T>, level: usize) -> Self {
-        RLFMIndexWithLocate(SearchIndexWrapper::new(RLFMIndexBackend::new(text, |sa| {
-            SOSampledSuffixArray::sample(sa, level)
-        })))
+    pub fn new<T: AsRef<[C]>>(text: &Text<C, T>, level: usize) -> Result<Self, Error> {
+        Ok(RLFMIndexWithLocate(SearchIndexWrapper::new(
+            RLFMIndexBackend::new(text, |sa| SOSampledSuffixArray::sample(sa, level))?,
+        )))
     }
 }
 
 impl<C: Character> FMIndexMultiPieces<C> {
     /// Create a new FMIndexMultiPieces without locate support.
-    pub fn new<T: AsRef<[C]>>(text: &Text<C, T>) -> Self {
-        FMIndexMultiPieces(SearchIndexWrapper::new(FMIndexMultiPiecesBackend::new(
-            text,
-            |_| (),
+    pub fn new<T: AsRef<[C]>>(text: &Text<C, T>) -> Result<Self, Error> {
+        Ok(FMIndexMultiPieces(SearchIndexWrapper::new(
+            FMIndexMultiPiecesBackend::new(text, |_| ())?,
         )))
     }
 }
@@ -238,10 +244,9 @@ impl<C: Character> FMIndexMultiPiecesWithLocate<C> {
     /// 0 means no sampling, and a level of 1 means half of the suffix array is
     /// sampled, a level of 2 means a quarter of the suffix array is sampled,
     /// and so on.
-    pub fn new<T: AsRef<[C]>>(text: &Text<C, T>, level: usize) -> Self {
-        FMIndexMultiPiecesWithLocate(SearchIndexWrapper::new(FMIndexMultiPiecesBackend::new(
-            text,
-            |sa| SOSampledSuffixArray::sample(sa, level),
+    pub fn new<T: AsRef<[C]>>(text: &Text<C, T>, level: usize) -> Result<Self, Error> {
+        Ok(FMIndexMultiPiecesWithLocate(SearchIndexWrapper::new(
+            FMIndexMultiPiecesBackend::new(text, |sa| SOSampledSuffixArray::sample(sa, level))?,
         )))
     }
 }
