@@ -1,6 +1,7 @@
-use crate::backend::{HasPosition, HeapSize, SearchIndexBackend};
+use crate::backend::{HasPosition, SearchIndexBackend};
 use crate::character::Character;
 use crate::error::Error;
+use crate::heap_size::HeapSize;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::SOSampledSuffixArray;
 use crate::text::Text;
@@ -57,23 +58,14 @@ where
     }
 }
 
-impl<C> HeapSize for FMIndexBackend<C, ()>
+impl<C, S> HeapSize for FMIndexBackend<C, S>
 where
-    C: Character,
-{
-    fn heap_size(&self) -> usize {
-        self.bw.heap_size() + self.cs.capacity() * std::mem::size_of::<u64>()
-    }
-}
-
-impl<C> HeapSize for FMIndexBackend<C, SOSampledSuffixArray>
-where
-    C: Character,
+    S: HeapSize,
 {
     fn heap_size(&self) -> usize {
         self.bw.heap_size()
-            + self.cs.capacity() * std::mem::size_of::<u64>()
-            + self.suffix_array.size()
+            + self.cs.len() * std::mem::size_of::<usize>()
+            + self.suffix_array.heap_size()
     }
 }
 

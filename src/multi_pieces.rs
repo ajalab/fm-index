@@ -3,11 +3,11 @@ use std::ops::{Rem, Sub};
 use crate::backend::{HasMultiPieces, HasPosition, SearchIndexBackend};
 use crate::character::Character;
 use crate::error::Error;
+use crate::heap_size::HeapSize;
 use crate::piece::PieceId;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::SOSampledSuffixArray;
 use crate::text::Text;
-use crate::HeapSize;
 
 use serde::{Deserialize, Serialize};
 use vers_vecs::{BitVec, RsVec, WaveletMatrix};
@@ -96,24 +96,15 @@ where
     }
 }
 
-impl<C> HeapSize for FMIndexMultiPiecesBackend<C, ()>
+impl<C, S> HeapSize for FMIndexMultiPiecesBackend<C, S>
 where
-    C: Character,
-{
-    fn heap_size(&self) -> usize {
-        self.bw.heap_size() + self.cs.capacity() * std::mem::size_of::<u64>()
-    }
-}
-
-impl<C> HeapSize for FMIndexMultiPiecesBackend<C, SOSampledSuffixArray>
-where
-    C: Character,
+    S: HeapSize,
 {
     fn heap_size(&self) -> usize {
         self.bw.heap_size()
-            + self.cs.capacity() * std::mem::size_of::<u64>()
-            + self.suffix_array.size()
-            + self.doc.capacity() * std::mem::size_of::<usize>()
+            + self.cs.len() * std::mem::size_of::<usize>()
+            + self.doc.len() * std::mem::size_of::<usize>()
+            + self.suffix_array.heap_size()
     }
 }
 

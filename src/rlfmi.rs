@@ -1,6 +1,7 @@
-use crate::backend::{HasPosition, HeapSize, SearchIndexBackend};
+use crate::backend::{HasPosition, SearchIndexBackend};
 use crate::character::Character;
 use crate::error::Error;
+use crate::heap_size::HeapSize;
 use crate::suffix_array::sais;
 use crate::suffix_array::sample::SOSampledSuffixArray;
 use crate::text::Text;
@@ -95,28 +96,16 @@ where
     }
 }
 
-impl<C> HeapSize for RLFMIndexBackend<C, ()>
+impl<C, S> HeapSize for RLFMIndexBackend<C, S>
 where
-    C: Character,
+    S: HeapSize,
 {
     fn heap_size(&self) -> usize {
         self.s.heap_size()
             + self.b.heap_size()
             + self.bp.heap_size()
-            + self.cs.capacity() * std::mem::size_of::<u64>()
-    }
-}
-
-impl<C> HeapSize for RLFMIndexBackend<C, SOSampledSuffixArray>
-where
-    C: Character,
-{
-    fn heap_size(&self) -> usize {
-        self.s.heap_size()
-            + self.b.heap_size()
-            + self.bp.heap_size()
-            + self.cs.capacity() * std::mem::size_of::<u64>()
-            + self.suffix_array.size()
+            + self.cs.len() * std::mem::size_of::<usize>()
+            + self.suffix_array.heap_size()
     }
 }
 
@@ -203,7 +192,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wrapper::SearchIndexWrapper;
+    use crate::{suffix_array::discard::DiscardedSuffixArray, wrapper::SearchIndexWrapper};
 
     #[test]
     fn test_s() {
@@ -328,7 +317,7 @@ mod tests {
             ("si", (8, 10)),
             ("ssi", (10, 12)),
         ];
-        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| ()).unwrap();
+        let rlfmi = RLFMIndexBackend::new(&Text::new(&text), |_| DiscardedSuffixArray {}).unwrap();
 
         let wrapper = SearchIndexWrapper::new(rlfmi);
 
