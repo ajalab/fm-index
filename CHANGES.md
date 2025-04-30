@@ -2,9 +2,11 @@
 
 ## [Unreleased] - ReleaseDate
 
-### Features
+### Added
 
-#### APIs
+We added an experimental support for search indices of multiple texts (text pieces): `FMIndexMultiPieces` and `FMIndexMultiPiecesWithLocate`. Its APIs and internal implementations might be changed in the future.
+
+### Changed
 
 We made a large overhaul in the public APIs.
 
@@ -12,11 +14,7 @@ We made a large overhaul in the public APIs.
 - The constructors accept a text wrapped with a struct `Text`, which retains the maximum character along with the original text.
 - The constructors require an explicit zero character (`\0`) at the end of the provided text. If they fail to build a search index, it returns `Result::Err`.
 
-#### Multi-pieces support
-
-We added an experimental support for search indices of multiple texts (text pieces): `FMIndexMultiPieces` and `FMIndexMultiPiecesWithLocate`. Its APIs and internal implementations might be changed in the future.
-
-## 0.2.0 - 2024-12-21
+## [0.2.0] - 2024-12-21
 
 ### Features
 
@@ -81,3 +79,7 @@ locate/RLFMIndex/1                1.00      5.2±0.02ms 48.5 KElem/sec      4.84
 locate/RLFMIndex/2                1.00     14.1±0.06ms 17.7 KElem/sec      5.33     75.3±1.13ms  3.3 KElem/sec
 locate/RLFMIndex/3                1.00     31.9±0.09ms  7.8 KElem/sec      5.89    187.8±2.91ms  1363 Elem/sec
 ```
+
+<!-- next-url -->
+[Unreleased]: https://github.com/ajalab/fm-index/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/ajalab/fm-index/compare/v0.1.2...v0.2.0
