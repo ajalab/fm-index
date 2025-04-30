@@ -2,6 +2,20 @@
 
 ## [Unreleased] - ReleaseDate
 
+### Features
+
+#### APIs
+
+We made a large overhaul in the public APIs.
+
+- Each FM-index variant has two structs: one supporting locate queries (e.g., `FMIndexWithLocate`) and the other doesn't (e.g., `FMIndex`).
+- The constructors accept a text wrapped with a struct `Text`, which retains the maximum character along with the original text.
+- The constructors require an explicit zero character (`\0`) at the end of the provided text. If they fail to build a search index, it returns `Result::Err`.
+
+#### Multi-pieces support
+
+We added an experimental support for search indices of multiple texts (text pieces): `FMIndexMultiPieces` and `FMIndexMultiPiecesWithLocate`. Its APIs and internal implementations might be changed in the future.
+
 ## 0.2.0 - 2024-12-21
 
 ### Features
