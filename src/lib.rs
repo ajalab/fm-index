@@ -86,23 +86,31 @@
 //!   of each pattern occurrence in the text.
 //!
 //! [^1]: Ferragina, P., & Manzini, G. (2000). Opportunistic data structures
-//!     with applications. Annual Symposium on Foundations of Computer Science
-//!     \- Proceedings, 390–398. <https://doi.org/10.1109/sfcs.2000.892127>
+//!     with applications. Proceedings 41st Annual Symposium on Foundations
+//!     of Computer Science, 390–398. <https://doi.org/10.1109/SFCS.2000.892127>
 //!
 //! [^2]: Mäkinen, V., & Navarro, G. (2005). Succinct suffix arrays based on
-//!     run-length encoding. In Lecture Notes in Computer Science (Vol. 3537).
-//!     <https://doi.org/10.1007/11496656_5>
+//!     run-length encoding. In Combinatorial Pattern Matching: 16th Annual Symposium,
+//!     CPM 2005, Jeju Island, Korea, June 19-22, 2005. Proceedings 16 (pp. 45-56).
+//!     Springer Berlin Heidelberg. <https://doi.org/10.1007/11496656_5>
 //!
-//! [^3]: Ge Nong, Sen Zhang, & Wai Hong Chan. (2010). Two Efficient Algorithms
-//!     for Linear Time Suffix Array Construction. IEEE Transactions on
-//!     Computers, 60(10), 1471–1484. <https://doi.org/10.1109/tc.2010.188>
+//! [^3]: Nong, G., Zhang, S., & Chan, W. H. (2010). Two efficient algorithms
+//!     for linear time suffix array construction. IEEE transactions on computers,
+//!     60(10), 1471-1484. <https://doi.org/10.1109/tc.2010.188>
 //!
 //! [^4]: Claude F., Navarro G. (2012). The Wavelet Matrix. In:
 //!     Calderón-Benavides L., González-Caro C., Chávez E., Ziviani N. (eds)
 //!     String Processing and Information Retrieval. SPIRE 2012.
+//!
+//! [^4]: Claude, F., & Navarro, G. (2012). The wavelet matrix.
+//!     In International Symposium on String Processing and Information Retrieval (pp. 167-179).
+//!     Berlin, Heidelberg: Springer Berlin Heidelberg.
 //!     <https://doi.org/10.1007/978-3-642-34109-0_18>
 //!
-//! [^5]: Arroyuelo, A., Claude, F., Maneth, S., Mäkinen, V., Navarro, G., Nguyen, K., Siren, J., & Välimäki, N. (2011). Fast In-Memory XPath Search over Compressed Text and Tree Indexes (No. arXiv:0907.2089). arXiv. <https://doi.org/10.48550/arXiv.0907.2089>
+//! [^5]: Arroyuelo, A., Claude, F., Maneth, S., Mäkinen, V., Navarro, G., Nguyen,
+//!     K., Siren, J., & Välimäki, N. (2011). Fast In-Memory XPath Search over
+//!     Compressed Text and Tree Indexes (No. arXiv:0907.2089).
+//!     arXiv. <https://doi.org/10.48550/arXiv.0907.2089>
 
 #![allow(clippy::len_without_is_empty)]
 #![warn(missing_docs)]
