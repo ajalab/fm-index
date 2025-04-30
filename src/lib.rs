@@ -20,7 +20,7 @@
 //!
 //! - _n_: the size of a text string
 //! - _σ_: the number of bits needed to represent the characters in the text.
-//! This can be controlled by [`Text::max_character`].
+//!   This can be controlled by [`Text::max_character`].
 //!
 //! ## FM-Index ([`FMIndex`], [`FMIndexWithLocate`])
 //!
