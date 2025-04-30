@@ -2,6 +2,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.3.0] - 2025-04-30
+
 ### Added
 
 We added an experimental support for search indices of multiple texts (text pieces): `FMIndexMultiPieces` and `FMIndexMultiPiecesWithLocate`. Its APIs and internal implementations might be changed in the future.
@@ -81,5 +83,6 @@ locate/RLFMIndex/3                1.00     31.9±0.09ms  7.8 KElem/sec      5.89
 ```
 
 <!-- next-url -->
-[Unreleased]: https://github.com/ajalab/fm-index/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/ajalab/fm-index/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/ajalab/fm-index/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ajalab/fm-index/compare/v0.1.2...v0.2.0
