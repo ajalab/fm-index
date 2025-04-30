@@ -14,6 +14,14 @@
 //!
 //! # Implementations
 //!
+//! This section describes the implementations of FM-Index and its variants.
+//!
+//! Throughout this documentation, we use the following notations:
+//!
+//! - _n_: the size of a text string
+//! - _σ_: the number of bits needed to represent the characters in the text.
+//! This can be controlled by [`Text::max_character`].
+//!
 //! ## FM-Index ([`FMIndex`], [`FMIndexWithLocate`])
 //!
 //! This is a fast implementation of a succinct full-text index. For most use
@@ -49,7 +57,28 @@
 //! - an array of size _O(σ)_ (_σ_: number of characters) which stores the
 //!   number of characters smaller than a given character in run heads
 //!
-//! # Reference
+//! ## FM-Index for Multiple Texts ([`FMIndexMultiPieces`], [`FMIndexMultiPiecesWithLocate`])
+//!
+//! This index is designed for multiple texts (text pieces) separated by a null character (`\0`).
+//! The implementation is based on SXSI [^5].
+//!
+//! Each text piece is assigned a unique ID ([`PieceId`]).
+//! The index supports locating the text piece ID for each search result.
+//! It also supports searching for patterns that are prefixes or suffixes of
+//! individual text pieces.
+//!
+//! The data structure consists of the following components:
+//!
+//! - A wavelet matrix ([`vers_vecs::WaveletMatrix`]) that stores the concatenated
+//!   text pieces, separated by null characters (`\0`). The space complexity is
+//!   _O(n log σ)_ bits.
+//! - A `Vec<usize>` of length _O(σ)_, which stores the number of characters
+//!   smaller than a given character.
+//! - A `Vec<usize>` of length _O(d)_, where _d_ is the number of text
+//!   pieces. This array maps between the suffix array and the text piece IDs.
+//! - (Only in [`FMIndexMultiPiecesWithLocate`]) A sampled suffix array for the text pieces.
+//!   Its length is _O(n / 2^l)_, and it is used to determine the position
+//!   of each pattern occurrence in the text.
 //!
 //! [^1]: Ferragina, P., & Manzini, G. (2000). Opportunistic data structures
 //!     with applications. Annual Symposium on Foundations of Computer Science
@@ -67,6 +96,9 @@
 //!     Calderón-Benavides L., González-Caro C., Chávez E., Ziviani N. (eds)
 //!     String Processing and Information Retrieval. SPIRE 2012.
 //!     <https://doi.org/10.1007/978-3-642-34109-0_18>
+//!
+//! [^5]: Arroyuelo, A., Claude, F., Maneth, S., Mäkinen, V., Navarro, G., Nguyen, K., Siren, J., & Välimäki, N. (2011). Fast In-Memory XPath Search over Compressed Text and Tree Indexes (No. arXiv:0907.2089). arXiv. <https://doi.org/10.48550/arXiv.0907.2089>
+
 #![allow(clippy::len_without_is_empty)]
 #![warn(missing_docs)]
 
