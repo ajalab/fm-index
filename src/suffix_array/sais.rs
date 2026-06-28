@@ -104,7 +104,7 @@ where
         let j = sa[i];
         if j != 0 && j != usize::MAX && types.is_bit_set(j - 1).unwrap() {
             let c = text[j - 1].into_usize();
-            let p = bucket_end_pos[c] as usize - 1;
+            let p = bucket_end_pos[c] - 1;
             sa[p] = j - 1;
             bucket_end_pos[c] -= 1;
         }
