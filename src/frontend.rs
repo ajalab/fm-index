@@ -28,7 +28,7 @@ pub trait SearchIndex<C> {
     ///
     /// Return a [`Search`] object with information about the search
     /// result.
-    fn search<K>(&self, pattern: K) -> impl Search<C>
+    fn search<K>(&self, pattern: K) -> impl Search<'_, C>
     where
         K: AsRef<[C]>;
 
@@ -47,17 +47,17 @@ pub trait SearchIndex<C> {
 /// Trait for searching in an index that supports multiple texts.
 pub trait SearchIndexWithMultiPieces<C>: SearchIndex<C> {
     /// Search for a pattern that is a prefix of a text.
-    fn search_prefix<K>(&self, pattern: K) -> impl Search<C>
+    fn search_prefix<K>(&self, pattern: K) -> impl Search<'_, C>
     where
         K: AsRef<[C]>;
 
     /// Search for a pattern that is a suffix of a text.
-    fn search_suffix<K>(&self, pattern: K) -> impl Search<C>
+    fn search_suffix<K>(&self, pattern: K) -> impl Search<'_, C>
     where
         K: AsRef<[C]>;
 
     /// Search for a pattern that is an exact match of a text.
-    fn search_exact<K>(&self, pattern: K) -> impl Search<C>
+    fn search_exact<K>(&self, pattern: K) -> impl Search<'_, C>
     where
         K: AsRef<[C]>;
 }
@@ -269,7 +269,7 @@ impl<C: Character> FMIndexMultiPiecesWithLocate<C> {
 macro_rules! impl_search_index {
     ($t:ty, $s:ident, $st:ty) => {
         impl<C: Character> SearchIndex<C> for $t {
-            fn search<K>(&self, pattern: K) -> impl Search<C>
+            fn search<K>(&self, pattern: K) -> impl Search<'_, C>
             where
                 K: AsRef<[C]>,
             {
@@ -305,7 +305,7 @@ macro_rules! impl_search_index {
 macro_rules! impl_search_index_with_locate {
     ($t:ty, $s:ident, $st:ty) => {
         impl<C: Character> SearchIndex<C> for $t {
-            fn search<K>(&self, pattern: K) -> impl Search<C>
+            fn search<K>(&self, pattern: K) -> impl Search<'_, C>
             where
                 K: AsRef<[C]>,
             {
@@ -341,21 +341,21 @@ macro_rules! impl_search_index_with_locate {
 macro_rules! impl_search_index_with_multi_pieces {
     ($t:ty, $s:ident, $st:ty) => {
         impl<C: Character> SearchIndexWithMultiPieces<C> for $t {
-            fn search_prefix<K>(&self, pattern: K) -> impl Search<C>
+            fn search_prefix<K>(&self, pattern: K) -> impl Search<'_, C>
             where
                 K: AsRef<[C]>,
             {
                 $s(self.0.search_prefix(pattern))
             }
 
-            fn search_suffix<K>(&self, pattern: K) -> impl Search<C>
+            fn search_suffix<K>(&self, pattern: K) -> impl Search<'_, C>
             where
                 K: AsRef<[C]>,
             {
                 $s(self.0.search_suffix(pattern))
             }
 
-            fn search_exact<K>(&self, pattern: K) -> impl Search<C>
+            fn search_exact<K>(&self, pattern: K) -> impl Search<'_, C>
             where
                 K: AsRef<[C]>,
             {
@@ -467,14 +467,14 @@ macro_rules! impl_match_piece_id {
     };
 }
 
-impl_search_index!(FMIndex<C>, FMIndexSearch, FMIndexSearch<C>);
+impl_search_index!(FMIndex<C>, FMIndexSearch, FMIndexSearch<'_, C>);
 impl_search!(FMIndexSearch<'a, C>, FMIndexMatch, FMIndexMatch<'a, C>);
 impl_match!(FMIndexMatch<'a, C>);
 
 impl_search_index_with_locate!(
     FMIndexWithLocate<C>,
     FMIndexSearchWithLocate,
-    FMIndexSearchWithLocate<C>
+    FMIndexSearchWithLocate<'_, C>
 );
 impl_search!(
     FMIndexSearchWithLocate<'a, C>,
@@ -484,7 +484,7 @@ impl_search!(
 impl_match!(FMIndexMatchWithLocate<'a, C>);
 impl_match_locate!(FMIndexMatchWithLocate<'a, C>);
 
-impl_search_index!(RLFMIndex<C>, RLFMIndexSearch, RLFMIndexSearch<C>);
+impl_search_index!(RLFMIndex<C>, RLFMIndexSearch, RLFMIndexSearch<'_, C>);
 impl_search!(
     RLFMIndexSearch<'a, C>,
     RLFMIndexMatch,
@@ -495,7 +495,7 @@ impl_match!(RLFMIndexMatch<'a, C>);
 impl_search_index_with_locate!(
     RLFMIndexWithLocate<C>,
     RLFMIndexSearchWithLocate,
-    RLFMIndexSearchWithLocate<C>
+    RLFMIndexSearchWithLocate<'_, C>
 );
 impl_search!(
     RLFMIndexSearchWithLocate<'a, C>,
@@ -508,12 +508,12 @@ impl_match_locate!(RLFMIndexMatchWithLocate<'a, C>);
 impl_search_index!(
     FMIndexMultiPieces<C>,
     FMIndexMultiPiecesSearch,
-    FMIndexMultiPiecesSearch<C>
+    FMIndexMultiPiecesSearch<'_, C>
 );
 impl_search_index_with_multi_pieces!(
     FMIndexMultiPieces<C>,
     FMIndexMultiPiecesSearch,
-    FMIndexMultiPiecesSearch<C>
+    FMIndexMultiPiecesSearch<'_, C>
 );
 impl_search!(
     FMIndexMultiPiecesSearch<'a, C>,
@@ -525,12 +525,12 @@ impl_match!(FMIndexMultiPiecesMatch<'a, C>);
 impl_search_index_with_locate!(
     FMIndexMultiPiecesWithLocate<C>,
     FMIndexMultiPiecesSearchWithLocate,
-    FMIndexMultiPiecesSearchWithLocate<C>
+    FMIndexMultiPiecesSearchWithLocate<'_, C>
 );
 impl_search_index_with_multi_pieces!(
     FMIndexMultiPiecesWithLocate<C>,
     FMIndexMultiPiecesSearchWithLocate,
-    FMIndexMultiPiecesSearchWithLocate<C>
+    FMIndexMultiPiecesSearchWithLocate<'_, C>
 );
 impl_search!(
     FMIndexMultiPiecesSearchWithLocate<'a, C>,
