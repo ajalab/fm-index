@@ -2,6 +2,10 @@
 
 ## [Unreleased] - ReleaseDate
 
+### Changed
+
+- Bumped vers-vecs to 1.10.1 ([#103](https://github.com/ajalab/fm-index/pull/103)).
+
 ## [0.3.0] - 2025-04-30
 
 ### Added
