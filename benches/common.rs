@@ -1,13 +1,13 @@
 use fm_index::Text;
 use rand::rngs::StdRng;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 
 pub fn binary_text_set(len: usize, prob: f64) -> Text<u8, Vec<u8>> {
     let zero = b'0';
     let one = b'1';
     let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
     let mut text = (0..len)
-        .map(|_| if rng.gen_bool(prob) { zero } else { one })
+        .map(|_| if rng.random_bool(prob) { zero } else { one })
         .collect::<Vec<_>>();
     text.push(0);
 

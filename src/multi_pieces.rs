@@ -245,7 +245,7 @@ mod tests {
     use super::*;
     use crate::suffix_array::sample::SOSampledSuffixArray;
     use crate::testutil;
-    use rand::{rngs::StdRng, Rng, SeedableRng};
+    use rand::{rngs::StdRng, RngExt, SeedableRng};
 
     #[test]
     fn test_lf_map_random() {
@@ -255,7 +255,7 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(0);
 
         for _ in 0..attempts {
-            let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
+            let text = testutil::build_text(|| rng.random::<u8>() % alphabet_size, text_size);
             let suffix_array = testutil::build_suffix_array(&text);
             let inv_suffix_array = testutil::build_inv_suffix_array(&suffix_array);
             let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(text), |sa| {
@@ -304,7 +304,7 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(0);
 
         for _ in 0..attempts {
-            let text = testutil::build_text(|| rng.gen::<u8>() % alphabet_size, text_size);
+            let text = testutil::build_text(|| rng.random::<u8>() % alphabet_size, text_size);
             let suffix_array = testutil::build_suffix_array(&text);
             let fm_index = FMIndexMultiPiecesBackend::new(&Text::new(&text), |sa| {
                 SOSampledSuffixArray::sample(sa, 0)

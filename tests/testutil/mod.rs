@@ -1,13 +1,16 @@
 use fm_index::{Error, PieceId, Text};
 use num_traits::Zero;
 use rand::rngs::StdRng;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 
 /// Build a text for tests using a generator function `gen`.
 pub fn build_text<T: Zero + Clone, F: FnMut() -> T>(mut gen: F, len: usize) -> Vec<T> {
     debug_assert!(len > 0, "Text length must be greater than 0");
 
     let mut text = vec![T::zero(); len];
+    if len == 1 {
+        return text;
+    }
 
     let mut prev_zero = true;
     for t in text.iter_mut().take(len - 1) {
@@ -108,14 +111,14 @@ impl TestRunner {
         let mut rng = StdRng::seed_from_u64(0);
 
         for _ in 0..self.texts {
-            let text_size = rng.gen::<usize>() % (self.text_size_max) + 1;
+            let text_size = rng.random_range(2..=self.text_size_max);
             let text = if self.multi_pieces {
-                build_text(|| rng.gen::<u8>() % self.alphabet_size, text_size)
+                build_text(|| rng.random::<u8>() % self.alphabet_size, text_size)
             } else {
-                build_text(|| rng.gen::<u8>() % self.alphabet_size + 1, text_size)
+                build_text(|| rng.random::<u8>() % self.alphabet_size + 1, text_size)
             };
             let text = Text::new(text);
-            let level = rng.gen::<usize>() % (self.level_max + 1);
+            let level = rng.random_range(0..=self.level_max);
             let fm_index = build_index(&text, level).unwrap();
 
             for _ in 0..self.patterns {
@@ -124,9 +127,13 @@ impl TestRunner {
                 } else {
                     self.pattern_size_max
                 };
-                let pattern_size = rng.gen::<usize>() % (pattern_size_max - 1) + 1;
+                let pattern_size = if pattern_size_max == 1 {
+                    1
+                } else {
+                    rng.random_range(1..pattern_size_max)
+                };
                 let pattern = (0..pattern_size)
-                    .map(|_| rng.gen::<u8>() % (self.alphabet_size - 1) + 1)
+                    .map(|_| rng.random::<u8>() % (self.alphabet_size - 1) + 1)
                     .collect::<Vec<_>>();
 
                 run_test(&fm_index, &text, &pattern);
