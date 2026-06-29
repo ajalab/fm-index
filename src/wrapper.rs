@@ -34,7 +34,7 @@ where
     ///
     /// Return a [`Search`] object with information about the search
     /// result.
-    pub(crate) fn search<K>(&self, pattern: K) -> SearchWrapper<B>
+    pub(crate) fn search<K>(&self, pattern: K) -> SearchWrapper<'_, B>
     where
         K: AsRef<[B::C]>,
     {
@@ -58,7 +58,7 @@ impl<B> SearchIndexWrapper<B>
 where
     B: SearchIndexBackend + HasMultiPieces,
 {
-    pub(crate) fn search_prefix<K>(&self, pattern: K) -> SearchWrapper<B>
+    pub(crate) fn search_prefix<K>(&self, pattern: K) -> SearchWrapper<'_, B>
     where
         K: AsRef<[B::C]>,
     {
@@ -66,7 +66,7 @@ where
     }
 
     /// Search for the text which has the given suffix.
-    pub(crate) fn search_suffix<K>(&self, pattern: K) -> SearchWrapper<B>
+    pub(crate) fn search_suffix<K>(&self, pattern: K) -> SearchWrapper<'_, B>
     where
         K: AsRef<[B::C]>,
     {
@@ -74,7 +74,7 @@ where
     }
 
     /// Search for a pattern that is an exact match of a text.
-    pub(crate) fn search_exact<K>(&self, pattern: K) -> SearchWrapper<B>
+    pub(crate) fn search_exact<K>(&self, pattern: K) -> SearchWrapper<'_, B>
     where
         K: AsRef<[B::C]>,
     {
