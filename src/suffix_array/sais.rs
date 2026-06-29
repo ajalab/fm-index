@@ -311,7 +311,7 @@ mod tests {
     use super::*;
     use num_traits::Zero;
     use rand::rngs::StdRng;
-    use rand::{Rng, SeedableRng};
+    use rand::{RngExt, SeedableRng};
 
     fn marks_to_lms(s: &str) -> Vec<usize> {
         s.as_bytes()
@@ -471,7 +471,7 @@ mod tests {
         let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
 
         for _ in 0..1000 {
-            let text = build_text(|| rng.gen::<u8>() % (b'z' - b'a') + b'a', len);
+            let text = build_text(|| rng.random::<u8>() % (b'z' - b'a') + b'a', len);
             let sa_actual = build_suffix_array(&Text::new(&text)).unwrap();
             let sa_expected = build_expected_suffix_array(&text);
             assert_eq!(sa_actual, sa_expected, "text: {:?}", text);
@@ -485,7 +485,7 @@ mod tests {
         let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
 
         for _ in 0..1000 {
-            let text = build_text(|| if rng.gen_bool(prob) { b'a' } else { b'b' }, len);
+            let text = build_text(|| if rng.random_bool(prob) { b'a' } else { b'b' }, len);
             let sa_actual = build_suffix_array(&Text::new(&text)).unwrap();
             let sa_expected = build_expected_suffix_array(&text);
             assert_eq!(sa_actual, sa_expected, "text: {:?}", text);
@@ -498,7 +498,7 @@ mod tests {
         let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
 
         for _ in 0..1000 {
-            let text = build_text(|| rng.gen::<u8>() % 2, len);
+            let text = build_text(|| rng.random::<u8>() % 2, len);
             let sa_actual = build_suffix_array(&Text::new(&text)).unwrap();
             let sa_expected = build_expected_suffix_array(&text);
             assert_eq!(sa_actual, sa_expected, "text: {:?}", text);
@@ -511,7 +511,7 @@ mod tests {
         let mut rng: StdRng = SeedableRng::from_seed([0; 32]);
 
         for _ in 0..1000 {
-            let text = build_text(|| rng.gen::<u8>(), len);
+            let text = build_text(|| rng.random::<u8>(), len);
             let sa_actual = build_suffix_array(&Text::new(&text)).unwrap();
             let sa_expected = build_expected_suffix_array(&text);
             assert_eq!(sa_actual, sa_expected, "text: {:?}", text);
