@@ -23,7 +23,7 @@ Add this to your `Cargo.toml`.
 
 ```toml
 [dependencies]
-fm-index = "0.3.0"
+fm-index = "0.3.1"
 ```
 
 ## Example

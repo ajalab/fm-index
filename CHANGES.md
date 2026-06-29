@@ -2,6 +2,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.3.1] - 2026-06-29
+
 ### Changed
 
 - Bumped vers-vecs to 1.10.1 ([#103](https://github.com/ajalab/fm-index/pull/103)).
@@ -87,6 +89,7 @@ locate/RLFMIndex/3                1.00     31.9±0.09ms  7.8 KElem/sec      5.89
 ```
 
 <!-- next-url -->
-[Unreleased]: https://github.com/ajalab/fm-index/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/ajalab/fm-index/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/ajalab/fm-index/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/ajalab/fm-index/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ajalab/fm-index/compare/v0.1.2...v0.2.0
